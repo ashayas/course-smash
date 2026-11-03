@@ -6,6 +6,8 @@ Say what you want to learn. An agent builds a course of multiple-choice and shor
 
 The same app runs on Cloudflare or in Docker.
 
+The design is by [Ayush Soni](https://x.com/ayushsoni_io).
+
 ## How it works
 
 ![Sketch: the user asks the agent for a course and answers questions into state. The agent builds courses, reads the state and changes the questions.](docs/architecture-sketch.png)
