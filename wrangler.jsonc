@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "coursesmash",
+  "account_id": "85b2a1e7f8abb1a82e8366a4929ea360",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [{ "pattern": "coursesmash.ashaya.xyz", "custom_domain": true }],
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  // run_worker_first keeps the app behind the login gate.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  "ratelimits": [{ "name": "LOGIN_LIMIT", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "coursesmash-db",
+      "database_id": "188fecf3-d95b-4255-8d54-748361cda02a"
+    }
+  ],
+  "vars": { "CLOUDFLARE_ACCOUNT_ID": "85b2a1e7f8abb1a82e8366a4929ea360" },
+  // Set with `wrangler secret put`. CLOUDFLARE_API_KEY is the inference token from .env.
+  "secrets": { "required": ["USER_NAME", "PW", "CLOUDFLARE_API_KEY"] }
+}
