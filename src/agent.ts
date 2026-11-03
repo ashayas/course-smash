@@ -154,7 +154,7 @@ async function writeRound(env: Env, course: Course, module: Module, round: numbe
       `You write assessment questions for one module of a course. Write ${shape}. ` +
       "mcq: exactly 4 distinct, plausible options of similar length, correct_index is the 0-based index of the right one, and reference explains why the right answer is right by naming the idea. Options get shuffled, so reference must never mention an option number or letter. " +
       "short: options is empty, correct_index is -1, the question can be answered in 1 to 3 sentences, and reference is a model answer stating what a good answer must include. " +
-      "Test understanding and application, not recall of wording. Never reuse a question listed in already_asked. " +
+      "Write plain text with no markdown. Test understanding and application, not recall of wording. Never reuse a question listed in already_asked. " +
       "Use concept names from the module, or from focus for follow-ups. " +
       "If learner_state shows weak concepts or misses, target the underlying confusion with a new angle, and say so in `why` (one short sentence addressed to the learner as you). " +
       "Otherwise leave `why` empty. `note` is one short sentence to the learner, as you, on how their answers shaped this set, or empty if they did not. " +

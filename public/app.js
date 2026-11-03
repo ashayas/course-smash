@@ -4,6 +4,9 @@ const live = document.getElementById("live");
 const ACCENTS = ["orange", "yellow", "green", "blue", "purple", "pink"];
 const COLORS = { orange: "#E65F2B", yellow: "#F5D556", green: "#469B5B", blue: "#5889F7", purple: "#904CF6", pink: "#E7A0EA", ink: "#141414", paper: "#FBFBFB" };
 
+// Models sometimes write markdown. Only paired markers go, so code like "2 ** 3" survives.
+const plainText = (text) => text.replace(/\*\*(\S(?:.*?\S)?)\*\*/g, "$1").replace(/`([^`\n]+)`/g, "$1");
+
 function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
   for (const [key, value] of Object.entries(props)) {
@@ -12,7 +15,7 @@ function h(tag, props = {}, ...children) {
     else if (value === true) el.setAttribute(key, "");
     else if (value !== false && value != null) el.setAttribute(key, value);
   }
-  el.append(...children.flat().filter((c) => c != null && c !== false));
+  el.append(...children.flat().filter((c) => c != null && c !== false).map((c) => (typeof c === "string" ? plainText(c) : c)));
   return el;
 }
 
