@@ -1,0 +1,13 @@
+services:
+  coursesmash:
+    build: .
+    ports:
+      - "${PORT:-8787}:8787"
+    env_file: .env
+    environment:
+      PORT: "8787" # the port inside the container; PORT in .env only picks the host port
+    volumes:
+      - coursesmash-data:/data
+    restart: unless-stopped
+volumes:
+  coursesmash-data:

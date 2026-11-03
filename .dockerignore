@@ -1,0 +1,15 @@
+.env
+.env.*
+.dev.vars*
+.git
+.agent-grid
+.agentic_work
+.boards
+.drawings
+.mistakes
+.wrangler
+node_modules
+dist
+data
+evals
+*.md
