@@ -1,0 +1,1453 @@
+{
+  "shard_id": "shard_4_math_algos",
+  "domain_focus": "Mathematics, Algorithms, Cryptography & Formal Logic",
+  "course_quality_evals": [
+    {
+      "id": "cq_math_01",
+      "eval_type": "course_quality",
+      "domain": "Linear Algebra & Spectral Theory",
+      "user_context": {
+        "prompt": "I need a 45-minute crash course on eigenvalues, eigenvectors, and spectral decomposition so I can understand how Principal Component Analysis (PCA) reduces dimensionality in machine learning.",
+        "what_user_wants_to_learn": "Eigenvalues, eigenvectors, symmetric matrix spectral theorem, and how covariance matrix eigenvectors define principal components in PCA.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Spectral Decomposition to PCA: Geometry and Algebra of Eigenvectors",
+        "description": "A focused 45-minute course bridging linear transformations and eigen-analysis with symmetric covariance matrices and Principal Component Analysis.",
+        "target_audience": "Intermediate learners with basic matrix multiplication knowledge aiming to understand PCA mathematically.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Geometric Intuition and Characteristic Polynomials",
+            "learning_objective": "Compute eigenvalues and eigenvectors of 2x2 matrices and interpret them as invariant directions under linear transformations.",
+            "summary": "Covers the equation Av = lambda v, determinant condition det(A - lambda I) = 0, and finding eigenspaces.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Find the eigenvalues of A = [[3, 1], [1, 3]] by solving det(A - lambda I) = 0.",
+              "Why must v be non-zero in the definition Av = lambda v, whereas lambda = 0 is valid?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "The Spectral Theorem for Real Symmetric Matrices",
+            "learning_objective": "Explain why real symmetric matrices always have real eigenvalues and orthogonal eigenvectors, enabling A = Q Lambda Q^T.",
+            "summary": "Introduces orthogonal diagonalization of symmetric matrices and why sample covariance matrices Sigma = (1/n) X^T X are positive semi-definite.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "If A is a real symmetric matrix with distinct eigenvalues lambda_1 and lambda_2, prove that their eigenvectors v_1 and v_2 are orthogonal.",
+              "What does positive semi-definiteness of the covariance matrix imply about its eigenvalues?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Variance Maximization and Principal Components",
+            "learning_objective": "Connect the top-k eigenvectors of the covariance matrix to the directions of maximum projected variance in PCA.",
+            "summary": "Formulates PCA via the Rayleigh quotient u^T Sigma u / (u^T u) and shows how projecting onto the top-k eigenvectors preserves maximum variance.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Given eigenvalues [12.4, 3.1, 0.5] of a 3D covariance matrix, what fraction of total variance is retained by projecting onto the first two principal components?",
+              "Show using the spectral decomposition Sigma = Q Lambda Q^T why the unit vector maximizing u^T Sigma u is the eigenvector corresponding to lambda_max."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "The course directly addresses the learner's goal of connecting eigenvalues and spectral decomposition to PCA within a 3-module structure well-suited for 45 minutes. Each module balances conceptual multiple-choice checks with short-answer derivations."
+      }
+    },
+    {
+      "id": "cq_math_02",
+      "eval_type": "course_quality",
+      "domain": "Graph Algorithms & Network Flow",
+      "user_context": {
+        "prompt": "Help me master shortest paths (Dijkstra vs Bellman-Ford) and Max-Flow Min-Cut (Ford-Fulkerson / Edmonds-Karp) for my graduate algorithms exam.",
+        "what_user_wants_to_learn": "Correctness invariants, negative edge handling, time complexity, and residual graph augmenting path mechanics for shortest path and network flow algorithms.",
+        "background_level": "advanced",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Shortest Paths, Residual Networks, and Max-Flow Duality",
+        "description": "Rigorous analysis of relaxation-based shortest path algorithms and augmenting-path network flow algorithms.",
+        "target_audience": "Advanced computer science students preparing for graduate-level algorithm analysis.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Edge Relaxation, Dijkstra's Greedy Invariant, and Negative Weights",
+            "learning_objective": "Prove when Dijkstra's greedy selection invariant holds and construct a counterexample with negative-weight edges.",
+            "summary": "Analyzes the triangle inequality relaxation property, priority queue complexity O((V + E) log V), and failure under negative edges.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Construct a 3-vertex DAG with a negative edge weight where Dijkstra's algorithm without re-popping vertices fails.",
+              "What invariant holds for the settled set S at each step of Dijkstra's algorithm on non-negative graphs?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Bellman-Ford Dynamic Programming and Negative Cycle Detection",
+            "learning_objective": "Derive the V-1 relaxation round bound of Bellman-Ford and explain how round V detects reachable negative-weight cycles.",
+            "summary": "Examines path-length induction over at most V-1 edges in simple paths and how negative cycle detection relates to arbitrage and feasibility.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does any shortest simple path in a graph with V vertices and no negative cycles contain at most V - 1 edges?",
+              "Which edge relaxation condition after V - 1 iterations certifies a reachable negative-weight cycle?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Residual Graphs, Ford-Fulkerson, and the Max-Flow Min-Cut Theorem",
+            "learning_objective": "Trace augmenting paths in residual networks G_f and prove the equivalence of maximum flow value and minimum s-t cut capacity.",
+            "summary": "Defines forward and backward residual capacities, bottleneck augmentation, and the equivalence of: (1) f is a max flow, (2) G_f has no augmenting path, (3) |f| = c(S, T).",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why are backward edges with capacity f(u, v) required in the residual network G_f?",
+              "Given a flow network where no s-t path exists in G_f, define the vertex set S that yields a cut (S, T) with capacity equal to |f|."
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Edmonds-Karp Shortest Augmenting Paths and Polynomial Complexity",
+            "learning_objective": "Explain how choosing shortest augmenting paths via BFS bounds augmentations to O(VE) and total runtime to O(VE^2).",
+            "summary": "Contrasts irrational/large-capacity pathological cases in generic Ford-Fulkerson with BFS distance monotonicity in Edmonds-Karp.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "How many times can a specific edge (u, v) become critical (saturated) along shortest augmenting paths in Edmonds-Karp, and why?",
+              "What is the worst-case time complexity of Ford-Fulkerson with integer capacities vs. Edmonds-Karp?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "This 4-module curriculum hits every graduate exam requirement: greedy vs DP shortest paths, residual backward edge necessity, Max-Flow Min-Cut proof structure, and Edmonds-Karp complexity bounds."
+      }
+    },
+    {
+      "id": "cq_math_03",
+      "eval_type": "course_quality",
+      "domain": "Cryptography & Number Theory",
+      "user_context": {
+        "prompt": "I want to learn how Elliptic Curve Cryptography (ECC) and Schnorr Zero-Knowledge Proofs work at a mathematical level.",
+        "what_user_wants_to_learn": "Elliptic curve group law over finite fields, ECDLP hardness, and interactive/Fiat-Shamir Schnorr protocols (completeness, soundness, honest-verifier zero-knowledge).",
+        "background_level": "advanced",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Elliptic Curve Groups, Discrete Logarithms, and Schnorr Zero-Knowledge Proofs",
+        "description": "Mathematical foundations of elliptic curve group operations over F_p and Schnorr sigma protocols for proving knowledge of a discrete logarithm.",
+        "target_audience": "Advanced learners comfortable with modular arithmetic and cyclic groups.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Elliptic Curves over Finite Fields and the Chord-and-Tangent Group Law",
+            "learning_objective": "Compute point addition and point doubling on y^2 = x^3 + ax + b (mod p) and verify abelian group properties.",
+            "summary": "Covers the non-singularity discriminant condition 4a^3 + 27b^2 != 0 (mod p), the point at infinity O as identity, and algebraic slope formulas.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why is the condition 4a^3 + 27b^2 != 0 (mod p) necessary for E(F_p) to form a valid group?",
+              "Given P = (x_1, y_1) on E(F_p), what is its additive inverse -P and why does P + (-P) = O?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Scalar Multiplication and the Elliptic Curve Discrete Logarithm Problem (ECDLP)",
+            "learning_objective": "Analyze double-and-add scalar multiplication kG in O(log k) group operations and state the ECDLP hardness assumption.",
+            "summary": "Contrasts the O(log n) forward computation Q = xG with the O(sqrt(n)) Pollard's rho barrier for recovering scalar x from (G, Q) in prime-order subgroups.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Using double-and-add, how many point doublings and point additions are needed to compute 23G?",
+              "Why do cryptographic curves select a generator G of large prime order q rather than composite order?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "The Schnorr Identification Protocol: Completeness and Special Soundness",
+            "learning_objective": "Prove completeness of the 3-move Schnorr protocol (R = kG, challenge c, response s = k + cx mod q) and extract the witness x from two transcripts with the same commitment.",
+            "summary": "Walks through commitment R, verifier challenge c, response s, verification sG == R + cQ, and the special soundness extractor x = (s_1 - s_2)(c_1 - c_2)^(-1) mod q.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "If a prover reuses the same nonce k for two distinct challenges c_1 != c_2, derive the algebraic formula that recovers the secret key x.",
+              "Verify algebraically that sG = R + cQ holds when the prover is honest."
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Honest-Verifier Zero-Knowledge Simulation and the Fiat-Shamir Transform",
+            "learning_objective": "Construct the HVZK simulator for Schnorr transcripts and explain how hashing the commitment and statement (c = H(G, Q, R, m)) produces a non-interactive proof.",
+            "summary": "Demonstrates how a simulator samples (c, s) uniformly at random and computes R = sG - cQ without knowing x, and explains why omitting Q or R from the Fiat-Shamir hash breaks soundness.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Explain why the simulated transcript (R = sG - cQ, c, s) has the exact same probability distribution as an honest prover's transcript.",
+              "What forgery attack becomes possible in Fiat-Shamir Schnorr if the commitment R is omitted from the hash input c = H(m)?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "Accurately progresses from the elliptic curve group law over F_p to scalar multiplication/ECDLP and then to Schnorr's completeness, special soundness witness extraction, HVZK simulation, and Fiat-Shamir."
+      }
+    },
+    {
+      "id": "cq_math_04",
+      "eval_type": "course_quality",
+      "domain": "Probability, Bayesian Inference & Markov Chains",
+      "user_context": {
+        "prompt": "I want a 45-minute course on Discrete-Time Markov Chains, stationary distributions, and why Metropolis-Hastings works for Bayesian posterior sampling.",
+        "what_user_wants_to_learn": "Transition matrices, irreducibility and aperiodicity, detailed balance, and the Metropolis-Hastings acceptance ratio for sampling unnormalized posteriors.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Markov Chains, Detailed Balance, and Metropolis-Hastings Sampling",
+        "description": "From stochastic transition matrices and ergodicity to constructing reversible Markov chains that converge to a target Bayesian posterior.",
+        "target_audience": "Intermediate learners familiar with conditional probability and Bayes' rule.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Stochastic Transition Matrices and Stationary Distributions",
+            "learning_objective": "Formulate the Markov property, compute multi-step transitions P^t, and solve pi P = pi for a stationary distribution.",
+            "summary": "Introduces row-stochastic matrices, state distribution evolution, and solving the left eigenvector equation pi P = pi with sum(pi_i) = 1.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Given transition matrix P = [[0.7, 0.3], [0.4, 0.6]], solve pi P = pi subject to pi_1 + pi_2 = 1.",
+              "Which eigenvalue of a row-stochastic matrix P always exists and corresponds to the stationary distribution?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Ergodicity: Irreducibility, Aperiodicity, and Detailed Balance",
+            "learning_objective": "Distinguish between existence of a stationary distribution and convergence to it, and verify stationarity via the detailed balance condition pi_i P_ij = pi_j P_ji.",
+            "summary": "Explains periodic vs reducible chains and proves that if pi_i P_ij = pi_j P_ji holds for all i, j, then pi is stationary.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Give an example of a 2-state irreducible Markov chain that has a unique stationary distribution pi but fails to converge to pi from arbitrary initial states.",
+              "Prove in two lines that summing the detailed balance equation pi_i P_ij = pi_j P_ji over all i yields (pi P)_j = pi_j."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Metropolis-Hastings and Cancellation of the Normalization Constant",
+            "learning_objective": "Derive the Metropolis-Hastings acceptance probability alpha(x, x') and explain why the intractable Bayesian evidence Z cancels out.",
+            "summary": "Shows how proposing x' ~ q(x'|x) and accepting with alpha(x, x') = min(1, [p~(x') q(x|x')] / [p~(x) q(x'|x)]) enforces detailed balance with respect to the posterior p(x) = p~(x)/Z.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does the marginal likelihood Z = integral p(D|theta)p(theta) d_theta disappear in the Metropolis-Hastings acceptance ratio?",
+              "How does the acceptance ratio simplify when the proposal distribution is symmetric, q(x'|x) = q(x|x')?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "Tightly structured 3-module progression from transition matrices to ergodicity/detailed balance and finally the Metropolis-Hastings ratio, directly answering how unnormalized Bayesian posteriors are sampled."
+      }
+    },
+    {
+      "id": "cq_math_05",
+      "eval_type": "course_quality",
+      "domain": "Dynamic Programming & Amortized Analysis",
+      "user_context": {
+        "prompt": "I have a technical interview in 2 days and need to learn how to formulate Dynamic Programming recurrences (like Knapsack and Edit Distance) and analyze amortized complexity using the potential method.",
+        "what_user_wants_to_learn": "Optimal substructure, state and transition formulation for 0/1 Knapsack and Levenshtein Edit Distance, plus Tarjan's potential method for amortized O(1) operations.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Fast Dynamic Programming and Amortized Bounds",
+        "description": "Learn quick rules for DP and amortized complexity.",
+        "target_audience": "Interview candidates.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Solving 0/1 Knapsack by Greedy Value-to-Weight Ratio",
+            "learning_objective": "Sort items by value/weight ratio and greedily pack the 0/1 knapsack in O(n log n) time.",
+            "summary": "Explains that sorting items by v_i / w_i and taking items until full always yields the optimal 0/1 knapsack solution faster than dynamic programming.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What is the complexity of sorting items by v_i / w_i for 0/1 Knapsack?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Edit Distance Recurrence",
+            "learning_objective": "Memorize the edit distance table size.",
+            "summary": "States that edit distance uses a 2D array of size m by n and runs in O(m + n) time.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What is the time complexity of 2D Edit Distance? (Answer key says O(m + n))"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Amortized Complexity Equals Average-Case Complexity",
+            "learning_objective": "Compute amortized cost by averaging over random uniform inputs.",
+            "summary": "Defines amortized complexity as the expected runtime over a probability distribution of random inputs, identical to average-case quicksort.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "True or False: Amortized analysis assumes a uniform probability distribution over inputs."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 2,
+          "pedagogical_progression": 1,
+          "module_coherence": 2,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "mathematically_unsound",
+          "missing_short_answer_derivation",
+          "omits_requested_potential_method"
+        ],
+        "rationale": "Contains severe mathematical and algorithmic falsehoods: claims greedy value-to-weight ratio solves 0/1 Knapsack optimally (it only solves Fractional Knapsack), claims 2D Edit Distance runs in O(m+n) instead of O(mn), and conflates worst-case sequence amortized analysis with probabilistic average-case analysis. It also lacks any short-answer recurrence derivations."
+      }
+    },
+    {
+      "id": "cq_math_06",
+      "eval_type": "course_quality",
+      "domain": "Formal Logic & Computability",
+      "user_context": {
+        "prompt": "I am a beginner programmer curious about propositional logic, truth tables, De Morgan's laws, and how SAT solvers check boolean satisfiability. Keep it under 30 minutes.",
+        "what_user_wants_to_learn": "Propositional connectives, truth tables, CNF conversion via De Morgan's laws, and basic DPLL unit propagation intuition.",
+        "background_level": "beginner",
+        "time_budget_minutes": 30
+      },
+      "candidate_course": {
+        "title": "Ultrafilters, Compactness of First-Order Model Theory, and Forcing in ZFC",
+        "description": "An intensive treatise on Los's theorem, ultraproducts, Godel's completeness and incompleteness theorems, and Cohen forcing.",
+        "target_audience": "PhD logicians and set theorists.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Ultraproducts and Los's Theorem",
+            "learning_objective": "Prove Los's fundamental theorem of ultraproducts and deduce the Compactness Theorem for arbitrary signature languages.",
+            "summary": "Constructs non-principal ultrafilters via Zorn's Lemma and proves transfer of first-order sentences across quotient structures.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Prove the inductive step for existential quantification in Los's Theorem using the Axiom of Choice."
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Arithmetization of Syntax and Godel's Diagonal Lemma",
+            "learning_objective": "Construct the fixed-point sentence G <-> ~Prov_T(#G) in Peano Arithmetic.",
+            "summary": "Develops primitive recursive representability, beta-functions, and Rosser's trick.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Prove the Diagonal Lemma for any recursively axiomatizable theory extending Robinson's Q."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Boolean-Valued Models and Independence of the Continuum Hypothesis",
+            "learning_objective": "Force 2^(aleph_0) = aleph_2 over a countable transitive model of ZFC using countable partial functions.",
+            "summary": "Covers the countable chain condition (ccc), generic filters, and preservation of cardinals.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Show that the poset Fn(kappa x omega, 2) satisfies the countable chain condition via the Delta-System Lemma."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 1,
+          "module_coherence": 2,
+          "depth_and_accuracy": 3,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "goal_misalignment",
+          "skips_foundational_definitions",
+          "time_budget_mismatch",
+          "inappropriate_difficulty_for_beginner"
+        ],
+        "rationale": "The user is a beginner asking for a 30-minute introduction to propositional truth tables, De Morgan's laws, and basic SAT solving, but the course delivers PhD-level set theory and model theory (ultraproducts, Godel numbering, Cohen forcing) with exclusively graduate proof prompts."
+      }
+    },
+    {
+      "id": "cq_math_07",
+      "eval_type": "course_quality",
+      "domain": "Linear Algebra & Numerical Methods",
+      "user_context": {
+        "prompt": "I want to learn Singular Value Decomposition (SVD), Moore-Penrose pseudoinverse, and how SVD solves ill-conditioned linear least squares problems.",
+        "what_user_wants_to_learn": "Deriving A = U Sigma V^T from A^T A and A A^T, geometric meaning of singular values, condition number kappa(A) = sigma_max / sigma_min, and least squares via A^+ = V Sigma^+ U^T.",
+        "background_level": "advanced",
+        "time_budget_minutes": 50
+      },
+      "candidate_course": {
+        "title": "Introduction to Basic Vectors and Calling numpy.linalg.svd",
+        "description": "A light multiple-choice overview of vectors and Python syntax for SVD.",
+        "target_audience": "Beginners learning Python.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Adding 2D Vectors",
+            "learning_objective": "Add two vectors component-wise.",
+            "summary": "Reviews how [1, 2] + [3, 4] = [4, 6].",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What is [2, 5] + [1, -1]?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Dot Products of Vectors",
+            "learning_objective": "Multiply matching entries and sum them.",
+            "summary": "Covers basic dot products in 2D.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What is the dot product of [1, 0] and [0, 1]?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Running numpy.linalg.svd in Python",
+            "learning_objective": "Remember the function name for SVD in NumPy.",
+            "summary": "Shows that calling np.linalg.svd(A) returns three arrays without explaining what U, S, or Vt represent mathematically or touching least squares.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Which NumPy submodule contains the svd() function?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "alignment_with_goal": 2,
+          "pedagogical_progression": 2,
+          "module_coherence": 2,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "missing_short_answer_derivation",
+          "goal_misalignment",
+          "superficial_coverage_for_advanced_learner"
+        ],
+        "rationale": "The advanced learner requested mathematical coverage of SVD, condition numbers, and the Moore-Penrose pseudoinverse for ill-conditioned least squares, but the course wastes two modules on trivial 2D vector arithmetic and ends with a syntax-memorization multiple-choice module on NumPy."
+      }
+    },
+    {
+      "id": "cq_math_08",
+      "eval_type": "course_quality",
+      "domain": "Cryptography & Formal Verification",
+      "user_context": {
+        "prompt": "Give me a quick 20-minute refresher on RSA key generation, Euler's totient theorem, and why textbook RSA without padding is malleable.",
+        "what_user_wants_to_learn": "RSA modulus N = pq, totient phi(N) = (p-1)(q-1), ed = 1 mod phi(N), Euler's theorem correctness proof, and homomorphic malleability of raw m^e mod N.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 20
+      },
+      "candidate_course": {
+        "title": "Complete 12-Hour Masterclass in Algebraic Number Theory, Lattice Cryptography, and Post-Quantum ZK-STARKs",
+        "description": "Exhaustive multi-week curriculum covering Dedekind domains, Learning With Errors, FRI polynomial IOPs, and distorted RSA math.",
+        "target_audience": "Full-semester cryptography researchers.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Broken RSA Totient Formula and Fermat's Last Theorem",
+            "learning_objective": "Compute RSA private keys using phi(N) = p + q and Wiles' modularity theorem.",
+            "summary": "Incorrectly states that Euler's totient of N = pq is phi(N) = p * q - 1 and requires solving elliptic modular forms before encrypting.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Compute d = e^(-1) mod (pq - 1) and explain why modular forms are required for RSA."
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Ideal Class Groups in Cyclotomic Fields and Ring-LWE",
+            "learning_objective": "Derive Minkowski's bound and worst-case to average-case reductions on ideal lattices.",
+            "summary": "Covers canonical embeddings, Gaussian sampling over lattices, and Kyber parameter sets.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Prove the canonical embedding norm bound for Z[zeta_m] when m is a power of 2."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Fast Reed-Solomon Interactive Oracle Proofs of Proximity (FRI)",
+            "learning_objective": "Prove soundness error bounds in the Johnson bound regime for Reed-Solomon codes.",
+            "summary": "Analyzes degree-folding commitments over binary extension fields.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Derive the correlated agreement theorem bound for proximity parameter delta < 1 - sqrt(rho)."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 1,
+          "module_coherence": 1,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 2
+        },
+        "failure_modes": [
+          "mathematically_unsound",
+          "time_budget_mismatch",
+          "goal_misalignment"
+        ],
+        "rationale": "Module 1 states a mathematically false formula for Euler's totient function (claiming phi(pq) = pq - 1 or p + q instead of (p-1)(q-1)), completely ignores textbook RSA malleability, and bloats a 20-minute RSA refresher with unrelated graduate topics in cyclotomic ideal lattices and FRI STARK soundness proofs."
+      }
+    }
+  ],
+  "question_quality_evals": [
+    {
+      "id": "qq_math_01",
+      "eval_type": "question_quality",
+      "domain": "Linear Algebra & Eigenvalues",
+      "user_context": {
+        "what_user_wants_to_learn": "Computing eigenvalues and trace/determinant invariants to verify characteristic polynomial roots rapidly.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Student previously made sign errors when expanding det(A - lambda I) for 2x2 matrices and forgot to cross-check roots against trace(A) and det(A)."
+      },
+      "module_context": {
+        "course_title": "Spectral Decomposition to PCA",
+        "module_title": "Geometric Intuition and Characteristic Polynomials",
+        "learning_objective": "Compute eigenvalues of 2x2 matrices and verify them using trace and determinant invariants."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Consider the symmetric matrix A = [[4, 2], [2, 1]]. What are the eigenvalues of A, and which invariant pair confirms your answer?",
+        "options": [
+          "lambda_1 = 5, lambda_2 = 0, verified because lambda_1 + lambda_2 = tr(A) = 5 and lambda_1 * lambda_2 = det(A) = 4(1) - 2(2) = 0",
+          "lambda_1 = 4, lambda_2 = 1, verified because the eigenvalues of any symmetric matrix equal its diagonal entries",
+          "lambda_1 = 3, lambda_2 = 2, verified because lambda_1 + lambda_2 = tr(A) = 5 and det(A) = 4(1) + 2(2) = 8",
+          "lambda_1 = -5, lambda_2 = 0, verified because det(A - lambda I) = lambda^2 + 5*lambda = 0"
+        ],
+        "correct_answer": "lambda_1 = 5, lambda_2 = 0, verified because lambda_1 + lambda_2 = tr(A) = 5 and lambda_1 * lambda_2 = det(A) = 4(1) - 2(2) = 0",
+        "grading_notes": "Option A is correct: det(A - lambda I) = (4 - lambda)(1 - lambda) - 4 = lambda^2 - 5*lambda = 0, giving roots 5 and 0. Option B tests the diagonal misconception; Option C tests the determinant sign error; Option D tests the trace sign error in lambda^2 - tr(A)lambda + det(A) = 0."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "The question directly targets the student's prior sign error in expanding det(A - lambda I) and reinforces the trace/determinant invariant check, with each distractor diagnostic of a specific algebraic misconception."
+      }
+    },
+    {
+      "id": "qq_math_02",
+      "eval_type": "question_quality",
+      "domain": "Graph Algorithms & Shortest Paths",
+      "user_context": {
+        "what_user_wants_to_learn": "Why Dijkstra's greedy choice fails on graphs with negative edge weights even when no negative cycles exist.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner previously believed Dijkstra only fails if the graph contains a negative-weight cycle."
+      },
+      "module_context": {
+        "course_title": "Shortest Paths, Residual Networks, and Max-Flow Duality",
+        "module_title": "Edge Relaxation, Dijkstra's Greedy Invariant, and Negative Weights",
+        "learning_objective": "Prove when Dijkstra's greedy selection invariant holds and construct a counterexample with negative-weight edges."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Consider a directed acyclic graph (DAG) with vertices {S, A, B} and directed edges: S -> A (weight 2), S -> B (weight 5), and B -> A (weight -4). If standard Dijkstra's algorithm (which never re-processes a vertex once popped from the priority queue) is run from source S, what happens?",
+        "options": [
+          "It pops S (d=0), then pops A (d=2) and permanently locks d[A]=2, failing to update A to the true shortest path S -> B -> A of total weight 5 + (-4) = 1 (or even if it updates d[A]=1 when relaxing B -> A, A was already settled and any outgoing edges from A would have been relaxed with the wrong distance).",
+          "It enters an infinite loop between B and A because any negative edge weight creates a negative cycle.",
+          "It computes the correct shortest path distances for all vertices because the graph is a DAG and has no negative cycles.",
+          "It pops B before A because 5 > 2, and therefore finds the path of weight 1 first."
+        ],
+        "correct_answer": "It pops S (d=0), then pops A (d=2) and permanently locks d[A]=2, failing to update A to the true shortest path S -> B -> A of total weight 5 + (-4) = 1 (or even if it updates d[A]=1 when relaxing B -> A, A was already settled and any outgoing edges from A would have been relaxed with the wrong distance).",
+        "grading_notes": "Directly refutes the misconception that Dijkstra only fails on negative cycles by showing a concrete 3-node DAG where settling A at d=2 violates the greedy monotone path extension assumption."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Presents a crisp 3-vertex DAG counterexample that directly targets the learner's prior misconception that negative cycles are required for Dijkstra to fail."
+      }
+    },
+    {
+      "id": "qq_math_03",
+      "eval_type": "question_quality",
+      "domain": "Amortized Complexity Analysis",
+      "user_context": {
+        "what_user_wants_to_learn": "Using Tarjan's potential method to prove O(1) amortized insertion in a dynamic array that doubles capacity when full.",
+        "background_level": "advanced",
+        "prior_feedback_summary": "Learner understood the aggregate method sum of powers of 2, and now wants to practice writing a formal potential function proof."
+      },
+      "module_context": {
+        "course_title": "Dynamic Programming and Amortized Analysis",
+        "module_title": "Tarjan's Potential Method",
+        "learning_objective": "Define a potential function Phi(D_i) >= 0 and bound amortized cost c_hat_i = c_i + Phi(D_i) - Phi(D_{i-1})."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "A dynamic array has current size n_i and capacity m_i (initialized with n_0 = 0, m_0 = 1). When n_{i-1} < m_{i-1}, inserting an element costs c_i = 1. When n_{i-1} = m_{i-1}, the array allocates a new buffer of capacity m_i = 2 * m_{i-1}, copies all n_{i-1} elements, and inserts the new element, costing c_i = n_{i-1} + 1 = n_i. Using the potential function Phi_i = 2*n_i - m_i, show that Phi_i >= 0 for all i >= 1 and compute the amortized cost c_hat_i = c_i + Phi_i - Phi_{i-1} in both the non-resizing and resizing cases.",
+        "correct_answer": "Since the array doubles whenever full, for all i >= 1 we have n_i >= m_i / 2, so Phi_i = 2*n_i - m_i >= 0. Case 1 (no resize, n_i = n_{i-1} + 1, m_i = m_{i-1}): c_hat_i = 1 + (2*n_i - m_i) - (2*(n_i - 1) - m_i) = 1 + 2 = 3. Case 2 (resize, n_{i-1} = m_{i-1}, m_i = 2*n_{i-1}, n_i = n_{i-1} + 1): actual cost c_i = n_{i-1} + 1. Change in potential: Phi_i - Phi_{i-1} = (2*(n_{i-1} + 1) - 2*n_{i-1}) - (2*n_{i-1} - n_{i-1}) = 2 - n_{i-1}. Thus c_hat_i = (n_{i-1} + 1) + (2 - n_{i-1}) = 3 = O(1).",
+        "grading_notes": "Award full credit if the student shows: (1) non-negativity via the load factor invariant n_i >= m_i / 2, (2) non-resizing amortized cost = 3, and (3) resizing amortized cost where the +n_{i-1} copy cost cancels against the -n_{i-1} drop in potential to give 3."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Explicitly specifies the indexing, initial state, actual cost model c_i, and potential function Phi_i = 2n_i - m_i, allowing the advanced student to execute a clean, unambiguous derivation."
+      }
+    },
+    {
+      "id": "qq_math_04",
+      "eval_type": "question_quality",
+      "domain": "Zero-Knowledge Proofs & Cryptography",
+      "user_context": {
+        "what_user_wants_to_learn": "Special soundness and nonce-reuse vulnerability in the Schnorr protocol over a prime-order group.",
+        "background_level": "advanced",
+        "prior_feedback_summary": "Student correctly proved completeness of Schnorr (sG = R + cQ) and is ready to derive the witness extractor."
+      },
+      "module_context": {
+        "course_title": "Elliptic Curve Groups, Discrete Logarithms, and Schnorr Zero-Knowledge Proofs",
+        "module_title": "The Schnorr Identification Protocol: Completeness and Special Soundness",
+        "learning_objective": "Extract the secret key x from two accepting Schnorr transcripts sharing the same commitment R."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "In a prime-order group of order q with generator G and public key Q = xG, a prover produces two valid Schnorr transcripts (R, c_1, s_1) and (R, c_2, s_2) using the same nonce commitment R = kG for two distinct challenges c_1 != c_2 (mod q), where s_i = k + c_i * x (mod q). Derive the explicit formula for the secret witness x in terms of s_1, s_2, c_1, c_2 modulo q, and state why the prime order q guarantees that the modular inverse exists.",
+        "correct_answer": "Subtracting the two response equations modulo q eliminates the unknown nonce k: s_1 - s_2 = (k + c_1*x) - (k + c_2*x) = (c_1 - c_2)*x (mod q). Since c_1 != c_2 (mod q) and q is prime, gcd(c_1 - c_2, q) = 1, so (c_1 - c_2) has a unique multiplicative inverse modulo q. Multiplying both sides by (c_1 - c_2)^(-1) mod q yields x = (s_1 - s_2) * (c_1 - c_2)^(-1) mod q.",
+        "grading_notes": "Must include: (1) subtracting s_1 and s_2 to eliminate k, (2) solving x = (s_1 - s_2)(c_1 - c_2)^(-1) mod q, and (3) explaining that c_1 - c_2 != 0 mod q in field F_q (since q is prime) ensures invertibility."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Well-scoped algebraic derivation that connects practical cryptographic catastrophic failure (nonce reuse) with formal ZK special soundness extraction and finite field invertibility."
+      }
+    },
+    {
+      "id": "qq_math_05",
+      "eval_type": "question_quality",
+      "domain": "Bayesian Inference & Probability",
+      "user_context": {
+        "what_user_wants_to_learn": "Applying Bayes' theorem to diagnostic testing and overcoming base-rate neglect.",
+        "background_level": "beginner",
+        "prior_feedback_summary": "Learner previously confused P(Disease | Positive) with sensitivity P(Positive | Disease) when prevalence is low."
+      },
+      "module_context": {
+        "course_title": "Bayesian Inference Fundamentals",
+        "module_title": "Bayes' Rule and the Base-Rate Fallacy",
+        "learning_objective": "Compute posterior probability P(H|E) using prior prevalence, sensitivity, and false-positive rate."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "A rare genetic marker is present in 1% of a population (P(M) = 0.01). A screening test has 99% sensitivity (P(+ | M) = 0.99) and a 1% false-positive rate (P(+ | not M) = 0.01). If a randomly selected person tests positive, compute the exact posterior probability P(M | +) using Bayes' theorem and explain in one sentence why it is much lower than 99%.",
+        "correct_answer": "By Bayes' theorem, P(M | +) = [P(+ | M) * P(M)] / [P(+ | M)*P(M) + P(+ | ~M)*P(~M)] = (0.99 * 0.01) / (0.99 * 0.01 + 0.01 * 0.99) = 0.0099 / (0.0099 + 0.0099) = 0.50 (50%). It is 50% rather than 99% because the 99% non-carrier majority generates just as many false positives (0.99 * 0.01 = 0.99% of the population) as the 1% carrier minority generates true positives.",
+        "grading_notes": "Requires setting up the law of total probability in the denominator (0.0099 + 0.0099), arriving at 50% (1/2), and noting that the small false-positive rate acts on a 99x larger healthy subpopulation."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Clean numbers (0.01 * 0.99 on both sides of the denominator) allow mental calculation without a calculator while directly remediating the student's prior confusion between P(+|M) and P(M|+)."
+      }
+    },
+    {
+      "id": "qq_math_06",
+      "eval_type": "question_quality",
+      "domain": "Combinatorics & Modular Arithmetic",
+      "user_context": {
+        "what_user_wants_to_learn": "Computing modular inverses using Fermat's Little Theorem and Extended Euclidean Algorithm.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Student is practicing modular division in prime fields."
+      },
+      "module_context": {
+        "course_title": "Number Theory for Cryptography",
+        "module_title": "Modular Multiplicative Inverses",
+        "learning_objective": "Find x such that a * x = 1 (mod p) for prime p."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "What is the multiplicative inverse of 5 modulo 17 (i.e., the integer x in {1, ..., 16} such that 5x = 1 mod 17)?",
+        "options": [
+          "3",
+          "5",
+          "10",
+          "12"
+        ],
+        "correct_answer": "3",
+        "grading_notes": "Since 5 * 3 = 15 = 1 mod 17, the inverse is 3."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 4,
+          "alignment_with_user_goal": 4,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 2,
+          "difficulty_calibration": 3
+        },
+        "failure_modes": [
+          "arithmetic_error_in_answer_key",
+          "no_correct_option_present"
+        ],
+        "rationale": "The question is unsolvable from the given options due to an arithmetic error in the answer key: 5 * 3 = 15 != 1 (mod 17). The true inverse of 5 mod 17 is 7 (since 5 * 7 = 35 = 2*17 + 1 = 1 mod 17), which is not listed among the options [3, 5, 10, 12]."
+      }
+    },
+    {
+      "id": "qq_math_07",
+      "eval_type": "question_quality",
+      "domain": "Dynamic Programming & Recurrences",
+      "user_context": {
+        "what_user_wants_to_learn": "Solving linear recurrences and understanding base case sensitivity in dynamic programming.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner struggled with off-by-one indexing caused by different base cases in DP problems."
+      },
+      "module_context": {
+        "course_title": "Dynamic Programming Foundations",
+        "module_title": "1D Recurrences and Base Cases",
+        "learning_objective": "Evaluate DP tables from explicit base cases and state transitions."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Given the recurrence relation dp[n] = 2 * dp[n - 1] + dp[n - 2] for n >= 2, compute the exact numerical value of dp[5].",
+        "correct_answer": "29",
+        "grading_notes": "Student must write the exact integer 29 (assuming dp[0] = 0, dp[1] = 1, so dp[2]=2, dp[3]=5, dp[4]=12, dp[5]=29). Any other number is marked wrong."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 1,
+          "alignment_with_user_goal": 2,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "missing_boundary_conditions_in_stem",
+          "underspecified_problem_statement"
+        ],
+        "rationale": "A second-order recurrence dp[n] = 2*dp[n-1] + dp[n-2] has infinitely many solutions unless initial boundary conditions dp[0] and dp[1] are specified in the prompt. Omitting dp[0]=0, dp[1]=1 in the stem while strictly grading for 29 (as opposed to dp[0]=1, dp[1]=1 which gives 41) makes the question mathematically ill-posed."
+      }
+    },
+    {
+      "id": "qq_math_08",
+      "eval_type": "question_quality",
+      "domain": "Graph Algorithms & Complexity",
+      "user_context": {
+        "what_user_wants_to_learn": "Choosing between adjacency lists and adjacency matrices and analyzing Dijkstra's time complexity on sparse vs dense graphs.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner got confused between O(V^2) array-based priority queue and O((V + E) log V) binary heap complexity on sparse graphs."
+      },
+      "module_context": {
+        "course_title": "Shortest Paths, Residual Networks, and Max-Flow Duality",
+        "module_title": "Edge Relaxation, Dijkstra's Greedy Invariant, and Negative Weights",
+        "learning_objective": "Compare priority queue implementations and time complexities for Dijkstra's algorithm."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "In what year did Edsger W. Dijkstra publish his 3-page paper 'A note on two problems in connexion with graphs' in Numerische Mathematik?",
+        "options": [
+          "1956",
+          "1959",
+          "1962",
+          "1968"
+        ],
+        "correct_answer": "1959",
+        "grading_notes": "Dijkstra conceived the algorithm in 1956 at the Mathematisch Centrum in Amsterdam and published it in 1959."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 4,
+          "alignment_with_user_goal": 1,
+          "distractor_or_rubric_quality": 2,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "trivial_memorization_instead_of_problem_solving",
+          "ignores_student_prior_error",
+          "goal_misalignment"
+        ],
+        "rationale": "Tests irrelevant historical trivia (publication year 1959 vs conception year 1956) instead of algorithmic analysis, completely ignoring both the module's learning objective and the student's confusion between O(V^2) and O((V+E) log V) implementations."
+      }
+    },
+    {
+      "id": "qq_math_09",
+      "eval_type": "question_quality",
+      "domain": "Formal Logic & Propositional Calculus",
+      "user_context": {
+        "what_user_wants_to_learn": "Distinguishing a valid implication P -> Q from its converse Q -> P and contrapositive ~Q -> ~P.",
+        "background_level": "beginner",
+        "prior_feedback_summary": "In the previous question, the student mistakenly treated the converse (Q -> P) as logically equivalent to (P -> Q)."
+      },
+      "module_context": {
+        "course_title": "Foundations of Formal Logic",
+        "module_title": "Material Implication, Contrapositive, and Converse",
+        "learning_objective": "Identify truth-table equivalences and fallacies involving material implication."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Which of the following formulas is logically equivalent to the implication P -> Q?",
+        "options": [
+          "~Q -> ~P",
+          "~P v Q",
+          "~(P ^ ~Q)",
+          "P ^ Q"
+        ],
+        "correct_answer": "~Q -> ~P",
+        "grading_notes": "Only Option A (~Q -> ~P) is marked correct."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 1,
+          "alignment_with_user_goal": 3,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 2,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "multiple_correct_options_in_single_choice",
+          "ignores_student_prior_error"
+        ],
+        "rationale": "Three of the four options (~Q -> ~P, ~P v Q, and ~(P ^ ~Q)) are logically equivalent to P -> Q in classical propositional logic, yet only ~Q -> ~P is keyed as correct. Furthermore, it fails to include the converse Q -> P as a diagnostic distractor despite the student's prior error."
+      }
+    },
+    {
+      "id": "qq_math_10",
+      "eval_type": "question_quality",
+      "domain": "Linear Algebra & Orthogonality",
+      "user_context": {
+        "what_user_wants_to_learn": "Applying the Gram-Schmidt process to construct an orthonormal basis and computing orthogonal projections.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Student forgot to normalize u_1 before using the simplified formula (v_2 . q_1) q_1, mixing up (v_2 . u_1)/(u_1 . u_1) u_1 with (v_2 . u_1) u_1."
+      },
+      "module_context": {
+        "course_title": "Linear Algebra for Machine Learning",
+        "module_title": "Orthogonal Projections and Gram-Schmidt",
+        "learning_objective": "Project vectors onto subspaces and orthogonalize basis vectors via Gram-Schmidt."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Explain linear algebra and why matrices are useful in science.",
+        "correct_answer": "Matrices represent linear maps and systems of linear equations.",
+        "grading_notes": "Check if the student mentions linear equations."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 2,
+          "alignment_with_user_goal": 1,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "vague_unfocused_prompt",
+          "ignores_student_prior_error",
+          "goal_misalignment"
+        ],
+        "rationale": "An overly broad essay prompt ('Explain linear algebra...') that is impossible to grade objectively and completely ignores the module objective (Gram-Schmidt orthogonalization) and the student's specific normalization error in projection formulas."
+      }
+    }
+  ],
+  "decision_grading_evals": [
+    {
+      "id": "dg_math_01",
+      "eval_type": "decision_grading",
+      "domain": "Dynamic Programming & Algorithms",
+      "user_profile": {
+        "what_user_wants_to_learn": "Coding interview preparation: stating the DP recurrence, base cases, and Big-O time/space complexity for 0/1 Knapsack.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Dynamic Programming for Technical Interviews",
+        "module_title": "0/1 Knapsack State and Transitions",
+        "learning_objective": "Formulate the 0/1 Knapsack state transition and analyze time and space complexity."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.8,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Given n items with weights w[1..n] and values v[1..n] and knapsack capacity W, define the DP state dp[i][c], write its transition recurrence, and state the time and space complexity (including the 1D rolling-array space optimization).",
+        "reference_answer": "Let dp[i][c] be the maximum value achievable using a subset of the first i items with total weight at most c. Base cases: dp[0][c] = 0 for all 0 <= c <= W. Transition: dp[i][c] = dp[i-1][c] if w[i] > c, else max(dp[i-1][c], dp[i-1][c - w[i]] + v[i]). Time complexity is O(nW) and space complexity is O(nW), which optimizes to O(W) by iterating c backwards from W down to w[i] in a 1D array.",
+        "required_concepts_for_user_goal": [
+          "dp[i][c] state definition over prefix i and capacity c",
+          "include vs exclude transition max(dp[i-1][c], dp[i-1][c - w[i]] + v[i])",
+          "O(nW) time complexity and O(W) space optimization via reverse iteration"
+        ],
+        "grading_rubric": "For practical interview prep, require clear state definition, correct include/exclude recurrence, and O(nW) time / O(W) reverse-loop space complexity. Formal inductive proof of optimal substructure is not required for this user profile."
+      },
+      "user_submission": {
+        "answer": "dp[i][c] is the max value from the first i items with capacity c (base case dp[0][c] = 0). If w[i] > c, dp[i][c] = dp[i-1][c]; otherwise dp[i][c] = max(dp[i-1][c], dp[i-1][c - w[i]] + v[i]). This takes O(n * W) time and O(n * W) space, or O(W) space if we use a 1D array and loop c from W down to w[i] so we don't reuse item i multiple times.",
+        "response_time_seconds": 68
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "dp[i][c] state definition over prefix i and capacity c",
+          "include vs exclude transition max(dp[i-1][c], dp[i-1][c - w[i]] + v[i])",
+          "O(nW) time complexity and O(W) space optimization via reverse iteration"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Confirm full mastery of the 0/1 Knapsack recurrence and highlight their insightful note on why reverse iteration prevents unbounded item reuse.",
+        "rationale": "The learner's goal is practical interview preparation (`practical_applied`). Their response hits all required concepts—state definition, transition, base case, O(nW) time, and the critical reverse-loop detail for O(W) space—warranting full credit and progression."
+      }
+    },
+    {
+      "id": "dg_math_02",
+      "eval_type": "decision_grading",
+      "domain": "Dynamic Programming & Formal Proofs",
+      "user_profile": {
+        "what_user_wants_to_learn": "Writing rigorous inductive proofs of correctness and cut-and-paste optimal substructure arguments for graduate algorithms exams.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Graduate Design and Analysis of Algorithms",
+        "module_title": "Proving Optimal Substructure and DP Correctness by Induction",
+        "learning_objective": "Prove by mathematical induction and exchange/cut-and-paste argument that the 0/1 Knapsack recurrence computes the globally optimal subset value."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.75,
+        "prior_misconceptions": [
+          "Stating a recurrence formula without proving the inductive hypothesis or optimal substructure via contradiction"
+        ]
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Prove by induction on i that dp[i][c] = max(dp[i-1][c], dp[i-1][c - w_i] + v_i) correctly equals OPT(i, c), the maximum value of any valid subset S subseteq {1, ..., i} with weight at most c. Your answer must state the inductive hypothesis, justify optimal substructure via a cut-and-paste contradiction argument for the two cases (i in S* vs i not in S*), and state why O(nW) is pseudo-polynomial.",
+        "reference_answer": "Inductive Hypothesis: For a fixed i-1, assume dp[i-1][c'] = OPT(i-1, c') for all 0 <= c' <= W. Base case i=0: only the empty set is valid, so dp[0][c] = 0 = OPT(0, c). Inductive step for i: Let S* be an optimal subset for (i, c). Case 1 (i not in S*): S* subseteq {1..i-1} with weight <= c, so OPT(i, c) = OPT(i-1, c) = dp[i-1][c] by IH. Case 2 (i in S*, possible only if w_i <= c): Then S' = S* \\ {i} is a valid subset of {1..i-1} with weight <= c - w_i. If val(S') < OPT(i-1, c - w_i), we could cut S' and paste an optimal T* for (i-1, c - w_i) to get T* U {i} with strictly greater value than S*, contradicting optimality of S*. Thus OPT(i, c) = OPT(i-1, c - w_i) + v_i = dp[i-1][c - w_i] + v_i by IH. Taking the max over both cases proves dp[i][c] = OPT(i, c). Finally, O(nW) is pseudo-polynomial because W is exponential in its bit-length log_2(W).",
+        "required_concepts_for_user_goal": [
+          "explicit inductive hypothesis dp[i-1][c'] = OPT(i-1, c') for all c' <= W",
+          "cut-and-paste contradiction proof that S* \\ {i} must be optimal for subproblem (i-1, c - w_i)",
+          "pseudo-polynomial distinction: O(nW) is exponential in the input bit-length of W (log_2 W)"
+        ],
+        "grading_rubric": "Because rigor_preference is rigorous_formal and the user is preparing for graduate proof exams, merely writing the recurrence and O(nW) runtime without the inductive hypothesis, cut-and-paste contradiction argument, and pseudo-polynomial bit-length explanation is insufficient (is_right: false, partially_correct)."
+      },
+      "user_submission": {
+        "answer": "dp[i][c] = max(dp[i-1][c], dp[i-1][c - w_i] + v_i) because for item i you either leave it out or put it in the knapsack. Since there are n items and W capacities, the runtime is O(nW).",
+        "response_time_seconds": 35
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.3,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "explicit inductive hypothesis dp[i-1][c'] = OPT(i-1, c') for all c' <= W",
+          "cut-and-paste contradiction proof that S* \\ {i} must be optimal for subproblem (i-1, c - w_i)",
+          "pseudo-polynomial distinction: O(nW) is exponential in the input bit-length of W (log_2 W)"
+        ],
+        "detected_misconception": "Restating the operational transition rule instead of proving optimal substructure via a cut-and-paste contradiction and induction",
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Acknowledge that the recurrence itself is right, but explain that for a formal proof exam they must explicitly state the inductive hypothesis for all c' <= W, prove by cut-and-paste contradiction that S* \\ {i} achieves OPT(i-1, c - w_i), and explain why O(nW) is pseudo-polynomial in log_2(W).",
+        "rationale": "Contrast with dg_math_01: while a recurrence statement suffices for an interview-prep user, this learner's goal is graduate proof mastery (`rigorous_formal`). Skipping the inductive hypothesis, cut-and-paste proof, and pseudo-polynomial analysis means `is_right` must be false (`partially_correct`) with a follow-up short answer."
+      }
+    },
+    {
+      "id": "dg_math_03",
+      "eval_type": "decision_grading",
+      "domain": "Linear Algebra & PCA",
+      "user_profile": {
+        "what_user_wants_to_learn": "Geometric intuition for what eigenvectors of a covariance matrix represent when visualizing 2D/3D data clouds.",
+        "background_level": "beginner",
+        "rigor_preference": "conceptual_intuition"
+      },
+      "module_context": {
+        "course_title": "Visual Linear Algebra for Data Science",
+        "module_title": "What Principal Components Mean Geometrically",
+        "learning_objective": "Explain in geometric terms what the eigenvectors and eigenvalues of a data covariance matrix represent."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.85,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "In your own words, if you have a 2D scatter plot of centered data points shaped like a tilted ellipse, what do the eigenvectors and eigenvalues of the covariance matrix represent geometrically?",
+        "reference_answer": "The eigenvectors point along the principal axes of the ellipse (the perpendicular directions of greatest and least spread/variance of the data cloud), while each corresponding eigenvalue measures how much variance (spread) the data has along that axis.",
+        "required_concepts_for_user_goal": [
+          "eigenvectors define the orthogonal principal axes / directions of maximum spread",
+          "eigenvalues measure the magnitude of variance / spread along each corresponding axis"
+        ],
+        "grading_rubric": "For a beginner with conceptual_intuition preference, grade as correct (is_right: true) if they accurately capture that eigenvectors give the perpendicular axes/directions of spread and eigenvalues give the amount of variance along those axes, without requiring Lagrange multiplier derivations."
+      },
+      "user_submission": {
+        "answer": "The eigenvectors point along the main tilted axes of the ellipse—the first one points in the direction where the data is stretched out the most, and the second one is perpendicular to it along the narrower width. The eigenvalues tell you how much variance or spread the data has along each of those two axes.",
+        "response_time_seconds": 44
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "eigenvectors define the orthogonal principal axes / directions of maximum spread",
+          "eigenvalues measure the magnitude of variance / spread along each corresponding axis"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Praise the clear geometric visualization of principal axes, perpendicularity, and variance magnitude.",
+        "rationale": "Matches the learner's `conceptual_intuition` preference and beginner level: the student accurately connects eigenvectors to the orthogonal axes of the data ellipse and eigenvalues to the variance along each axis."
+      }
+    },
+    {
+      "id": "dg_math_04",
+      "eval_type": "decision_grading",
+      "domain": "Linear Algebra & Optimization",
+      "user_profile": {
+        "what_user_wants_to_learn": "Deriving PCA variance maximization formally using the Rayleigh quotient and Lagrange multipliers.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Spectral Decomposition to PCA",
+        "module_title": "Variance Maximization and Principal Components",
+        "learning_objective": "Derive the eigenvalue equation Sigma u = lambda u by maximizing projected variance u^T Sigma u subject to ||u||_2^2 = 1."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.9,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Formulate the Lagrangian L(u, lambda) to maximize the projected sample variance u^T Sigma u subject to the unit-norm constraint u^T u = 1. Take the gradient with respect to u, set it to zero to derive the eigenvalue condition, and prove that the maximum objective value equals lambda_max(Sigma).",
+        "reference_answer": "Define L(u, lambda) = u^T Sigma u - lambda (u^T u - 1). Since Sigma is symmetric, taking the gradient with respect to u yields nabla_u L = 2 Sigma u - 2 lambda u = 0, which gives Sigma u = lambda u (so u must be a unit eigenvector of Sigma). Left-multiplying by u^T gives u^T Sigma u = lambda u^T u = lambda. Therefore, the projected variance equals the eigenvalue lambda, which is maximized when u is the unit eigenvector corresponding to lambda_max(Sigma).",
+        "required_concepts_for_user_goal": [
+          "Lagrangian formulation L(u, lambda) = u^T Sigma u - lambda(u^T u - 1)",
+          "matrix calculus gradient nabla_u L = 2 Sigma u - 2 lambda u = 0 yielding Sigma u = lambda u",
+          "substituting Sigma u = lambda u into u^T Sigma u = lambda u^T u = lambda to show maximum is lambda_max"
+        ],
+        "grading_rubric": "Because the learner wants formal derivation (`rigorous_formal`), purely intuitive descriptions of ellipses without the Lagrangian, gradient stationarity condition Sigma u = lambda u, and quadratic form substitution u^T Sigma u = lambda must be graded as partially_correct (`is_right: false`)."
+      },
+      "user_submission": {
+        "answer": "Geometrically, the covariance matrix stretches space like an ellipse, so the unit vector that maximizes variance has to point along the longest axis of the ellipse, which is the top eigenvector with the biggest eigenvalue.",
+        "response_time_seconds": 28
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.25,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "Lagrangian formulation L(u, lambda) = u^T Sigma u - lambda(u^T u - 1)",
+          "matrix calculus gradient nabla_u L = 2 Sigma u - 2 lambda u = 0 yielding Sigma u = lambda u",
+          "substituting Sigma u = lambda u into u^T Sigma u = lambda u^T u = lambda to show maximum is lambda_max"
+        ],
+        "detected_misconception": null,
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Note that while their geometric intuition is accurate, their stated goal requires writing out L(u, lambda) = u^T Sigma u - lambda(u^T u - 1), computing nabla_u L = 0, and showing u^T Sigma u = lambda.",
+        "rationale": "Even though this exact geometric explanation would pass for the beginner in `dg_math_03`, this advanced learner explicitly requested the formal Rayleigh quotient / Lagrange multiplier derivation (`rigorous_formal`). Thus the Clef model marks `is_right: false` and prompts for the algebraic derivation."
+      }
+    },
+    {
+      "id": "dg_math_05",
+      "eval_type": "decision_grading",
+      "domain": "Graph Algorithms & Network Flow",
+      "user_profile": {
+        "what_user_wants_to_learn": "Understanding why residual graphs in Ford-Fulkerson require backward edges and how they enable undoing sub-optimal flow routing.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Shortest Paths, Residual Networks, and Max-Flow Duality",
+        "module_title": "Residual Graphs, Ford-Fulkerson, and the Max-Flow Min-Cut Theorem",
+        "learning_objective": "Trace augmenting paths in residual networks G_f and explain the role of backward residual edges."
+      },
+      "learner_state": {
+        "attempt_number": 2,
+        "recent_accuracy": 0.5,
+        "prior_misconceptions": [
+          "Believing backward residual edges send flow against one-way pipes in the original graph rather than cancelling previously committed forward flow"
+        ]
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "In the Ford-Fulkerson algorithm, suppose directed edge (u, v) in the original graph G has capacity c(u, v) = 10 and currently carries flow f(u, v) = 7 (with no edge (v, u) in G). Why does the residual network G_f include a backward edge (v, u) with residual capacity c_f(v, u) = 7?",
+        "options": [
+          "Pushing delta <= 7 units of flow along the backward residual edge (v, u) corresponds to decreasing the forward flow f(u, v) to 7 - delta, effectively redirecting previously committed flow from u along an alternative path while maintaining flow conservation.",
+          "It allows the final output flow to send up to 7 units backwards from v to u even though (v, u) does not exist in the original graph G.",
+          "It prevents breadth-first search from visiting vertex u more than once during a single augmenting path search.",
+          "It increases the total capacity of edge (u, v) from 10 to 17 when an augmenting path uses (v, u)."
+        ],
+        "reference_answer": "Pushing delta <= 7 units of flow along the backward residual edge (v, u) corresponds to decreasing the forward flow f(u, v) to 7 - delta, effectively redirecting previously committed flow from u along an alternative path while maintaining flow conservation.",
+        "required_concepts_for_user_goal": [
+          "backward edge (v, u) in G_f has capacity f(u, v) and represents cancelling/reducing forward flow f(u, v) by delta",
+          "enables rerouting early greedy flow commitments without violating original edge directions"
+        ],
+        "grading_rubric": "Option A is the only correct answer. Selecting Option B indicates the persistent misconception that backward residual edges represent physical reverse flow in G."
+      },
+      "user_submission": {
+        "answer": "It allows the final output flow to send up to 7 units backwards from v to u even though (v, u) does not exist in the original graph G.",
+        "response_time_seconds": 19
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "backward edge (v, u) in G_f has capacity f(u, v) and represents cancelling/reducing forward flow f(u, v) by delta",
+          "enables rerouting early greedy flow commitments without violating original edge directions"
+        ],
+        "detected_misconception": "Believing backward residual edges send physical reverse flow in the original network rather than subtracting from existing forward flow f(u, v)",
+        "next_action": "re_explain_concept",
+        "feedback_focus": "Walk through the 4-node diamond network example showing how pushing +1 on backward edge (v, u) in G_f algebraically updates f(u, v) <- f(u, v) - 1, keeping flow strictly non-negative on original directed edges.",
+        "rationale": "This is the learner's second attempt and they repeated their exact prior misconception (selecting Option B). The decision model should flag the misconception and trigger `re_explain_concept` with a concrete diamond-graph trace."
+      }
+    },
+    {
+      "id": "dg_math_06",
+      "eval_type": "decision_grading",
+      "domain": "Cryptography & Elliptic Curves",
+      "user_profile": {
+        "what_user_wants_to_learn": "Auditing Schnorr and ECDSA signature implementations for nonce-reuse and biased-nonce key recovery vulnerabilities.",
+        "background_level": "advanced",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Elliptic Curve Groups, Discrete Logarithms, and Schnorr Zero-Knowledge Proofs",
+        "module_title": "The Schnorr Identification Protocol: Completeness and Special Soundness",
+        "learning_objective": "Recover the private scalar x from two Schnorr signatures that reuse the same ephemeral nonce k."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 1.0,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Working modulo prime subgroup order q = 23, an implementation signs two messages using the same nonce commitment R = kG, producing challenges c_1 = 4, c_2 = 9 and responses s_1 = 15, s_2 = 8 (where s_i = k + c_i * x mod 23). Compute the signer's private key x mod 23 and the reused nonce k mod 23.",
+        "reference_answer": "Subtracting the equations gives s_1 - s_2 = (c_1 - c_2) x (mod 23) => 15 - 8 = (4 - 9) x => 7 = -5x = 18x (mod 23). Since (-5) * 9 = -45 = 1 (mod 23) (or 18 * 9 = 162 = 7*23 + 1 = 1 mod 23), multiplying by 9 gives x = 7 * 9 = 63 = 17 (mod 23). Substituting x = 17 into s_1 = k + 4x (mod 23) gives 15 = k + 4(17) = k + 68 = k + 22 (mod 23), so k = 15 - 22 = -7 = 16 (mod 23).",
+        "required_concepts_for_user_goal": [
+          "nonce elimination formula x = (s_1 - s_2)(c_1 - c_2)^(-1) mod q",
+          "correct modular inverse calculation (-5)^(-1) = 18^(-1) = 9 mod 23 yielding x = 17",
+          "back-substitution to recover k = 16 mod 23"
+        ],
+        "grading_rubric": "Full credit if the student accurately computes both x = 17 mod 23 and k = 16 mod 23 using modular inversion."
+      },
+      "user_submission": {
+        "answer": "s_1 - s_2 = (c_1 - c_2)x mod 23 => 7 = -5x mod 23, so 5x = -7 = 16 mod 23. Since 5 * 14 = 70 = 1 mod 23, x = 16 * 14 = 224 = 9*23 + 17 = 17 mod 23. Then k = s_1 - c_1*x = 15 - 4(17) = 15 - 68 = -53 = -53 + 3(23) = 16 mod 23. Quick check: k + c_2*x = 16 + 9(17) = 169 = 7*23 + 8 = 8 = s_2. So x = 17 and k = 16.",
+        "response_time_seconds": 75
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "nonce elimination formula x = (s_1 - s_2)(c_1 - c_2)^(-1) mod q",
+          "correct modular inverse calculation (-5)^(-1) = 18^(-1) = 9 mod 23 yielding x = 17",
+          "back-substitution to recover k = 16 mod 23"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "ask_harder_challenge",
+        "feedback_focus": "Confirm that x = 17 and k = 16 are exact and commend the verification check against s_2; transition to a harder challenge on deterministic nonce derivation (RFC 6979) or lattice attacks on biased nonces.",
+        "rationale": "The advanced student solved the modular extraction flawlessly on attempt 1 with 1.0 recent accuracy and even verified their answer against the second equation, making `ask_harder_challenge` the ideal next action."
+      }
+    },
+    {
+      "id": "dg_math_07",
+      "eval_type": "decision_grading",
+      "domain": "Markov Chains & Bayesian Sampling",
+      "user_profile": {
+        "what_user_wants_to_learn": "Implementing Metropolis-Hastings MCMC samplers in code without numerical underflow or acceptance ratio bugs.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Markov Chains, Detailed Balance, and Metropolis-Hastings Sampling",
+        "module_title": "Metropolis-Hastings and Cancellation of the Normalization Constant",
+        "learning_objective": "Compute the Metropolis-Hastings acceptance probability for asymmetric proposals and log-space implementations."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.7,
+        "prior_misconceptions": [
+          "Assuming the proposal ratio q(x|x') / q(x'|x) is always 1 even when the proposal distribution is asymmetric (e.g., log-normal proposal for positive parameters)"
+        ]
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "You are sampling a strictly positive rate parameter theta > 0 with unnormalized posterior density f(theta) = p(D | theta) p(theta) using an asymmetric proposal distribution q(theta' | theta) where q(theta' | theta) != q(theta | theta'). Write the exact Metropolis-Hastings acceptance probability alpha(theta -> theta') and explain how you should evaluate the acceptance check in log-space to prevent floating-point underflow.",
+        "reference_answer": "The acceptance probability is alpha(theta -> theta') = min(1, [f(theta') * q(theta | theta')] / [f(theta) * q(theta' | theta)]). Because q is asymmetric, the Hastings correction factor q(theta | theta') / q(theta' | theta) cannot be omitted. In log-space, compute log_r = [log f(theta') - log f(theta)] + [log q(theta | theta') - log q(theta' | theta)], draw u ~ Uniform(0, 1), and accept theta' if log(u) < log_r.",
+        "required_concepts_for_user_goal": [
+          "target ratio f(theta') / f(theta) using unnormalized posterior",
+          "Hastings asymmetric proposal correction factor q(theta | theta') / q(theta' | theta)",
+          "log-space acceptance check log(u) < log f(theta') - log f(theta) + log q(theta | theta') - log q(theta' | theta)"
+        ],
+        "grading_rubric": "Must include both the Hastings correction factor q(theta | theta') / q(theta' | theta) and the log-space difference formula. Omitting the Hastings factor repeats the learner's prior misconception and violates detailed balance."
+      },
+      "user_submission": {
+        "answer": "To avoid underflow, work with log probabilities: compute log_alpha = log f(theta') - log f(theta), sample u ~ Uniform(0, 1), and accept theta' whenever log(u) < log_alpha.",
+        "response_time_seconds": 39
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.5,
+        "matched_concepts": [
+          "target ratio f(theta') / f(theta) using unnormalized posterior"
+        ],
+        "missed_concepts": [
+          "Hastings asymmetric proposal correction factor q(theta | theta') / q(theta' | theta)",
+          "log-space acceptance check log(u) < log f(theta') - log f(theta) + log q(theta | theta') - log q(theta' | theta)"
+        ],
+        "detected_misconception": "Using the symmetric Metropolis ratio f(theta')/f(theta) for an asymmetric proposal distribution, omitting the Hastings correction term log q(theta | theta') - log q(theta' | theta)",
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Praise the log(u) < log_alpha numerical stability trick, but point out that omitting + log q(theta | theta') - log q(theta' | theta) breaks detailed balance when q is asymmetric, biasing the stationary distribution.",
+        "rationale": "The student nailed the log-space underflow prevention (`log(u) < log_r`) and target log-ratio, but dropped the asymmetric Hastings correction `q(theta | theta') / q(theta' | theta)`, directly triggering their known prior misconception."
+      }
+    },
+    {
+      "id": "dg_math_08",
+      "eval_type": "decision_grading",
+      "domain": "Formal Logic & SAT Solving",
+      "user_profile": {
+        "what_user_wants_to_learn": "Tracing DPLL unit propagation and Conjunctive Normal Form (CNF) satisfiability step by step.",
+        "background_level": "beginner",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Propositional Logic and SAT Solvers",
+        "module_title": "Conjunctive Normal Form and Unit Propagation",
+        "learning_objective": "Apply unit propagation on a CNF formula to deduce forced variable assignments or detect an empty clause conflict."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.6,
+        "prior_misconceptions": [
+          "Confusing removing a satisfied clause (when a literal in it evaluates to True) with removing a falsified literal from an unresolved clause"
+        ]
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "Consider the CNF formula F consisting of four clauses: C_1 = (A), C_2 = (~A v B), C_3 = (~B v ~C), and C_4 = (~A v B v C). What happens when a DPLL solver runs unit propagation to completion on F?",
+        "options": [
+          "Unit clause C_1 forces A = True; then C_2 = (~A v B) reduces to unit clause (B), forcing B = True; B = True immediately satisfies C_4 = (~A v B v C), while C_3 = (~B v ~C) reduces to (~C), forcing C = False. All clauses are satisfied with (A=True, B=True, C=False).",
+          "Unit clause C_1 forces A = True; C_2 forces B = True; C_3 forces C = False; then C_4 = (~A v B v C) has all its literals falsified and becomes the empty conflict clause (), so F is UNSAT.",
+          "Unit clause C_1 forces A = False because A appears negated in C_2 and C_4.",
+          "No unit propagation is possible because C_4 has three literals."
+        ],
+        "reference_answer": "Unit clause C_1 forces A = True; then C_2 = (~A v B) reduces to unit clause (B), forcing B = True; B = True immediately satisfies C_4 = (~A v B v C), while C_3 = (~B v ~C) reduces to (~C), forcing C = False. All clauses are satisfied with (A=True, B=True, C=False).",
+        "required_concepts_for_user_goal": [
+          "unit clause (A) forces A = True and eliminates ~A from remaining clauses",
+          "cascading unit propagation: (~A v B) -> (B) -> B = True -> (~B v ~C) -> (~C) -> C = False",
+          "recognizing that B = True satisfies C_4 = (~A v B v C) rather than falsifying it"
+        ],
+        "grading_rubric": "Option A is correct. Selecting Option B indicates the student misread B in C_4 as ~B or confused clause satisfaction with literal falsification."
+      },
+      "user_submission": {
+        "answer": "Unit clause C_1 forces A = True; then C_2 = (~A v B) reduces to unit clause (B), forcing B = True; B = True immediately satisfies C_4 = (~A v B v C), while C_3 = (~B v ~C) reduces to (~C), forcing C = False. All clauses are satisfied with (A=True, B=True, C=False).",
+        "response_time_seconds": 31
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "unit clause (A) forces A = True and eliminates ~A from remaining clauses",
+          "cascading unit propagation: (~A v B) -> (B) -> B = True -> (~B v ~C) -> (~C) -> C = False",
+          "recognizing that B = True satisfies C_4 = (~A v B v C) rather than falsifying it"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Reinforce how setting B = True immediately satisfied the entire clause C_4 while shrinking C_3 to the unit literal ~C.",
+        "rationale": "The student overcame their prior confusion between clause satisfaction and literal removal, accurately tracing the cascading unit propagation across all four clauses."
+      }
+    },
+    {
+      "id": "dg_math_09",
+      "eval_type": "decision_grading",
+      "domain": "Divide-and-Conquer & Recurrence Relations",
+      "user_profile": {
+        "what_user_wants_to_learn": "Quickly identifying which case of the Master Theorem applies (leaf-heavy, balanced, or root-heavy) during software engineering interviews.",
+        "background_level": "intermediate",
+        "rigor_preference": "conceptual_intuition"
+      },
+      "module_context": {
+        "course_title": "Algorithm Analysis for Interviews",
+        "module_title": "Recursion Trees and the Master Theorem",
+        "learning_objective": "Compare n^(log_b a) against f(n) to determine asymptotic runtime of divide-and-conquer recurrences."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.75,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Using recursion-tree intuition or the Master Theorem, what is the tight asymptotic runtime Theta(...) of T(n) = 4T(n/2) + n, and why does the n term not show up in the final Big-Theta bound?",
+        "reference_answer": "Here a = 4, b = 2, so the number of leaves in the recursion tree grows as n^(log_2 4) = n^2, which polynomially dominates the root non-recursive work f(n) = n (Case 1 / leaf-heavy). Because the work per level quadruples every time the problem size halves (n, 2n, 4n, ..., n^2 at the leaves), the geometric series is dominated by the bottom level, giving T(n) = Theta(n^2).",
+        "required_concepts_for_user_goal": [
+          "critical exponent n^(log_b a) = n^(log_2 4) = n^2",
+          "leaf-heavy / Case 1 dominance over f(n) = n yielding Theta(n^2)"
+        ],
+        "grading_rubric": "For conceptual_intuition interview prep, award full credit (`is_right: true`) if the learner computes n^(log_2 4) = n^2, identifies that leaf work dominates the linear work f(n) = n (geometric growth across levels), and concludes Theta(n^2)."
+      },
+      "user_submission": {
+        "answer": "At each level we branch into 4 subproblems of size n/2, so the leaf count is 4^(log_2 n) = n^(log_2 4) = n^2. Since n^2 is polynomially larger than the O(n) work per call (work doubles each level down the tree: n, 2n, 4n...), the leaves dominate the geometric sum and the total runtime is Theta(n^2).",
+        "response_time_seconds": 41
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "critical exponent n^(log_b a) = n^(log_2 4) = n^2",
+          "leaf-heavy / Case 1 dominance over f(n) = n yielding Theta(n^2)"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Validate their recursion-tree geometric series intuition (n + 2n + 4n + ... + n^2 = Theta(n^2)).",
+        "rationale": "Perfectly matches the learner's `conceptual_intuition` and interview-prep goal: they computed `n^(log_2 4) = n^2`, explained why the per-level work grows geometrically by a factor of 2 toward the leaves, and stated `Theta(n^2)`."
+      }
+    },
+    {
+      "id": "dg_math_10",
+      "eval_type": "decision_grading",
+      "domain": "Linear Algebra & Numerical Stability",
+      "user_profile": {
+        "what_user_wants_to_learn": "Why solving normal equations (A^T A)x = A^T b directly squares the condition number compared to QR or SVD least squares.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Numerical Linear Algebra and SVD",
+        "module_title": "Condition Numbers and Least Squares Stability",
+        "learning_objective": "Prove that kappa_2(A^T A) = (kappa_2(A))^2 using singular values and explain its impact on floating-point precision."
+      },
+      "learner_state": {
+        "attempt_number": 2,
+        "recent_accuracy": 0.4,
+        "prior_misconceptions": [
+          "Confusing the determinant det(A) with the 2-norm condition number kappa_2(A) = sigma_max(A) / sigma_min(A)"
+        ]
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Let A in R^(m x n) (m >= n) have full column rank with singular values sigma_1 >= sigma_2 >= ... >= sigma_n > 0 and 2-norm condition number kappa_2(A) = sigma_1 / sigma_n. Using the SVD A = U Sigma V^T, prove that kappa_2(A^T A) = (kappa_2(A))^2, and state what happens in double-precision floating point (machine epsilon approx 10^(-16)) when kappa_2(A) = 10^9.",
+        "reference_answer": "Substituting A = U Sigma V^T gives A^T A = V Sigma^T U^T U Sigma V^T = V (Sigma^T Sigma) V^T. Since Sigma^T Sigma = diag(sigma_1^2, ..., sigma_n^2), the singular values (and eigenvalues) of the symmetric positive-definite matrix A^T A are sigma_1^2 >= ... >= sigma_n^2 > 0. Therefore, kappa_2(A^T A) = sigma_1^2 / sigma_n^2 = (sigma_1 / sigma_n)^2 = (kappa_2(A))^2. When kappa_2(A) = 10^9, kappa_2(A^T A) = 10^18 > 1 / eps_mach (approx 10^16), so forming A^T A loses all significant digits in the smallest singular value direction and can make A^T A numerically singular in IEEE-754 double precision.",
+        "required_concepts_for_user_goal": [
+          "deriving A^T A = V (Sigma^T Sigma) V^T so eigenvalues/singular values of A^T A are sigma_i^2",
+          "concluding kappa_2(A^T A) = sigma_1^2 / sigma_n^2 = (kappa_2(A))^2",
+          "numerical catastrophe in IEEE-754 float64: kappa_2(A^T A) = 10^18 exceeds 1/eps_mach (~10^16), wiping out all significant digits"
+        ],
+        "grading_rubric": "Requires showing A^T A has singular values sigma_i^2 so kappa_2(A^T A) = (sigma_1 / sigma_n)^2, plus comparing 10^18 against machine epsilon 10^(-16). Using determinants instead of singular values is incorrect."
+      },
+      "user_submission": {
+        "answer": "Because det(A^T A) = det(A^T) * det(A) = (det(A))^2, the condition number squares. Since 10^9 is bigger than 0, the determinant is still positive so Gaussian elimination works fine without losing accuracy.",
+        "response_time_seconds": 33
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "deriving A^T A = V (Sigma^T Sigma) V^T so eigenvalues/singular values of A^T A are sigma_i^2",
+          "concluding kappa_2(A^T A) = sigma_1^2 / sigma_n^2 = (kappa_2(A))^2",
+          "numerical catastrophe in IEEE-754 float64: kappa_2(A^T A) = 10^18 exceeds 1/eps_mach (~10^16), wiping out all significant digits"
+        ],
+        "detected_misconception": "Conflating the determinant det(A) (which isn't even defined for rectangular m x n matrices with m > n) with the spectral condition number kappa_2(A) = sigma_1 / sigma_n, and ignoring finite-precision rounding error when kappa_2(A^T A) = 10^18 > 1/eps_mach",
+        "next_action": "ask_remedial_multiple_choice",
+        "feedback_focus": "Clarify that (1) det(A) is undefined for non-square m x n matrices and does not measure conditioning, (2) A^T A = V diag(sigma_i^2) V^T squares the singular values so kappa_2(A^T A) = (sigma_1/sigma_n)^2 = 10^18, and (3) since 10^18 > 10^16 (1/eps_mach in float64), forming A^T A obliterates the smaller singular value information.",
+        "rationale": "On attempt 2 with low recent accuracy (0.4), the learner repeated their misconception conflating determinants with singular-value condition numbers and missed the float64 precision loss completely. The Clef model marks `incorrect` and steps down to `ask_remedial_multiple_choice` to isolate the SVD identity `A^T A = V Sigma^T Sigma V^T`."
+      }
+    }
+  ]
+}

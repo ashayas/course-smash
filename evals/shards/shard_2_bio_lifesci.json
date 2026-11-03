@@ -1,0 +1,1438 @@
+{
+  "shard_id": "shard_2_bio_lifesci",
+  "domain_focus": "Computational Biology, Bio-Engineering & Life Sciences",
+  "course_quality_evals": [
+    {
+      "id": "cq_bio_01",
+      "eval_type": "course_quality",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_context": {
+        "prompt": "I am a molecular biology graduate student starting a rotation in a genome editing lab. Teach me how to design sgRNAs for SpCas9 knockouts vs. cytosine/adenine base editors (CBE/ABE), including PAM constraints, activity windows, and bystander edit mitigation.",
+        "what_user_wants_to_learn": "Practical guide RNA design rules for SpCas9 DSB knockouts versus CBE and ABE base editors, focusing on PAM positioning, deamination editing windows, and avoiding bystander mutations.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Precision Guide Design: From SpCas9 Knockouts to Cytosine & Adenine Base Editing",
+        "description": "An applied wet-lab and computational design course covering RNP cleavage mechanics, PAM-relative activity windows for CBE/ABE architectures, and strategies to eliminate deleterious bystander edits.",
+        "target_audience": "Intermediate molecular biologists and rotation students designing mammalian genome editing experiments",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "SpCas9 Target Selection, PAM Recognition, and Frameshift Knockout Strategy",
+            "learning_objective": "Select optimal exons and 5'-NGG-3' PAM sites to induce nonsense-mediated decay (NMD) while minimizing off-target cleavage using CFD and MIT specificity scores.",
+            "summary": "Covers R-loop formation, HNH and RuvC nuclease cleavage 3 bp upstream of the NGG PAM, targeting early constitutive exons while avoiding the final exon or last 50–55 nt of the penultimate exon so premature stop codons trigger NMD.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why can targeting the last exon of a multi-exon gene with SpCas9 fail to produce a functional loss-of-function knockout even when a frameshift indel is confirmed by Sanger sequencing?",
+              "Given a target sequence 5'-ATGCGATCGATCGATCGATCGGG-3', identify the PAM and exact phosphodiester bond position cleaved by wild-type SpCas9."
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Cytosine and Adenine Base Editor Architectures (BE4max & ABE8e)",
+            "learning_objective": "Distinguish the deamination chemistry, Cas9 nickase (D10A) role, and uracil glycosylase inhibition in CBEs (C•G to T•A) versus evolved TadA deaminases in ABEs (A•T to G•C).",
+            "summary": "Explains why fusion of APOBEC/TadA to nCas9(D10A) exposes a single-stranded DNA R-loop bubble on the non-target strand, how UGI prevents base excision repair from reverting U:G intermediates, and how nicking the unedited target strand biases mismatch repair.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "What is the specific mechanistic role of the D10A nickase mutation and Uracil Glycosylase Inhibitor (UGI) in BE4max?",
+              "Which base transition can be directly catalyzed by an Adenine Base Editor (ABE8e) when targeting the coding or template strand?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Editing Windows, PAM-Flexible Variants, and Bystander Edit Mitigation",
+            "learning_objective": "Place target nucleotides within canonical editing windows (positions 4–8 for SpCas9 CBE/ABE, counting PAM as 21–23) and select narrow-window or PAM-relaxed variants (SpG, SpRY, YE1) to avoid nonsynonymous bystander edits.",
+            "summary": "Walks through protospacer numbering (1 at 5' end, 20 adjacent to PAM), evaluating bystander C or A bases inside positions 4–8, checking if bystander edits are synonymous (wobble positions), or shifting the window using SpCas9-NG / SpG PAM variants.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "You want to install a disease-correcting A-to-G edit at protospacer position 6 using ABE8e, but there is another adenine at position 5. Under what codon condition is this bystander edit acceptable without changing deaminase variants?",
+              "How would switching from wild-type SpCas9-BE4 to YE1-BE4 or an SpG-PAM variant resolve a deleterious nonsynonymous bystander cytosine at position 8?"
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Validation Assays and Off-Target Profiling (Cas-dependent vs. Cas-independent)",
+            "learning_objective": "Design amplicon deep sequencing (CRISPResso2) workflows and distinguish guide-dependent off-targets from guide-independent ssDNA/RNA deamination.",
+            "summary": "Compares Sanger trace deconvolution (EditR/TIDE) with NGS amplicon quantification using CRISPResso2, and contrasts Cas9-dependent off-target binding with stochastic TadA/APOBEC deamination in transcription bubbles.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why is whole-genome sequencing alone insufficient to efficiently detect Cas-independent transcriptomic off-target deamination by hyperactive CBEs?",
+              "In a CRISPResso2 output for a CBE experiment, you observe a 4% rate of C-to-G transversions and small indels at the target cytosine. What repair pathway caused this byproduct?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "The course directly addresses every part of the graduate student's prompt: SpCas9 knockout design (including NMD exon selection rules), CBE/ABE biochemical mechanisms (nCas9 D10A, UGI, TadA), exact protospacer numbering and activity windows (positions 4–8), and practical bystander mitigation strategies. Every module pairs multiple-choice and short-answer prompts at an appropriate intermediate molecular biology level."
+      }
+    },
+    {
+      "id": "cq_bio_02",
+      "eval_type": "course_quality",
+      "domain": "Single-Cell RNA-seq Analysis",
+      "user_context": {
+        "prompt": "I'm a computational biologist moving from bulk RNA-seq to 10x Chromium scRNA-seq in Python (Scanpy). I need a structured course on preprocessing, ambient RNA & doublet removal, normalization/HVG selection, batch integration, and Leiden clustering without falling into statistical traps like p-value inflation in differential expression.",
+        "what_user_wants_to_learn": "End-to-end 10x scRNA-seq workflow in Scanpy covering QC, doublet/ambient RNA removal, normalization, batch integration (Harmony/scVI), Leiden clustering, and pseudobulk differential expression to avoid pseudoreplication.",
+        "background_level": "advanced",
+        "time_budget_minutes": 90
+      },
+      "candidate_course": {
+        "title": "Rigorous Single-Cell Transcriptomics in Scanpy: From Raw UMI Matrices to Pseudobulk DE",
+        "description": "An advanced computational biology curriculum transitioning bulk RNA-seq practitioners to droplet-based scRNA-seq analysis, focusing on UMI noise modeling, artifact removal, latent space integration, and statistically sound multi-sample differential expression.",
+        "target_audience": "Computational biologists and bioinformaticians familiar with bulk RNA-seq and Python",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Droplet QC, Ambient RNA Decontamination, and Multiplet Detection",
+            "learning_objective": "Filter empty droplets and damaged cells using MAD thresholds on mitochondrial fraction and UMI counts, and remove ambient soup (SoupX/CellBender) and heterotypic doublets (Scrublet) per 10x lane.",
+            "summary": "Explains why droplet barcoding captures cell-free ambient mRNA, why Scrublet must be run separately on each capture lane rather than a merged multi-sample matrix, and how fixed mitochondrial cutoffs can mistakenly remove metabolically active cell types.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does running Scrublet on a concatenated count matrix of 8 patient samples (captured across 8 separate 10x lanes) degrade doublet detection accuracy?",
+              "How can high ambient hemoglobin mRNA in bone marrow samples create false marker gene signatures in non-erythroid clusters?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "UMI Count Modeling, Shifted Log Normalization, and Feature Selection",
+            "learning_objective": "Compare shifted logarithm normalization with Pearson residuals / Negative Binomial models, and select highly variable genes (HVGs) in a batch-aware manner.",
+            "summary": "Covers why zero-inflation in droplet UMI data is primarily driven by Poisson/Negative Binomial sampling dropout rather than structural biological zeros, and why `batch_key` must be specified during HVG selection.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "What happens to downstream PCA and neighborhood graphs if HVGs are selected across pooled batches without specifying `batch_key` when one batch has a unique technical artifact?",
+              "Explain why UMI droplet scRNA-seq rarely requires zero-inflated negative binomial (ZINB) models compared to full-length plate-based protocols like Smart-seq2."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Batch Integration (Harmony & scVI), kNN Graphs, and Leiden Clustering",
+            "learning_objective": "Integrate multi-donor datasets in latent space while preserving biological variance, construct kNN graphs, and tune Leiden resolution without over-clustering.",
+            "summary": "Contrasts linear PCA-space correction (Harmony) with variational autoencoders modeling raw counts (scVI), explains why UMAP coordinates should never be used as input to clustering or distance metrics, and evaluates integration conservation vs. batch mixing.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does scVI require raw integer UMI counts rather than log-normalized expression values as input?",
+              "A colleague runs k-means clustering directly on 2D UMAP coordinates to define T-cell subsets. Explain why this is statistically invalid."
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Pseudobulk Aggregation and Overcoming Pseudoreplication in Differential Expression",
+            "learning_objective": "Aggregate cell-type UMI counts at the biological replicate (donor) level and fit DESeq2/edgeR generalized linear models to prevent false-positive p-value inflation.",
+            "summary": "Demonstrates how treating 10,000 cells from 6 donors as N=10,000 independent observations in a Wilcoxon rank-sum test conflates within-donor variance with between-donor variance, and also addresses double-dipping when testing marker genes between clusters defined by the same genes.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "In a case-control scRNA-seq study with 4 healthy donors and 4 diseased donors (40,000 microglia total), why does a cell-level Wilcoxon test yield thousands of genes with p < 10^-50 even when donor labels are permuted?",
+              "Outline the exact matrix aggregation steps required to construct a pseudobulk count table for edgeR/DESeq2 from a Scanpy AnnData object."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "This course is calibrated to an advanced computational biologist moving from bulk RNA-seq to Scanpy. It covers per-lane Scrublet execution, UMI Poisson/NB noise properties, scVI vs. Harmony latent integration, and pseudobulk aggregation to prevent pseudoreplication, with strong multi-format assessment questions in every module."
+      }
+    },
+    {
+      "id": "cq_bio_03",
+      "eval_type": "course_quality",
+      "domain": "Protein Folding & Structure Prediction",
+      "user_context": {
+        "prompt": "I am a structural biochemistry PhD student using AlphaFold2 and AlphaFold3 to model protein-protein complexes and intrinsically disordered regions. Teach me how to interpret pLDDT, PAE (Predicted Aligned Error), and ipTM scores so I don't over-interpret hallucinated loops or bad interfaces.",
+        "what_user_wants_to_learn": "Rigorous interpretation of AlphaFold confidence metrics (pLDDT, PAE, pTM, ipTM) for multimer interfaces, domain packing, and intrinsically disordered regions.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Interpreting AlphaFold Confidence Metrics: pLDDT, PAE, and Multimer Interfaces",
+        "description": "A focused practical course for structural biologists on evaluating local vs. global confidence metrics in AlphaFold2/3, distinguishing true inter-domain packing from flexible linkers, and validating predicted protein-protein complexes.",
+        "target_audience": "Biochemistry and structural biology graduate students using AlphaFold in hypothesis generation",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Local Confidence (pLDDT) and Intrinsically Disordered Regions (IDRs)",
+            "learning_objective": "Interpret per-residue pLDDT scores (0–100) as predictors of local Cα-lDDT accuracy and recognize low-pLDDT (<50) ribbon-like regions as indicators of intrinsic disorder rather than structured helices.",
+            "summary": "Details how pLDDT reflects local backbone and side-chain reliability (pLDDT > 90 for active-site rotamers, 70–90 for backbone topology, < 50 as a strong predictor of disorder) and why relative spatial placement of low-pLDDT tails is physically meaningless.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "An AlphaFold model places an N-terminal tail with pLDDT = 32 directly inside the catalytic cleft of an enzyme domain (pLDDT = 94). Can you conclude the tail autoinhibits the enzyme?",
+              "At what pLDDT threshold are side-chain chi1 rotamer conformations generally reliable enough for molecular docking?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Predicted Aligned Error (PAE) and Inter-Domain Orientation",
+            "learning_objective": "Read 2D PAE matrices to determine whether two well-folded domains have a fixed relative orientation or move independently via a flexible hinge.",
+            "summary": "Explains why two domains can both have pLDDT > 90 yet exhibit high off-diagonal PAE (> 20 Å), indicating independent rigid bodies with uncertain relative orientation, and discusses asymmetry in PAE matrices (aligned on residue x, error at residue y).",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "A two-domain protein shows dark green (2 Å error) squares along the PAE diagonal for residues 1–150 and 170–320, but white (28 Å error) in the off-diagonal blocks between them. What does this tell you about the protein's 3D architecture?",
+              "Why is the PAE matrix not strictly symmetric across the main diagonal?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Multimer Scoring (ipTM vs. pTM), MSA Depth, and Interface Validation",
+            "learning_objective": "Evaluate protein-protein complex predictions using ipTM, interface PAE, and residue contact consistency across models, and design point-mutation wet-lab controls.",
+            "summary": "Covers why global pTM can be artificially high when one monomer is much larger than its binding partner, why ipTM (>0.75–0.80) and low inter-chain PAE at contacting residues are critical for complex validation, and how AlphaFold3 diffusion heads can hallucinate spurious secondary structure in disordered regions without cross-validation.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "You model a 900-residue receptor bound to a 45-residue peptide. The complex has pTM = 0.86 but ipTM = 0.29. Is the peptide binding mode reliable? Explain why pTM and ipTM diverge here.",
+              "What notable structural artifact differs between AlphaFold2 and diffusion-based AlphaFold3 when predicting unstructured regions, and how do you spot it using confidence metrics?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "The 3-module course fits the 45-minute budget and accurately teaches pLDDT vs. PAE vs. pTM/ipTM interpretation, including real-world pitfalls like asymmetric PAE, large monomer dominating pTM over a small peptide partner, and AF2 ribbon disorder vs. AF3 diffusion spurious helices."
+      }
+    },
+    {
+      "id": "cq_bio_04",
+      "eval_type": "course_quality",
+      "domain": "Enzyme Kinetics & Assay Design",
+      "user_context": {
+        "prompt": "I am a bioprocess engineer characterizing engineered enzymes and small-molecule inhibitors in 96-well plate assays. I need to master initial velocity (v0) linear range setup, Michaelis-Menten vs. tight-binding (Morrison) kinetics, and distinguishing competitive, non-competitive, and uncompetitive inhibition.",
+        "what_user_wants_to_learn": "Practical enzyme kinetics assay design, steady-state assumptions, reversible inhibition mechanisms (Ki determination via non-linear regression), and when to use the Morrison equation for tight-binding inhibitors.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Quantitative Enzyme Kinetics & Inhibitor Characterization for Bioengineers",
+        "description": "A practical course on designing steady-state kinetic assays, diagnosing reversible inhibition mechanisms via non-linear regression, and handling tight-binding enzyme inhibitors where free inhibitor depletion invalidates Michaelis-Menten assumptions.",
+        "target_audience": "Bioprocess engineers and enzymologists running plate-based kinetic characterization",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Steady-State Assumptions, Initial Velocity (v0), and Assay Linearity",
+            "learning_objective": "Verify the Briggs-Haldane steady-state assumption ([S]0 >> [E]T) and restrict product formation to <10% substrate conversion to measure true initial velocity v0.",
+            "summary": "Covers pre-steady-state burst phases, why substrate depletion or product inhibition curves downward over time, how to calculate kcat/KM catalytic efficiency, and why non-linear regression outperforms Lineweaver-Burk double-reciprocal linearizations.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does fitting a Lineweaver-Burk (1/v0 vs. 1/[S]) plot with ordinary least squares distort KM and Vmax estimates compared to direct non-linear regression?",
+              "If an enzyme has KM = 2 µM and you run an assay at [E]T = 1.5 µM and [S]0 = 2 µM, which fundamental assumption of the Michaelis-Menten derivation is violated?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Reversible Inhibition Modes: Competitive, Uncompetitive, and Mixed/Non-Competitive",
+            "learning_objective": "Distinguish how competitive, uncompetitive, and mixed inhibitors alter apparent Vmax and apparent KM, and convert IC50 to Ki using the Cheng-Prusoff equations.",
+            "summary": "Maps binding equilibria to free enzyme E (Ki) vs. enzyme-substrate complex ES (alpha*Ki), explains why uncompetitive inhibitors decrease both Vmax,app and KM,app by the same factor (1 + [I]/alpha*Ki), and applies the appropriate Cheng-Prusoff relation for each mechanism.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "An inhibitor decreases apparent Vmax by 50% and also decreases apparent KM by 50%, leaving the ratio Vmax,app / KM,app unchanged. What is its mechanism of inhibition and why?",
+              "Using the Cheng-Prusoff equation for a competitive inhibitor, calculate Ki if IC50 = 120 nM when assayed at [S] = 300 µM and KM = 100 µM."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Tight-Binding Inhibitors and the Morrison Quadratic Equation",
+            "learning_objective": "Recognize when inhibitor potency approaches total enzyme concentration (Ki,app <= 10 * [E]T) and apply the Morrison quadratic equation to determine true Ki and active enzyme concentration.",
+            "summary": "Explains inhibitor depletion when [E]T is comparable to Ki, why the minimum measurable IC50 in a standard assay is bounded below by 0.5 * [E]T ('the tight-binding limit'), and how fitting the Morrison equation extracts true Ki.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "You screen a panel of engineered picomolar inhibitors using an assay with [E]T = 20 nM, and every compound returns an IC50 of ~10 nM. Explain this 'assay floor' phenomenon.",
+              "How can a tight-binding inhibitor titration curve at high [E]T be used to determine the fraction of catalytically active enzyme in a purified protein batch?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "The course covers all requested aspects of quantitative enzyme kinetics: v0 linearity and [S]>>[E] assumptions, non-linear vs. Lineweaver-Burk fitting, reversible inhibition modes and Cheng-Prusoff conversions, and the Morrison equation for tight-binding inhibitors hitting the [E]T/2 IC50 floor."
+      }
+    },
+    {
+      "id": "cq_bio_05",
+      "eval_type": "course_quality",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_context": {
+        "prompt": "I am a postdoctoral researcher designing prime editing (PE3/PEmax) pegRNAs in primary human T cells. Teach me how to optimize primer binding site (PBS) melting temperature, reverse transcriptase template (RTT) length, and epegRNA 3' structural motifs.",
+        "what_user_wants_to_learn": "Advanced pegRNA and epegRNA engineering for prime editing (PBS length/Tm, RTT optimization, nicking sgRNA placement in PE3/PE3b, and 3' pseudoknot protection).",
+        "background_level": "advanced",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Introduction to DNA, RNA, and What CRISPR Is",
+        "description": "A gentle introduction to the central dogma of molecular biology, how bacteria fight off viruses, and how CRISPR acts like molecular scissors.",
+        "target_audience": "High school students and general public beginners with no biology background",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "DNA: The Blueprint of Life",
+            "learning_objective": "Identify the four bases of DNA (A, T, C, G) and explain how A pairs with T and C pairs with G.",
+            "summary": "Covers the double helix discovered by Watson, Crick, and Franklin, and how genes code for traits like eye color.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Which base pairs with Adenine (A) in a DNA double helix?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Bacterial Immune Systems and Cas9 Scissors",
+            "learning_objective": "Describe how bacteria use CRISPR arrays to remember bacteriophage viruses.",
+            "summary": "Uses the analogy of a 'most wanted' mugshot book inside yoghurt bacteria (Streptococcus thermophilus) and explains that Cas9 cuts both strands of viral DNA.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What kind of organism naturally evolved CRISPR as an immune system?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Prime Editing Uses RNA Pol II to Reverse-Transcribe PAM Sequences",
+            "learning_objective": "Understand how Prime Editors use Cas13 and endogenous cellular RNA Polymerase II to glue new exons into ribosomes.",
+            "summary": "Explains that Prime Editing works by fusing Cas13 to DNA ligase so that the PAM sequence is reverse-transcribed directly from the cell's ribosomes without needing a guide RNA.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Which enzyme is fused to Cas13 in a Prime Editor to glue exons into ribosomes?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 2,
+          "module_coherence": 1,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "wrong_audience_level",
+          "hallucinated_biological_mechanism",
+          "goal_mismatch",
+          "missing_multiple_choice_or_short_answer_mix"
+        ],
+        "rationale": "This candidate course fails on every axis: (1) it targets high-school beginners instead of an advanced postdoc asking about pegRNA PBS/RTT optimization; (2) Module 3 hallucinates absurd biology (claiming Prime Editors fuse Cas13 to DNA ligase and use RNA Pol II on ribosomes without a guide RNA, whereas Prime Editors fuse Cas9 H840A nickase to an engineered M-MLV reverse transcriptase guided by a pegRNA); and (3) it omits short-answer questions entirely."
+      }
+    },
+    {
+      "id": "cq_bio_06",
+      "eval_type": "course_quality",
+      "domain": "Metabolic Flux Analysis & Systems Biology",
+      "user_context": {
+        "prompt": "I am a metabolic engineering undergrad learning Flux Balance Analysis (FBA) in COBRApy to maximize succinate production in E. coli. Teach me stoichiometric matrix construction, steady-state mass balance (S*v = 0), objective functions, and Flux Variability Analysis (FVA).",
+        "what_user_wants_to_learn": "Constraint-based metabolic modeling (FBA and FVA) using stoichiometric matrices and linear programming in COBRApy.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Stoichiometric Metabolic Modeling and FBA",
+        "description": "A course covering Flux Balance Analysis and metabolic networks.",
+        "target_audience": "Undergraduate bioengineering students",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Dynamic Gene Knockdown Flux Variability Analysis and 13C Isotopomer Non-Stationary NMR",
+            "learning_objective": "Solve non-stationary 13C-MFA ordinary differential equations before defining stoichiometry.",
+            "summary": "Starts immediately with cumulative isotopomer (cumomer) tensor decompositions and mass isotopomer distribution (MID) GC-MS fragment deconvolutions without introducing reaction stoichiometry or mass balance.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Derive the elementary metabolite unit (EMU) matrix decomposition for a 6-carbon symmetrical citric acid cycle intermediate."
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "The Citric Acid Cycle in Mammalian Mitochondria",
+            "learning_objective": "Memorize the eight enzymes of the human Krebs cycle.",
+            "summary": "Lists citrate synthase, aconitase, isocitrate dehydrogenase, alpha-ketoglutarate dehydrogenase, succinyl-CoA synthetase, succinate dehydrogenase, fumarase, and malate dehydrogenase.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "List all 8 enzymes of the TCA cycle in order."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "What Is a Chemical Reaction?",
+            "learning_objective": "Define reactants, products, and stoichiometric coefficients.",
+            "summary": "Introduces basic general chemistry concepts of balancing chemical equations like 2 H2 + O2 -> 2 H2O.",
+            "question_types_included": ["short_answer"],
+            "sample_question_prompts": [
+              "Balance the reaction: C6H12O6 + O2 -> CO2 + H2O."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "alignment_with_goal": 2,
+          "pedagogical_progression": 1,
+          "module_coherence": 1,
+          "depth_and_accuracy": 2,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "incoherent_module_progression",
+          "goal_mismatch",
+          "missing_multiple_choice_or_short_answer_mix"
+        ],
+        "rationale": "The module progression is completely backwards and incoherent: Module 1 jumps straight into advanced non-stationary 13C-isotopomer MFA (which was not requested), Module 2 pivots to rote memorization of mammalian TCA enzymes, and Module 3 regresses to high-school chemical equation balancing. It never teaches S*v = 0 linear programming, objective functions, FVA, or COBRApy, and only includes short-answer questions."
+      }
+    },
+    {
+      "id": "cq_bio_07",
+      "eval_type": "course_quality",
+      "domain": "PCR & Wet-Lab Troubleshooting",
+      "user_context": {
+        "prompt": "I am a wet-lab research associate troubleshooting failed high-GC amplification, primer dimers, and non-specific bands in standard endpoint PCR and RT-qPCR (SYBR Green melt curves and TaqMan probes). Help me systematically diagnose and fix my reactions.",
+        "what_user_wants_to_learn": "Hands-on troubleshooting of endpoint PCR and RT-qPCR reactions: fixing high-GC secondary structures, primer dimers, melt-curve artifacts, Cq shifts, and gDNA contamination.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Statistical Genomics and Genome-Wide Association Studies (GWAS)",
+        "description": "A course on population genetics, linkage disequilibrium, Manhattan plots, and polygenic risk scores in large human biobanks.",
+        "target_audience": "Statistical geneticists and epidemiologists",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Hardy-Weinberg Equilibrium and Minor Allele Frequency Filtering",
+            "learning_objective": "Test SNP genotypes for deviations from Hardy-Weinberg equilibrium (p^2 + 2pq + q^2 = 1) in PLINK.",
+            "summary": "Covers genotyping array QC, call rates, and population stratification using principal component analysis.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why can extreme deviation from Hardy-Weinberg equilibrium in control samples indicate a genotyping calling error?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Linkage Disequilibrium (r^2 and D') and Imputation",
+            "learning_objective": "Calculate linkage disequilibrium statistics and impute untyped variants against a haplotype reference panel.",
+            "summary": "Explains recombination hotspots, haplotype blocks, and Hidden Markov Models used in Minimac4 and Beagle.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Contrast the properties of D' and r^2 when allele frequencies differ strongly between two SNPs."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Linear Mixed Models (LMMs) and Polygenic Risk Scores",
+            "learning_objective": "Control for cryptic relatedness using genetic relationship matrices (GRMs) and apply genome-wide significance thresholds (p < 5e-8).",
+            "summary": "Covers BOLT-LMM, REGENIE, genomic inflation factor lambda_GC, and LD-clumping for PRS construction.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "What causes genomic inflation (lambda_GC > 1.15) in a naive logistic regression GWAS, and how do linear mixed models address it?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 4,
+          "module_coherence": 4,
+          "depth_and_accuracy": 4,
+          "assessment_mix": 4
+        },
+        "failure_modes": [
+          "goal_mismatch"
+        ],
+        "rationale": "Although the candidate course is internally coherent and scientifically accurate on statistical genetics and GWAS, it completely ignores the user's request for wet-lab PCR and RT-qPCR troubleshooting (high-GC templates, DMSO/betaine additives, primer dimers, melt curves, and No-RT controls)."
+      }
+    },
+    {
+      "id": "cq_bio_08",
+      "eval_type": "course_quality",
+      "domain": "Synthetic Gene Circuits",
+      "user_context": {
+        "prompt": "I am a synthetic biology graduate student modeling transcriptional genetic toggle switches (Gardner-Collins bistable switch) and repressilators (Elowitz-Leibler oscillator) using Hill functions and phase-plane analysis. Teach me the dynamical requirements for bistability vs. sustained oscillations.",
+        "what_user_wants_to_learn": "Nonlinear dynamical modeling of synthetic genetic circuits (Hill cooperativity, nullclines, saddle-node bifurcations in the toggle switch, and Hopf bifurcations/delay in the repressilator).",
+        "background_level": "advanced",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Nonlinear Dynamics of Synthetic Gene Circuits",
+        "description": "Mathematical modeling of transcriptional toggle switches and ring oscillators.",
+        "target_audience": "Synthetic biology graduate students",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Hill Kinetics and Ultrasensitivity in Transcriptional Repression",
+            "learning_objective": "Explain how cooperative Transcription Factor dimerization/tetramerization produces sigmoidal repression curves with Hill coefficient n < 1.",
+            "summary": "Teaches that positive cooperativity in repressor binding corresponds to a Hill coefficient n = 0.25, whereas non-cooperative binding has n = 4.0, and that leaky basal expression is impossible in prokaryotic promoters.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What Hill coefficient value represents high positive cooperativity (ultrasensitivity): n = 0.2 or n = 3.0?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "The Gardner-Collins Toggle Switch Requires an Odd Number of Repressors",
+            "learning_objective": "Design a bistable toggle switch using three mutually repressing transcription factors (TetR, LacI, and lambda cI) in a negative feedback loop.",
+            "summary": "Claims that the classic Gardner-Collins bistable toggle switch is a 3-repressor ring oscillator and that mutual repression between two genes always produces sustained limit-cycle oscillations without bistability.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Why do two mutually repressing genes always oscillate rather than settling into one of two stable steady states?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "The Elowitz-Leibler Repressilator Requires Hill Coefficient n = 1",
+            "learning_objective": "Prove that a 3-gene transcriptional repression ring without time delay oscillates robustly when Hill cooperativity is strictly linear (n = 1).",
+            "summary": "States that linear non-cooperative repression (n = 1) in a 3-node ODE model without mRNA/protein staging guarantees unstable fixed points and sustained limit cycles.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Why does setting Hill coefficient n = 1 guarantee sustained oscillations in a 3-repressor ODE ring?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 2,
+          "pedagogical_progression": 2,
+          "module_coherence": 2,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "hallucinated_biological_mechanism",
+          "missing_multiple_choice_or_short_answer_mix"
+        ],
+        "rationale": "Every module in this course reverses fundamental dynamical systems principles in synthetic biology: (1) positive cooperativity requires Hill coefficient n > 1 (not n < 1); (2) the Gardner-Collins toggle switch consists of TWO mutually repressing repressors (a positive feedback loop yielding bistability via saddle-node bifurcation), whereas THREE repressors in a cycle form the Elowitz-Leibler repressilator (negative feedback yielding oscillations); and (3) a 3-node protein-only ODE repressilator requires n > 2 for a Hopf bifurcation, so n = 1 is globally stable and cannot oscillate. It also lacks short-answer questions."
+      }
+    }
+  ],
+  "question_quality_evals": [
+    {
+      "id": "qq_bio_01",
+      "eval_type": "question_quality",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_context": {
+        "what_user_wants_to_learn": "Designing cytosine and adenine base editing experiments and avoiding bystander mutations in the editing window.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner correctly identified NGG PAM sites for SpCas9 but previously confused protospacer numbering (counting from the PAM instead of the 5' PAM-distal end)."
+      },
+      "module_context": {
+        "course_title": "Precision Guide Design: From SpCas9 Knockouts to Cytosine & Adenine Base Editing",
+        "module_title": "Editing Windows, PAM-Flexible Variants, and Bystander Edit Mitigation",
+        "learning_objective": "Place target nucleotides within canonical editing windows (positions 4–8 for SpCas9 CBE/ABE, counting PAM as 21–23) and evaluate bystander edits."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "You are designing an ABE8e guide RNA (using an SpCas9 nickase scaffold, canonical activity window at protospacer positions 4–8, where position 1 is the 5'-most PAM-distal nucleotide and positions 21–23 are the NGG PAM) to convert a pathogenic `T•A` base pair back to `C•G`. Your non-target (protospacer) strand sequence is:\n\n`5'- G C T A1 C A2 G T C C A G T C A G T C A G - A G G -3'`\n(where `A1` is at position 4, `A2` is at position 6, and `AGG` is the PAM at positions 21–23).\n\nIf your desired therapeutic edit is at `A2` (position 6), which of the following statements best describes the outcome and design constraint regarding `A1` (position 4)?",
+        "options": [
+          "Both A1 (position 4) and A2 (position 6) lie inside the canonical 4–8 deamination window; unless A1 is at a wobble position where A-to-G conversion yields a synonymous codon, you risk introducing an unwanted nonsynonymous bystander mutation.",
+          "Because protospacer positions are numbered starting from the PAM-proximal 3' end, A1 and A2 are actually at positions 17 and 15 and neither will be edited by ABE8e.",
+          "ABE8e only deaminates adenines on the double-stranded PAM-proximal seed region (positions 18–20), so neither A1 nor A2 will be edited.",
+          "A1 at position 4 will be cleaved by the HNH nuclease domain to generate a double-strand break, preventing bystander deamination."
+        ],
+        "correct_answer": "Both A1 (position 4) and A2 (position 6) lie inside the canonical 4–8 deamination window; unless A1 is at a wobble position where A-to-G conversion yields a synonymous codon, you risk introducing an unwanted nonsynonymous bystander mutation.",
+        "grading_notes": "Checks both the 5'-to-3' protospacer numbering remediation (addressing the learner's prior misconception in Option B) and practical bystander evaluation within positions 4–8."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "This multiple-choice question is unambiguous, directly tests bystander edit risk in the positions 4–8 activity window, and includes a targeted distractor (Option B) that probes the exact PAM-proximal vs. 5' numbering misconception noted in the learner's prior feedback."
+      }
+    },
+    {
+      "id": "qq_bio_02",
+      "eval_type": "question_quality",
+      "domain": "Single-Cell RNA-seq Analysis",
+      "user_context": {
+        "what_user_wants_to_learn": "Statistically sound differential expression and batch integration in multi-donor 10x scRNA-seq studies.",
+        "background_level": "advanced",
+        "prior_feedback_summary": "Learner mastered ambient RNA removal and Leiden clustering, and is ready for multi-donor experimental design and differential expression pitfalls."
+      },
+      "module_context": {
+        "course_title": "Rigorous Single-Cell Transcriptomics in Scanpy: From Raw UMI Matrices to Pseudobulk DE",
+        "module_title": "Pseudobulk Aggregation and Overcoming Pseudoreplication in Differential Expression",
+        "learning_objective": "Aggregate cell-type UMI counts at the biological replicate (donor) level and fit DESeq2/edgeR generalized linear models to prevent false-positive p-value inflation."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "In a single-cell study comparing alveolar macrophages from 5 IPF patients and 5 healthy controls (totaling 35,000 macrophages), running `sc.tl.rank_genes_groups(..., method='wilcoxon')` across all 35,000 cells yields 4,200 differentially expressed genes with FDR < 1e-20. Explain (1) the statistical flaw causing this massive p-value inflation, and (2) how you should restructure the count matrix before running DESeq2 or edgeR to test for disease-associated expression changes.",
+        "correct_answer": "(1) Treating individual cells as independent statistical observations violates independence (pseudoreplication), because cells from the same human donor share genetic, environmental, and sample-processing covariance; the true biological sample size is N=5 vs. N=5, not N=35,000. (2) Aggregate (sum) the raw integer UMI counts across all alveolar macrophages within each donor to create a 10-column pseudobulk gene-by-donor count matrix, then fit a Negative Binomial GLM in DESeq2/edgeR across the 10 biological replicates.",
+        "grading_notes": "Award full credit if the learner identifies pseudoreplication / non-independence of cells within donors (N=5 per group vs. N=35,000 cells) and describes summing raw UMI counts per donor within the cell type to form a pseudobulk matrix for Negative Binomial modeling."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "The prompt asks a focused, two-part analytical question on a real-world scRNA-seq statistical trap (pseudoreplication) with clear, concrete grading criteria."
+      }
+    },
+    {
+      "id": "qq_bio_03",
+      "eval_type": "question_quality",
+      "domain": "Enzyme Kinetics & Assay Design",
+      "user_context": {
+        "what_user_wants_to_learn": "Distinguishing reversible inhibition mechanisms and interpreting kinetic parameter shifts in plate assays.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner struggled to explain why uncompetitive inhibitors lower apparent KM rather than raising it."
+      },
+      "module_context": {
+        "course_title": "Quantitative Enzyme Kinetics & Inhibitor Characterization for Bioengineers",
+        "module_title": "Reversible Inhibition Modes: Competitive, Uncompetitive, and Mixed/Non-Competitive",
+        "learning_objective": "Distinguish how competitive, uncompetitive, and mixed inhibitors alter apparent Vmax and apparent KM."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "You characterize a novel small-molecule inhibitor against a recombinant dehydrogenase. Nonlinear regression of initial velocity ($v_0$) vs. substrate concentration ($[S]$) in the presence of inhibitor shows that BOTH $V_{\\max,\\text{app}}$ and $K_{M,\\text{app}}$ decrease by the exact same factor $(1 + [I]/\\alpha K_i)$ compared to the uninhibited control. Why does this inhibitor decrease $K_{M,\\text{app}}$ (making the enzyme appear to have higher affinity for substrate)?",
+        "options": [
+          "The inhibitor binds exclusively to the enzyme-substrate (ES) complex to form an inactive ESI ternary complex, depleting ES and shifting the E + S <-> ES equilibrium toward ES formation by Le Chatelier's principle.",
+          "The inhibitor binds exclusively to the free enzyme (E) active site, forcing substrate molecules to bind with higher cooperativity.",
+          "The inhibitor covalently phosphorylates the free substrate in solution, increasing the effective substrate concentration.",
+          "The inhibitor increases the catalytic turnover rate constant kcat while blocking substrate dissociation."
+        ],
+        "correct_answer": "The inhibitor binds exclusively to the enzyme-substrate (ES) complex to form an inactive ESI ternary complex, depleting ES and shifting the E + S <-> ES equilibrium toward ES formation by Le Chatelier's principle.",
+        "grading_notes": "Directly targets the learner's prior confusion about why uncompetitive inhibition lowers KM,app via Le Chatelier's principle on the E + S <-> ES <-> ESI equilibrium."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Directly remediates the learner's documented difficulty (understanding why uncompetitive inhibitors lower apparent KM) with plausible mechanistic distractors."
+      }
+    },
+    {
+      "id": "qq_bio_04",
+      "eval_type": "question_quality",
+      "domain": "Protein Folding & Structure Prediction",
+      "user_context": {
+        "what_user_wants_to_learn": "Interpreting AlphaFold pLDDT and PAE matrices to distinguish rigid multi-domain packing from flexible linkers.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner accurately interpreted per-residue pLDDT scores and is now learning 2D PAE matrices."
+      },
+      "module_context": {
+        "course_title": "Interpreting AlphaFold Confidence Metrics: pLDDT, PAE, and Multimer Interfaces",
+        "module_title": "Predicted Aligned Error (PAE) and Inter-Domain Orientation",
+        "learning_objective": "Read 2D PAE matrices to determine whether two well-folded domains have a fixed relative orientation or move independently via a flexible hinge."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "An AlphaFold2 prediction of a 400-residue kinase-SH2 fusion protein shows mean pLDDT = 92 across Domain A (residues 1–140) and mean pLDDT = 91 across Domain B (residues 160–400), connected by a 20-residue linker (pLDDT = 41). In the Predicted Aligned Error (PAE) plot, the two on-diagonal blocks (1–140 and 160–400) have low error (~2 Å), whereas the off-diagonal quadrants between Domain A and Domain B show uniform errors of 26–30 Å. How should you interpret the accuracy of (1) each individual domain's fold and (2) the inter-domain interface shown in the 3D PDB coordinates?",
+        "correct_answer": "(1) Both individual domains (Domain A and Domain B) are predicted with very high local fold confidence (pLDDT > 90 and low intra-domain PAE ~2 Å), so their internal tertiary structures and side-chain orientations are reliable. (2) However, the high off-diagonal PAE (26–30 Å) and disordered linker (pLDDT = 41) indicate that AlphaFold is completely uncertain about the relative spatial orientation of Domain A with respect to Domain B; they behave as independent rigid bodies tethered by a flexible linker, and any apparent inter-domain contact in the static PDB model is an arbitrary placement that must not be interpreted as a real physical interface.",
+        "grading_notes": "Must contrast high confidence in individual intra-domain folds (high pLDDT, low on-diagonal PAE) with complete uncertainty in relative inter-domain orientation (high off-diagonal PAE, low-pLDDT linker)."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Presents a realistic structural biology scenario with specific numbers (pLDDT 92/91 vs. 41, on-diagonal PAE 2 Å vs. off-diagonal 26–30 Å) and asks a well-scoped two-part interpretation question."
+      }
+    },
+    {
+      "id": "qq_bio_05",
+      "eval_type": "question_quality",
+      "domain": "PCR & Wet-Lab Troubleshooting",
+      "user_context": {
+        "what_user_wants_to_learn": "Diagnosing RT-qPCR melt curve artifacts, primer dimers, and genomic DNA contamination at the bench.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner understands standard Cq calculations and is now learning SYBR Green melt-curve diagnostics and No-RT controls."
+      },
+      "module_context": {
+        "course_title": "Systematic PCR & RT-qPCR Troubleshooting",
+        "module_title": "Diagnosing Melt Curves, No-RT Controls, and Primer Dimers in SYBR Green RT-qPCR",
+        "learning_objective": "Use dissociation (melt) curves ($-dF/dT$ vs. $T$) and No-Reverse-Transcriptase (No-RT) controls to distinguish primer dimers from genomic DNA contamination."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "In a SYBR Green RT-qPCR assay using primers located entirely within a single exon of a low-abundance transcript, your cDNA samples amplify with $C_q = 24.5$ and display a single sharp melt peak at $86\\,^\\circ\\text{C}$. Your No-Template Control (NTC, water) shows no amplification ($C_q > 40$), while your No-Reverse-Transcriptase (No-RT) control amplifies at $C_q = 25.1$ with the exact same melt peak at $86\\,^\\circ\\text{C}$. What is the primary cause of this issue, and how should you resolve it?",
+        "options": [
+          "Genomic DNA (gDNA) contamination in the RNA prep is being amplified because single-exon primers cannot distinguish gDNA from cDNA; treat the RNA with DNase I and/or redesign primers to span an exon-exon junction.",
+          "Primer dimers are forming in the No-RT control; increase the annealing temperature by 4 °C and reduce primer concentration from 500 nM to 100 nM.",
+          "The water stock used in the master mix is contaminated with carryover amplicon; autoclave the PCR tubes and switch to dUTP/UDG master mix.",
+          "Reverse transcriptase remained active in the No-RT control due to insufficient heat inactivation; increase the post-RT heat kill step to 95 °C."
+        ],
+        "correct_answer": "Genomic DNA (gDNA) contamination in the RNA prep is being amplified because single-exon primers cannot distinguish gDNA from cDNA; treat the RNA with DNase I and/or redesign primers to span an exon-exon junction.",
+        "grading_notes": "Clean NTC rules out master-mix carryover or primer dimers; identical 86 °C melt peak in No-RT with single-exon primers is diagnostic of genomic DNA amplification."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Realistic wet-lab diagnostic scenario where each control (cDNA, NTC, No-RT) and the melt peak temperature (86 °C) provides essential information to rule out primer dimers and water carryover and pinpoint gDNA contamination."
+      }
+    },
+    {
+      "id": "qq_bio_06",
+      "eval_type": "question_quality",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_context": {
+        "what_user_wants_to_learn": "Mechanisms of Cas9 target recognition and R-loop cleavage.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner is doing well and needs a challenging question on HNH vs. RuvC nuclease domain specificity."
+      },
+      "module_context": {
+        "course_title": "Precision Guide Design: From SpCas9 Knockouts to Cytosine & Adenine Base Editing",
+        "module_title": "SpCas9 Target Selection, PAM Recognition, and Frameshift Knockout Strategy",
+        "learning_objective": "Identify the roles of the HNH and RuvC nuclease domains and the 5'-NGG-3' PAM in SpCas9 cleavage."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Which nuclease domain of wild-type Streptococcus pyogenes Cas9 (SpCas9) cleaves the DNA strand that base-pairs with the 20-nt spacer of the sgRNA?",
+        "options": [
+          "The HNH endonuclease domain",
+          "A magical tiny laser beam from outer space",
+          "A slice of pepperoni pizza",
+          "The steering wheel of a 1998 Honda Civic"
+        ],
+        "correct_answer": "The HNH endonuclease domain",
+        "grading_notes": "HNH cleaves the target (complementary) strand."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 4,
+          "alignment_with_user_goal": 3,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "implausible_distractors"
+        ],
+        "rationale": "Three of the four options are absurd joke distractors ('magical tiny laser beam', 'pepperoni pizza', '1998 Honda Civic') rather than biologically plausible alternatives like the RuvC domain, the PAM-interacting (PI) domain, or REC lobe."
+      }
+    },
+    {
+      "id": "qq_bio_07",
+      "eval_type": "question_quality",
+      "domain": "PCR & Wet-Lab Troubleshooting",
+      "user_context": {
+        "what_user_wants_to_learn": "Selecting chemical additives and polymerases to amplify GC-rich (>75% GC) mammalian promoter templates.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner understands primer Tm calculation and now wants to optimize PCR master mixes for GC-rich templates."
+      },
+      "module_context": {
+        "course_title": "Systematic PCR & RT-qPCR Troubleshooting",
+        "module_title": "Overcoming High-GC Secondary Structures and Hairpins",
+        "learning_objective": "Select co-solvents and additives that lower DNA melting temperature and disrupt secondary structures in GC-rich templates."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "You are attempting to PCR-amplify a human CpG island promoter with 81% GC content that repeatedly fails due to stable intramolecular hairpins. Which single PCR reaction additive can you add to disrupt secondary structures and lower the effective melting temperature of the GC-rich template?",
+        "options": [
+          "5% Dimethyl sulfoxide (DMSO)",
+          "1 M Betaine (N,N,N-trimethylglycine)",
+          "50 mM EDTA (metal chelator in excess of Mg2+)",
+          "1% Sodium dodecyl sulfate (SDS, an ionic detergent that denatures DNA polymerase)"
+        ],
+        "correct_answer": "5% Dimethyl sulfoxide (DMSO)",
+        "grading_notes": "Only select Option A."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 2,
+          "alignment_with_user_goal": 4,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 3,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "two_correct_options"
+        ],
+        "rationale": "Both Option A (5% DMSO) and Option B (1 M Betaine) are standard, textbook PCR co-solvents used to disrupt secondary structure and isostabilize/lower the melting temperature of high-GC (>75% GC) templates, making it impossible for a knowledgeable student to pick a single uniquely correct answer."
+      }
+    },
+    {
+      "id": "qq_bio_08",
+      "eval_type": "question_quality",
+      "domain": "Single-Cell RNA-seq Analysis",
+      "user_context": {
+        "what_user_wants_to_learn": "Computational preprocessing of 10x scRNA-seq count matrices in Python (Scanpy): doublet removal, normalization, and batch integration.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner wants purely computational/bioinformatics questions on count matrices and Scanpy functions, not wet-lab microfluidics mechanics."
+      },
+      "module_context": {
+        "course_title": "Rigorous Single-Cell Transcriptomics in Scanpy: From Raw UMI Matrices to Pseudobulk DE",
+        "module_title": "Droplet QC, Ambient RNA Decontamination, and Multiplet Detection",
+        "learning_objective": "Filter empty droplets and doublets from 10x Chromium UMI count matrices in Scanpy."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Describe the complete organic synthesis route for perfluoropolyether-polyethylene glycol (PFPE-PEG) block-copolymer fluorosurfactants used in fluorinated oil (HFE-7500) to stabilize water-in-oil microfluidic droplets, including the exact NMR chemical shifts of the terminal Krytox carboxylic acid chloride intermediate.",
+        "correct_answer": "React Krytox 157 FSH perfluoropolyether carboxylic acid with oxalyl chloride in fluorinated solvent to form the acyl chloride (19F NMR shift at -80.2 ppm), then couple with Jeffamine ED-900 diamine in dry THF/HFE-7100.",
+        "grading_notes": "Requires exact fluorosurfactant synthesis reagents and 19F NMR chemical shifts."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 3,
+          "alignment_with_user_goal": 1,
+          "distractor_or_rubric_quality": 2,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "misaligned_with_learner_goal",
+          "ignores_remediation_feedback"
+        ],
+        "rationale": "The user explicitly requested computational scRNA-seq preprocessing in Python/Scanpy and stated they do not want wet-lab microfluidics questions, yet this prompt asks for organic fluorosurfactant polymer synthesis and 19F NMR chemical shifts."
+      }
+    },
+    {
+      "id": "qq_bio_09",
+      "eval_type": "question_quality",
+      "domain": "Synthetic Gene Circuits",
+      "user_context": {
+        "what_user_wants_to_learn": "Phase-plane nullcline analysis and Hill cooperativity in the Gardner-Collins genetic toggle switch.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner failed the previous question because they confused the Hill coefficient n=1 (hyperbolic Michaelis-Menten repression, which yields only 1 intersection/monostability) with n>=2 (sigmoidal ultrasensitive repression required for 3 nullcline intersections/bistability). Needs a targeted remedial question on why n=1 cannot produce bistability."
+      },
+      "module_context": {
+        "course_title": "Nonlinear Dynamics of Synthetic Gene Circuits",
+        "module_title": "Bistability and Nullcline Intersections in the Genetic Toggle Switch",
+        "learning_objective": "Determine how the Hill coefficient n controls the number of steady-state nullcline intersections in a mutual repression toggle switch."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Assuming you have already proven that your toggle switch has three fixed points and is bistable with $n = 4$, explain which fluorescent reporter protein (mVenus, mCherry, or dsRed-tetramer) has the fastest chromophore maturation half-time in E. coli M9 minimal media at 37 °C and write out the three-step autocatalytic cyclization and oxidation reaction of its chromophore.",
+        "correct_answer": "mVenus matures fastest (t1/2 ~ 4–7 min) via nucleophilic attack of the Gly67 amide nitrogen on the carbonyl carbon of Thr65, followed by dehydration and O2-mediated oxidation of the Tyr66 alpha-beta bond.",
+        "grading_notes": "Requires naming mVenus and detailing the Gly67-Tyr66-Thr65 cyclization/dehydration/oxidation mechanism."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 4,
+          "alignment_with_user_goal": 2,
+          "distractor_or_rubric_quality": 3,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "ignores_remediation_feedback",
+          "misaligned_with_learner_goal"
+        ],
+        "rationale": "The learner's prior feedback specifically flagged a misconception about why Hill coefficient n=1 yields monostability vs. n>=2 yielding bistability in nullcline intersections, yet this question completely skips remediation, assumes the learner already mastered bistability, and pivots to memorizing fluorescent protein maturation times."
+      }
+    },
+    {
+      "id": "qq_bio_10",
+      "eval_type": "question_quality",
+      "domain": "Metabolic Flux Analysis & Systems Biology",
+      "user_context": {
+        "what_user_wants_to_learn": "Formulating the steady-state mass balance constraint S*v = 0 and linear objective functions in Flux Balance Analysis.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "Learner just completed the reading on stoichiometric matrices."
+      },
+      "module_context": {
+        "course_title": "Constraint-Based Metabolic Modeling in COBRApy",
+        "module_title": "Stoichiometric Matrices and Steady-State Mass Balance",
+        "learning_objective": "Construct a stoichiometric matrix S for a small reaction network and write the steady-state flux constraint S*v = 0."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Tell me everything you know about metabolism, biology, cells, and how organisms stay alive.",
+        "correct_answer": "Cells use ATP, glycolysis, the TCA cycle, oxidative phosphorylation, enzymes, membranes, DNA, RNA, and Flux Balance Analysis where S*v = 0 with upper and lower bounds.",
+        "grading_notes": "Check that the student mentions ATP, glycolysis, TCA cycle, DNA, RNA, and S*v = 0."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 1,
+          "alignment_with_user_goal": 2,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 2,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "overly_broad_short_answer"
+        ],
+        "rationale": "The prompt ('Tell me everything you know about metabolism, biology, cells, and how organisms stay alive') is impossibly broad and underspecified, while the grading rubric arbitrarily expects specific keywords like S*v = 0 that the prompt never asked for."
+      }
+    }
+  ],
+  "decision_grading_evals": [
+    {
+      "id": "dg_bio_01",
+      "eval_type": "decision_grading",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_profile": {
+        "what_user_wants_to_learn": "High-level conceptual intuition of how CRISPR base editors fix single-letter genetic mutations without cutting both strands of DNA, for a biotech product manager.",
+        "background_level": "beginner",
+        "rigor_preference": "conceptual_intuition"
+      },
+      "module_context": {
+        "course_title": "CRISPR Base Editing for Biotech Leaders",
+        "module_title": "How Base Editors Differ from Standard Cas9 Nucleases",
+        "learning_objective": "Explain why base editors convert one DNA base pair into another without creating double-strand breaks."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.85,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "How does a CRISPR base editor fix a single point mutation differently from traditional CRISPR-Cas9 'molecular scissors', and why does that reduce unwanted random insertions and deletions (indels)?",
+        "reference_answer": "Instead of cutting both strands of the DNA double helix (which triggers error-prone NHEJ repair and random indels), a base editor uses a modified Cas9 (nickase/dead Cas9) fused to a deaminase enzyme that chemically converts one DNA base letter into another while only nicking a single strand.",
+        "required_concepts_for_user_goal": [
+          "avoids double-strand break (DSB)",
+          "chemically converts/rewrites a single DNA base directly"
+        ],
+        "grading_rubric": "For a beginner with conceptual_intuition preference, accept clear high-level explanations that contrast double-strand cuts (which cause messy indels during repair) with direct chemical conversion of a single DNA letter using a disabled/nicking Cas9. Exact catalytic residue names (D10A, H840A, APOBEC1, UGI, TadA) are NOT required."
+      },
+      "user_submission": {
+        "answer": "Standard Cas9 cuts completely through both strands of the DNA helix, and when the cell tries to glue the broken ends back together it often makes random insertion/deletion mistakes. A base editor disables the full double-strand cut and instead attaches an enzyme that chemically rewrites just the single target letter (like C to T) in place.",
+        "response_time_seconds": 48
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "avoids double-strand break (DSB)",
+          "chemically converts/rewrites a single DNA base directly"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Affirm the clear distinction between double-strand cleavage (error-prone repair/indels) and direct chemical base conversion, and advance to the next module.",
+        "rationale": "Under the JEV Clef model, although the learner did not mention D10A nickase, UGI, or hydrolytic deamination chemistry, their goal is high-level conceptual intuition as a beginner biotech PM. They nailed all required concepts for their profile."
+      }
+    },
+    {
+      "id": "dg_bio_02",
+      "eval_type": "decision_grading",
+      "domain": "CRISPR-Cas9 & Base Editing",
+      "user_profile": {
+        "what_user_wants_to_learn": "Mechanistic protein engineering of Cytosine Base Editors (BE4max), specifically how nCas9(D10A) and Uracil Glycosylase Inhibitor (UGI) coordinate DNA repair pathways to maximize C•G to T•A conversion and prevent indels/transversions.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Precision Guide Design: From SpCas9 Knockouts to Cytosine & Adenine Base Editing",
+        "module_title": "Cytosine and Adenine Base Editor Architectures (BE4max & ABE8e)",
+        "learning_objective": "Distinguish the deamination chemistry, Cas9 nickase (D10A) role, and uracil glycosylase inhibition in CBEs."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.9,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Explain the specific biochemical roles of (1) the cytidine deaminase domain, (2) the Uracil Glycosylase Inhibitor (UGI) domains, and (3) the Cas9 D10A nickase mutation in BE4max during conversion of a `C•G` base pair to `T•A`.",
+        "reference_answer": "(1) The cytidine deaminase (e.g., rAPOBEC1) hydrolytically deaminates cytosine to uracil (U) on the displaced single-stranded non-target DNA strand within the R-loop, creating a U•G mismatch. (2) UGI inhibits endogenous Uracil DNA Glycosylase (UNG), preventing excision of the uracil into an abasic (AP) site (which would otherwise trigger base excision repair reversion to C•G or AP lyase cleavage causing indels and C-to-G/A transversions). (3) The Cas9 D10A mutation inactivates the RuvC domain while keeping the HNH domain active to nick the unedited G-containing target strand, biasing eukaryotic mismatch repair (MMR) to resynthesize the nicked strand using U as a template to yield U•A and then T•A.",
+        "required_concepts_for_user_goal": [
+          "cytidine deamination of C to U on the ssDNA non-target R-loop strand",
+          "UGI blocks UNG from excising U into an abasic (AP) site / prevents BER reversion and transversions",
+          "nCas9(D10A) uses HNH to nick the unedited G-containing target strand to bias mismatch repair (MMR) toward U•A / T•A"
+        ],
+        "grading_rubric": "For an advanced protein engineer with rigorous_formal preference, a high-level metaphor ('it rewrites letters without cutting both strands') is insufficient. The response must explicitly explain C->U deamination on the non-target ssDNA R-loop, UGI blocking UNG/abasic site formation, and D10A HNH nicking of the unedited G-strand to direct MMR."
+      },
+      "user_submission": {
+        "answer": "Instead of cutting both strands of DNA like wild-type Cas9, BE4max disables one cut and attaches an enzyme that chemically rewrites C into T directly in place so the cell doesn't make random indels.",
+        "response_time_seconds": 35
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.25,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "cytidine deamination of C to U on the ssDNA non-target R-loop strand",
+          "UGI blocks UNG from excising U into an abasic (AP) site / prevents BER reversion and transversions",
+          "nCas9(D10A) uses HNH to nick the unedited G-containing target strand to bias mismatch repair (MMR) toward U•A / T•A"
+        ],
+        "detected_misconception": "Conflates cytosine base editing with direct C-to-T conversion without a U•G intermediate, UNG inhibition, or target-strand nicking.",
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Acknowledge the high-level summary, but press for the specific three-step biochemical mechanism required for their goal: C->U deamination on the displaced non-target strand, UGI inhibition of UNG to prevent abasic site generation, and HNH nicking of the unedited G-strand to bias MMR.",
+        "rationale": "Even though almost the exact same answer was graded `is_right: true` in dg_bio_01 for a beginner PM seeking conceptual intuition, for an advanced protein engineer with `rigorous_formal` preference specifically learning nCas9(D10A) + UGI repair mechanics, this answer omits all three required biochemical mechanisms and must be marked `is_right: false` (`partially_correct`) with a follow-up short answer."
+      }
+    },
+    {
+      "id": "dg_bio_03",
+      "eval_type": "decision_grading",
+      "domain": "Single-Cell RNA-seq Analysis",
+      "user_profile": {
+        "what_user_wants_to_learn": "Practical Scanpy pipeline implementation for filtering doublets per 10x lane and integrating batches.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Rigorous Single-Cell Transcriptomics in Scanpy: From Raw UMI Matrices to Pseudobulk DE",
+        "module_title": "Droplet QC, Ambient RNA Decontamination, and Multiplet Detection",
+        "learning_objective": "Run Scrublet doublet detection separately per 10x capture lane rather than on a merged multi-sample matrix."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.75,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "You have 6 patient PBMC samples processed across 6 separate 10x Chromium microfluidic lanes. How should you run `scanpy.external.pp.scrublet` to detect heterotypic doublets?",
+        "options": [
+          "Pass `batch_key='lane_id'` (or run Scrublet separately on each 10x lane before concatenation) so artificial doublets are simulated only from cells that were physically co-encapsulated in the same microfluidic lane.",
+          "Concatenate all 6 lanes first and run Scrublet once globally without `batch_key` so the kNN classifier has a 6x larger training set.",
+          "Run Harmony batch integration first and then pass the batch-corrected PCA coordinates into Scrublet.",
+          "Filter out all cells with >2,500 genes instead of using Scrublet, because Scrublet only works on Smart-seq2 plate data."
+        ],
+        "reference_answer": "Pass `batch_key='lane_id'` (or run Scrublet separately on each 10x lane before concatenation) so artificial doublets are simulated only from cells that were physically co-encapsulated in the same microfluidic lane.",
+        "required_concepts_for_user_goal": [
+          "per-lane doublet simulation (physical co-encapsulation occurs within a single 10x lane)",
+          "avoiding cross-batch synthetic doublets"
+        ],
+        "grading_rubric": "Must select Option A."
+      },
+      "user_submission": {
+        "answer": "Pass `batch_key='lane_id'` (or run Scrublet separately on each 10x lane before concatenation) so artificial doublets are simulated only from cells that were physically co-encapsulated in the same microfluidic lane.",
+        "response_time_seconds": 19
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "per-lane doublet simulation (physical co-encapsulation occurs within a single 10x lane)",
+          "avoiding cross-batch synthetic doublets"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Confirm that physical doublets can only form between cells loaded in the same microfluidic channel, so Scrublet must simulate doublets per lane.",
+        "rationale": "The learner selected the exact right option quickly and has solid recent accuracy (0.75), warranting advancement to the next module."
+      }
+    },
+    {
+      "id": "dg_bio_04",
+      "eval_type": "decision_grading",
+      "domain": "PCR & Wet-Lab Troubleshooting",
+      "user_profile": {
+        "what_user_wants_to_learn": "Hands-on bench protocols to fix failed PCR reactions (what reagent to add or thermal cycler setting to change), without needing statistical thermodynamics derivations.",
+        "background_level": "beginner",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Systematic PCR & RT-qPCR Troubleshooting",
+        "module_title": "Overcoming High-GC Secondary Structures and Non-Specific Bands",
+        "learning_objective": "Select practical PCR additives and annealing temperature adjustments to resolve high-GC dropouts and non-specific amplification."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.8,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Your endpoint PCR for a 78% GC-rich target shows no product band on an agarose gel, even though your positive control primer pair on a 50% GC control locus worked in the same master mix. What two practical changes can you make at the bench for your next run to get the 78% GC target to amplify?",
+        "reference_answer": "Add a secondary-structure disrupting co-solvent such as 3–5% DMSO or 0.5–1 M Betaine (or manufacturer GC enhancer buffer), and increase the denaturation temperature/time (e.g., 98 °C with a high-fidelity polymerase) or run a touchdown/gradient annealing protocol (removing Mg2+ chelators or lowering annealing slightly when using DMSO since DMSO lowers primer Tm).",
+        "required_concepts_for_user_goal": [
+          "add a GC-melting additive/co-solvent (e.g., DMSO, Betaine, or GC Enhancer buffer)",
+          "adjust thermal cycling (e.g., longer/hotter denaturation step or annealing temperature gradient/adjustment for DMSO)"
+        ],
+        "grading_rubric": "For a bench technician with `practical_applied` preference, give full credit (`is_right: true`) if they name concrete, actionable wet-lab fixes (adding 3–5% DMSO or Betaine/GC enhancer, plus adjusting denaturation or annealing temperature). Do not penalize for omitting SantaLucia nearest-neighbor enthalpy/entropy formulas."
+      },
+      "user_submission": {
+        "answer": "1) Add 5% DMSO or 1 M Betaine (or the polymerase kit's GC Enhancer buffer) to help melt the GC hairpins. 2)Since DMSO lowers the effective Tm of the primers by ~0.6 °C per percent DMSO, run an annealing temperature gradient (or lower Ta by 2–3 °C) and make sure the initial denaturation step is long/hot enough (e.g., 98 °C for Q5).",
+        "response_time_seconds": 52
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "add a GC-melting additive/co-solvent (e.g., DMSO, Betaine, or GC Enhancer buffer)",
+          "adjust thermal cycling (e.g., longer/hotter denaturation step or annealing temperature gradient/adjustment for DMSO)"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Praise the practical rule of thumb that DMSO depresses primer Tm (~0.6 °C per % DMSO), requiring annealing temperature adjustment alongside hairpin disruption.",
+        "rationale": "Matches the user's practical wet-lab troubleshooting goal completely and includes the critical bench detail that DMSO lowers primer Tm."
+      }
+    },
+    {
+      "id": "dg_bio_05",
+      "eval_type": "decision_grading",
+      "domain": "Enzyme Kinetics & Assay Design",
+      "user_profile": {
+        "what_user_wants_to_learn": "Rigorous mathematical derivation and quantitative application of the Morrison equation for tight-binding inhibitors.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Quantitative Enzyme Kinetics & Inhibitor Characterization for Bioengineers",
+        "module_title": "Tight-Binding Inhibitors and the Morrison Quadratic Equation",
+        "learning_objective": "Recognize when inhibitor potency approaches total enzyme concentration (Ki,app <= 10 * [E]T) and apply the Morrison quadratic equation."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.6,
+        "prior_misconceptions": [
+          "Previously assumed [I]free = [I]total holds for sub-nanomolar inhibitors assayed at 10 nM enzyme concentration."
+        ]
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "You assay a competitive inhibitor with true $K_i = 0.05\\text{ nM}$ at $[S] = K_M$ using an enzyme concentration of $[E]_T = 20\\text{ nM}$. (1) Why does the standard Cheng-Prusoff relation ($\\text{IC}_{50} = K_i(1 + [S]/K_M) = 0.10\\text{ nM}$) fail to predict the experimentally observed $\\text{IC}_{50}$, and (2) what observed $\\text{IC}_{50}$ value will you actually measure in this assay?",
+        "reference_answer": "(1) The standard Michaelis-Menten and Cheng-Prusoff equations assume $[I]_{\\text{free}} \\approx [I]_T$ (negligible inhibitor depletion upon binding enzyme). When $[E]_T = 20\\text{ nM} \\gg K_i^{\\text{app}} = 0.10\\text{ nM}$, nearly every added inhibitor molecule is stoichiometricly sequestered into the $EI$ complex, violating $[I]_{\\text{free}} \\approx [I]_T$. (2) By the tight-binding conservation relationship $\\text{IC}_{50} = K_i^{\\text{app}} + \\frac{1}{2}[E]_T$, the observed $\\text{IC}_{50}$ will be $0.10\\text{ nM} + 0.5(20\\text{ nM}) = 10.1\\text{ nM}$ (bounded by the tight-binding limit $\\frac{1}{2}[E]_T = 10\\text{ nM}$).",
+        "required_concepts_for_user_goal": [
+          "violation of free inhibitor approximation ([I]free != [I]total due to stoichiometric inhibitor depletion by enzyme)",
+          "quantitative IC50 relationship for tight-binding inhibitors: IC50 = Ki,app + 0.5 * [E]T ≈ 10.1 nM"
+        ],
+        "grading_rubric": "Requires both (1) explaining stoichiometric inhibitor depletion ($[I]_T = [I]_{\\text{free}} + [EI]$) and (2) computing the quantitative observed $\\text{IC}_{50} = K_i(1+[S]/K_M) + [E]_T/2 = 10.1\\text{ nM}$ (or $\\approx 10\\text{ nM}$)."
+      },
+      "user_submission": {
+        "answer": "Cheng-Prusoff fails because the enzyme concentration (20 nM) is way higher than Ki, so most of the inhibitor gets soaked up binding to the enzyme and [I]_free is no longer equal to [I]_total.",
+        "response_time_seconds": 41
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.5,
+        "matched_concepts": [
+          "violation of free inhibitor approximation ([I]free != [I]total due to stoichiometric inhibitor depletion by enzyme)"
+        ],
+        "missed_concepts": [
+          "quantitative IC50 relationship for tight-binding inhibitors: IC50 = Ki,app + 0.5 * [E]T ≈ 10.1 nM"
+        ],
+        "detected_misconception": null,
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Validate that they overcame their prior misconception about [I]_free ≈ [I]_total, then ask them to complete part (2) by calculating the exact observed IC50 using IC50 = Ki,app + 0.5*[E]T.",
+        "rationale": "The learner correctly answered part (1) on stoichiometric inhibitor depletion (resolving their earlier misconception), but completely omitted part (2), which is essential for their `rigorous_formal` quantitative goal."
+      }
+    },
+    {
+      "id": "dg_bio_06",
+      "eval_type": "decision_grading",
+      "domain": "Protein Folding & Structure Prediction",
+      "user_profile": {
+        "what_user_wants_to_learn": "Interpreting AlphaFold confidence metrics (pLDDT and PAE) to avoid over-interpreting disordered regions and uncertain interfaces.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Interpreting AlphaFold Confidence Metrics: pLDDT, PAE, and Multimer Interfaces",
+        "module_title": "Local Confidence (pLDDT) and Intrinsically Disordered Regions (IDRs)",
+        "learning_objective": "Interpret per-residue pLDDT scores (0–100) and recognize low-pLDDT (<50) regions as indicators of intrinsic disorder."
+      },
+      "learner_state": {
+        "attempt_number": 2,
+        "recent_accuracy": 0.4,
+        "prior_misconceptions": [
+          "Assumed low pLDDT (<50) means a rigid hydrophobic transmembrane helix."
+        ]
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "In an AlphaFold2 monomer prediction, residues 1–85 form a long, ribbon-like loop wrapping loosely around the outside of the globular core, with per-residue pLDDT scores between 25 and 42. How should you interpret residues 1–85?",
+        "options": [
+          "A low-confidence region that is very likely intrinsically disordered in solution (or only folds upon binding an unmodeled partner); its specific 3D spatial trajectory in the PDB file should not be interpreted literally.",
+          "A highly rigid, well-packed beta-barrel domain whose side-chain rotamers are accurate to within 0.5 Å.",
+          "An alpha-helical transmembrane domain that has high structural certainty because pLDDT is an inverted error metric where lower numbers mean lower error in Ångströms.",
+          "A catalytic active site where low pLDDT proves the residues undergo covalent phosphorylation."
+        ],
+        "reference_answer": "A low-confidence region that is very likely intrinsically disordered in solution (or only folds upon binding an unmodeled partner); its specific 3D spatial trajectory in the PDB file should not be interpreted literally.",
+        "required_concepts_for_user_goal": [
+          "pLDDT is a 0–100 confidence score (higher is better), not an Ångström error metric",
+          "pLDDT < 50 indicates low confidence and is a strong predictor of intrinsic disorder"
+        ],
+        "grading_rubric": "Must select Option A. Choosing Option C indicates conflating pLDDT (0-100 confidence, higher=better) with PAE (Ångström error, lower=better)."
+      },
+      "user_submission": {
+        "answer": "An alpha-helical transmembrane domain that has high structural certainty because pLDDT is an inverted error metric where lower numbers mean lower error in Ångströms.",
+        "response_time_seconds": 24
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "pLDDT is a 0–100 confidence score (higher is better), not an Ångström error metric",
+          "pLDDT < 50 indicates low confidence and is a strong predictor of intrinsic disorder"
+        ],
+        "detected_misconception": "Confuses pLDDT (a 0–100 confidence scale where higher values mean higher confidence) with PAE (an error distance in Ångströms where lower values mean lower error), and persists in treating low-pLDDT ribbons as rigid transmembrane helices.",
+        "next_action": "re_explain_concept",
+        "feedback_focus": "Re-explain the scale difference between pLDDT (0–100 confidence score: >90 very high confidence, <50 very low confidence / disordered ribbon) and PAE (0–30+ Å distance error: lower Å is better).",
+        "rationale": "This is the learner's 2nd attempt with low recent accuracy (0.4), and they selected Option C, revealing a fundamental confusion between the directionality and units of pLDDT vs. PAE. The model should trigger `re_explain_concept` before asking another question."
+      }
+    },
+    {
+      "id": "dg_bio_07",
+      "eval_type": "decision_grading",
+      "domain": "Metabolic Flux Analysis & Systems Biology",
+      "user_profile": {
+        "what_user_wants_to_learn": "Constraint-based metabolic modeling (FBA and Flux Variability Analysis) in COBRApy to identify alternative optimal pathways.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Constraint-Based Metabolic Modeling in COBRApy",
+        "module_title": "Degeneracy of Optimal Solutions and Flux Variability Analysis (FVA)",
+        "learning_objective": "Explain why a single FBA linear program returns a unique optimal objective value Z* but non-unique reaction flux vectors v, and use FVA to bound each flux."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.95,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "When you run `solution = model.optimize()` in COBRApy to maximize biomass growth rate $\\mu$, the solver returns a single flux value $v_i$ for every internal reaction $i$. Why can relying on that single flux vector $v$ be misleading when comparing parallel metabolic pathways (e.g., glycolysis vs. Entner-Doudoroff), and how does Flux Variability Analysis (`cobra.flux_analysis.flux_variability_analysis`) solve this problem?",
+        "reference_answer": "Because metabolic networks are underdetermined ($m$ metabolites $< n$ reactions), the LP optimal hyperplane often intersects a face of the feasible flux cone, creating infinitely many alternate optimal flux vectors $v$ that all achieve the exact same maximum objective value $Z^*$. A single `model.optimize()` call returns just one arbitrary vertex/point chosen by the LP solver. FVA resolves this by fixing the objective at $Z \\ge \\gamma Z^*$ (e.g., $\\gamma = 1.0$ or $0.99$) and sequentially minimizing and maximizing each individual reaction flux $v_i$ across the network to determine its full feasible range $[v_i^{\\min}, v_i^{\\max}]$.",
+        "required_concepts_for_user_goal": [
+          "non-uniqueness / degeneracy of optimal flux distributions in underdetermined metabolic networks",
+          "FVA fixes the objective near its optimum (e.g. Z >= gamma * Z*) and minimizes/maximizes each individual reaction flux v_i"
+        ],
+        "grading_rubric": "Requires explaining (1) alternate optima / non-unique flux vectors achieving the same optimal objective Z*, and (2) how FVA constrains the objective to Z* (or fraction gamma*Z*) while solving min v_i and max v_i for each reaction."
+      },
+      "user_submission": {
+        "answer": "In an underdetermined stoichiometric network (more reactions than metabolites), there isn't a unique flux vector v at the optimal growth rate Z*—parallel pathways create a whole polytope face of alternate optimal flux distributions, and `model.optimize()` just hands back whichever arbitrary corner the simplex/interior-point solver landed on. FVA fixes the biomass objective to >= 100% (or 95–99%) of Z* and then runs 2n linear programs to find the minimum and maximum possible flux [v_min, v_max] for every reaction i.",
+        "response_time_seconds": 63
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "non-uniqueness / degeneracy of optimal flux distributions in underdetermined metabolic networks",
+          "FVA fixes the objective near its optimum (e.g. Z >= gamma * Z*) and minimizes/maximizes each individual reaction flux v_i"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "ask_harder_challenge",
+        "feedback_focus": "Commend the geometric insight on alternate optimal polytope faces and 2n LP formulations, and challenge the learner with a harder problem on loopless FVA (eliminating thermodynamically infeasible internal flux cycles).",
+        "rationale": "The learner has 0.95 recent accuracy and provided an exceptionally thorough, mathematically precise answer on alternate optima and 2n LP FVA formulations, making `ask_harder_challenge` (e.g., loopless FVA) the ideal next action."
+      }
+    },
+    {
+      "id": "dg_bio_08",
+      "eval_type": "decision_grading",
+      "domain": "Synthetic Gene Circuits",
+      "user_profile": {
+        "what_user_wants_to_learn": "Dynamical systems requirements for sustained oscillations in the Elowitz-Leibler repressilator.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Nonlinear Dynamics of Synthetic Gene Circuits",
+        "module_title": "Hopf Bifurcations and Ring Oscillators (The Repressilator)",
+        "learning_objective": "Identify the structural and kinetic design principles required to destabilize the symmetric steady state in a transcriptional repression ring."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.5,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "Which combination of circuit topology and biochemical kinetics favors sustained limit-cycle oscillations around an unstable symmetric fixed point in a synthetic transcriptional ring oscillator?",
+        "options": [
+          "An odd number of repressive nodes (overall negative feedback loop), high Hill cooperativity (ultrasensitivity, large n), and comparable mRNA and protein degradation rates (accomplished experimentally by adding ssrA protease degradation tags to the repressor proteins).",
+          "An even number of repressive nodes (overall positive feedback loop) with non-cooperative Michaelis-Menten repression (n = 1) and infinitely stable proteins.",
+          "Two mutually activating transcription factors with zero basal leakiness and no protein degradation.",
+          "Three repressive nodes where protein half-lives are 100x longer than mRNA half-lives and Hill cooperativity is strictly linear (n = 1)."
+        ],
+        "reference_answer": "An odd number of repressive nodes (overall negative feedback loop), high Hill cooperativity (ultrasensitivity, large n), and comparable mRNA and protein degradation rates (accomplished experimentally by adding ssrA protease degradation tags to the repressor proteins).",
+        "required_concepts_for_user_goal": [
+          "odd number of repressors (overall delayed negative feedback loop)",
+          "high Hill cooperativity (n > 1)",
+          "matched/comparable mRNA and protein decay timescales via ssrA tags"
+        ],
+        "grading_rubric": "Must select Option A. Selecting Option B confuses the bistable toggle switch (even number of repressors = positive feedback loop) with a ring oscillator."
+      },
+      "user_submission": {
+        "answer": "An even number of repressive nodes (overall positive feedback loop) with non-cooperative Michaelis-Menten repression (n = 1) and infinitely stable proteins.",
+        "response_time_seconds": 30
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "odd number of repressors (overall delayed negative feedback loop)",
+          "high Hill cooperativity (n > 1)",
+          "matched/comparable mRNA and protein decay timescales via ssrA tags"
+        ],
+        "detected_misconception": "Confuses an even-node mutual repression ring (which forms a net positive feedback loop yielding bistability, like the 2-node toggle switch) with an odd-node negative feedback ring required for oscillations.",
+        "next_action": "ask_remedial_multiple_choice",
+        "feedback_focus": "Trace the sign of the loop gain around an even-node vs. odd-node repression cycle: (-1)^2 = +1 (positive feedback -> bistable switch) vs. (-1)^3 = -1 (delayed negative feedback -> oscillator).",
+        "rationale": "The learner selected Option B on their first attempt, mixing up the parity rule for ring topologies (even = bistable positive feedback vs. odd = oscillatory negative feedback). Asking a remedial multiple-choice question on feedback loop sign parity is the right adaptive step."
+      }
+    },
+    {
+      "id": "dg_bio_09",
+      "eval_type": "decision_grading",
+      "domain": "Single-Cell RNA-seq Analysis",
+      "user_profile": {
+        "what_user_wants_to_learn": "Reading clinical immunology papers that use scRNA-seq UMAP plots and cluster marker dotplots (for an MD/medical fellow who does not write code or derive variational inference).",
+        "background_level": "beginner",
+        "rigor_preference": "conceptual_intuition"
+      },
+      "module_context": {
+        "course_title": "Reading Single-Cell Atlas Papers for Clinicians",
+        "module_title": "How to Interpret UMAP Plots and Batch Integration in Clinical Studies",
+        "learning_objective": "Understand what UMAP axes and inter-cluster distances can and cannot tell a reader about patient cell populations."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.85,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "In a clinical paper's UMAP figure of tumor-infiltrating leukocytes, the CD8+ T-cell cluster is plotted 2 cm away from the B-cell cluster and 8 cm away from the Neutrophil cluster. Can you conclude from the UMAP plot alone that B cells are 4 times more transcriptionally similar to CD8+ T cells than Neutrophils are? Why or why not?",
+        "reference_answer": "No. UMAP is a non-linear dimensionality reduction visualization designed to preserve local neighborhood relationships (grouping similar cells into nearby clusters), but global Euclidean distances between distant clusters and the absolute orientation of the UMAP1/UMAP2 axes are not quantitatively meaningful.",
+        "required_concepts_for_user_goal": [
+          "cannot conclude global quantitative similarity ratios from 2D UMAP inter-cluster distances",
+          "UMAP preserves local neighborhood structure rather than global Euclidean distances"
+        ],
+        "grading_rubric": "For a clinical fellow with `conceptual_intuition` preference, award full credit (`is_right: true`) if they state that UMAP preserves local neighbor groupings while global distances between far-apart clusters are distorted/non-quantitative. Do not require fuzzy simplicial set cross-entropy formulas."
+      },
+      "user_submission": {
+        "answer": "No, you cannot. UMAP is a non-linear visualization that keeps very similar cells together in local neighborhoods, but the large-scale distances between separate islands on the 2D page are stretched and compressed arbitrarily, so 8 cm vs 2 cm does not mean 4x more different.",
+        "response_time_seconds": 38
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "cannot conclude global quantitative similarity ratios from 2D UMAP inter-cluster distances",
+          "UMAP preserves local neighborhood structure rather than global Euclidean distances"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Reinforce this critical paper-reading rule: local neighborhoods on UMAP are meaningful, while global distances between separated clusters are not.",
+        "rationale": "For a clinician seeking conceptual intuition to read immunology papers critically, this answer accurately captures local vs. global distance preservation in UMAP without needing mathematical formalism."
+      }
+    },
+    {
+      "id": "dg_bio_10",
+      "eval_type": "decision_grading",
+      "domain": "PCR & Wet-Lab Troubleshooting",
+      "user_profile": {
+        "what_user_wants_to_learn": "Quantitative RT-qPCR efficiency calibration, standard curve slope interpretation, and why the 2^(-ddCt) Livak approximation fails when target and reference primer efficiencies diverge.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Quantitative RT-qPCR Assay Validation & MIQE Guidelines",
+        "module_title": "Amplification Efficiency, Standard Curves, and Pfaffl vs. Livak Relative Quantification",
+        "learning_objective": "Calculate amplification efficiency E from a log10 dilution series slope and apply the Pfaffl equation when target and reference efficiencies differ."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.7,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "A 10-fold serial dilution standard curve ($C_q$ plotted against $\\log_{10}(\\text{template copy number})$) for your target gene primer pair yields a linear regression slope of $m = -3.95$, whereas your housekeeping reference gene (ACTB) has a slope of $m = -3.32$. (1) Calculate the percentage amplification efficiency $E = (10^{-1/m} - 1) \\times 100\\%$ for both primer pairs, and (2) explain why using the standard $2^{-\\Delta\\Delta C_q}$ (Livak) formula across samples spanning a 6-cycle $C_q$ range will systematically bias your fold-change results, stating which equation you should use instead if you cannot redesign the primers.",
+        "reference_answer": "(1) For ACTB ($m = -3.32$), $E = (10^{1/3.32} - 1) \\times 100\\% \\approx 100\\%$ (doubling factor $1 + E = 2.00$ per cycle). For the target gene ($m = -3.95$), $E = (10^{1/3.95} - 1) \\times 100\\% = (1.791 - 1) \\times 100\\% \\approx 79.1\\%$ (amplification factor $1.791$ per cycle, outside the MIQE acceptable range of 90–110%). (2) The $2^{-\\Delta\\Delta C_q}$ Livak method assumes both target and reference genes amplify with identical ~100% efficiency (base 2 per cycle). Because the target only multiplies by $1.791$ per cycle while ACTB multiplies by $2.00$, normalizing via $\\Delta C_q = C_{q,\\text{target}} - C_{q,\\text{ref}}$ introduces a dilution-dependent error; you must instead use the Pfaffl efficiency-corrected relative quantification equation: $\\text{Ratio} = \\frac{(E_{\\text{target}})^{\\Delta C_{q,\\text{target}}(\\text{control} - \\text{sample})}}{(E_{\\text{ref}})^{\\Delta C_{q,\\text{ref}}(\\text{control} - \\text{sample})}}$.",
+        "required_concepts_for_user_goal": [
+          "quantitative efficiency calculation: m = -3.32 corresponds to ~100% efficiency, while m = -3.95 corresponds to ~79% efficiency",
+          "2^(-ddCq) assumes equal ~100% amplification efficiency (base 2) for both target and reference genes",
+          "use the Pfaffl efficiency-corrected equation (E_target^dCq_target / E_ref^dCq_ref)"
+        ],
+        "grading_rubric": "Requires (1) computing E ≈ 100% for m = -3.32 and E ≈ 79% for m = -3.95, (2) explaining that 2^(-ddCq) assumes equal base-2 doubling efficiency, and (3) naming/writing the Pfaffl efficiency-corrected formula."
+      },
+      "user_submission": {
+        "answer": "For slope = -3.32, efficiency E = (10^(1/3.32) - 1) = 100% (amplicon doubles by 2.0x each cycle). For slope = -3.95, E = (10^(1/3.95) - 1) = 79.1% (amplicon only increases by 1.79x each cycle). However, the 2^(-ddCq) formula automatically cancels out primer efficiency differences because you subtract the housekeeping gene Cq from the target Cq in both the treated and control samples.",
+        "response_time_seconds": 57
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.4,
+        "matched_concepts": [
+          "quantitative efficiency calculation: m = -3.32 corresponds to ~100% efficiency, while m = -3.95 corresponds to ~79% efficiency"
+        ],
+        "missed_concepts": [
+          "2^(-ddCq) assumes equal ~100% amplification efficiency (base 2) for both target and reference genes",
+          "use the Pfaffl efficiency-corrected equation (E_target^dCq_target / E_ref^dCq_ref)"
+        ],
+        "detected_misconception": "Believes that double-delta subtraction in 2^(-ddCq) cancels out unequal amplification efficiencies between the target gene (1.79x/cycle) and reference gene (2.00x/cycle).",
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Confirm the exact efficiency calculations (100% vs. 79.1%), then demonstrate algebraically why (1.79)^(-dCq_target) / (2.00)^(-dCq_ref) cannot be simplified to 2^(-(dCq_target - dCq_ref)) and guide them to the Pfaffl equation.",
+        "rationale": "The learner calculated the standard curve efficiencies (100% and 79.1%) accurately in part (1), but expressed a classic RT-qPCR misconception in part (2)—claiming $\\Delta\\Delta C_q$ subtraction cancels unequal base efficiencies ($1.791 \\neq 2.00$) rather than using the Pfaffl equation."
+      }
+    }
+  ]
+}

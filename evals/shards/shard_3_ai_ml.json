@@ -1,0 +1,1451 @@
+{
+  "shard_id": "shard_3_ai_ml",
+  "domain_focus": "AI/ML, LLM Evaluations, Decision Models & Reinforcement Learning",
+  "course_quality_evals": [
+    {
+      "id": "cq_ai_01",
+      "eval_type": "course_quality",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_context": {
+        "prompt": "I am an ML systems engineer building a low-latency LLM serving engine. Teach me how Self-Attention memory bottlenecks work and how KV Caching, Grouped-Query Attention (GQA), and PagedAttention solve them.",
+        "what_user_wants_to_learn": "Memory bandwidth bottlenecks in autoregressive decoding, KV cache sizing math, Grouped-Query Attention (GQA) vs Multi-Head Attention (MHA), and PagedAttention block management.",
+        "background_level": "advanced",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "description": "A deep technical course on memory-bound autoregressive LLM decoding, KV cache memory footprint calculations, architectural head sharing via GQA, and virtual memory block management with PagedAttention.",
+        "target_audience": "Advanced ML systems engineers optimizing LLM serving throughput and latency.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Prefill vs. Decode: Arithmetic Intensity and the Memory Wall",
+            "learning_objective": "Distinguish compute-bound prefill from memory-bandwidth-bound autoregressive decoding and calculate exact KV cache byte footprints per token.",
+            "summary": "Covers prefill matrix-matrix operations vs decode matrix-vector operations, roofline model arithmetic intensity, and deriving the formula 2 * layers * n_kv_heads * d_head * precision_bytes * seq_len.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Calculate the exact KV cache footprint in GB for a 70B model with 80 layers, 64 query heads, 8 KV heads, head dimension 128, FP16 precision, batch size 16, and sequence length 4096.",
+              "Why does increasing batch size during the decode phase improve GPU compute utilization up to the roofline knee point?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Multi-Head (MHA), Multi-Query (MQA), and Grouped-Query Attention (GQA)",
+            "learning_objective": "Analyze how sharing Key and Value projections across query head groups reduces KV cache memory bandwidth overhead while preserving model quality.",
+            "summary": "Compares standard MHA, extreme MQA (1 KV head), and GQA (g groups of query heads sharing KV heads), examining tensor shapes and broadcast mechanics during attention score computation.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "In Grouped-Query Attention with 32 query heads and 4 KV heads, how are Key tensors broadcast or repeated to compute QK^T?",
+              "What is the primary trade-off between Multi-Query Attention (MQA) and Grouped-Query Attention (GQA) when uptraining an existing MHA checkpoint?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Eliminating Fragmentation with PagedAttention",
+            "learning_objective": "Explain internal and external memory fragmentation in contiguous KV cache allocation and how PagedAttention maps logical token blocks to non-contiguous physical GPU memory blocks.",
+            "summary": "Examines why pre-allocating max_seq_len contiguous buffers wastes 60-80% of VRAM, how block tables map logical blocks to fixed-size physical KV blocks, and copy-on-write mechanics for parallel sampling and beam search.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "How does PagedAttention handle shared prefixes across multiple candidate completions using reference counts and copy-on-write?",
+              "Which type of memory fragmentation occurs when a request reserves 2048 token slots contiguously in VRAM but terminates after generating 150 tokens?"
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Continuous Batching & FlashDecoding Kernel Mechanics",
+            "learning_objective": "Combine iteration-level scheduling with parallelized sequence-dimension reduction in FlashDecoding to maximize tokens/sec under SLA latency bounds.",
+            "summary": "Covers iteration-level batching (replacing completed sequences immediately without waiting for stragglers) and splitting KV cache across the sequence length dimension with online softmax rescaling.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does standard FlashAttention underutilize streaming multiprocessors (SMs) during small-batch autoregressive decoding, and how does FlashDecoding fix this?",
+              "Explain how online softmax combines partial attention outputs across split KV sequence chunks using log-sum-exp rescaling factors."
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "The course directly targets the advanced systems engineer's goal, progressing logically from roofline arithmetic intensity and exact KV cache byte math to GQA head sharing, PagedAttention virtual block tables, and continuous batching. Every module integrates both multiple-choice and rigorous short-answer assessments."
+      }
+    },
+    {
+      "id": "cq_ai_02",
+      "eval_type": "course_quality",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_context": {
+        "prompt": "I know supervised fine-tuning (SFT), and now I want to understand the math and engineering behind RLHF (Bradley-Terry reward modeling + PPO) and how DPO eliminates the separate reward model.",
+        "what_user_wants_to_learn": "Bradley-Terry preference modeling, PPO objective with KL penalty in RLHF, the closed-form derivation of DPO via the optimal policy-reward mapping, and practical failure modes like reward hacking and likelihood displacement.",
+        "background_level": "advanced",
+        "time_budget_minutes": 50
+      },
+      "candidate_course": {
+        "title": "Mathematical & Practical Foundations of LLM Preference Alignment: RLHF to DPO",
+        "description": "A rigorous progression from pairwise preference modeling and four-model PPO loops to Direct Preference Optimization (DPO) and alignment pathology debugging.",
+        "target_audience": "ML researchers and engineers experienced with SFT who want deep mathematical and practical mastery of preference alignment.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Pairwise Human Preferences & The Bradley-Terry Reward Model",
+            "learning_objective": "Derive the cross-entropy loss for training a reward model on pairwise comparisons (y_w > y_l | x) under the Bradley-Terry probabilistic framework.",
+            "summary": "Formulates preference probability P(y_w > y_l | x) = sigma(r(x, y_w) - r(x, y_l)), explains why reward scores are shift-invariant per prompt, and covers sequence-level scalar head architecture.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why is adding a prompt-dependent function f(x) to a reward model r(x, y) neutral under the Bradley-Terry preference probability?",
+              "Which token position's hidden state is typically projected to produce the scalar reward in a causal decoder-only reward model?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "KL-Regularized Reinforcement Learning & The Four-Model PPO Loop",
+            "learning_objective": "Formulate the KL-constrained reward maximization objective and explain the roles of the Actor, Reference Policy, Critic, and Reward Model in RLHF.",
+            "summary": "Covers the objective E[r(x,y) - beta * D_KL(pi_theta || pi_ref)], why omitting the KL penalty causes mode collapse and reward over-optimization, and the memory pressure of hosting four models in VRAM.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "What happens to policy entropy and reward model scores if beta (the KL penalty coefficient) is set too close to zero during PPO?",
+              "Explain the distinct functions of the frozen reference policy (pi_ref) and the trainable value critic (V_phi) during a PPO update step."
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Direct Preference Optimization (DPO): Reparameterizing the Optimal Policy",
+            "learning_objective": "Derive the DPO loss by expressing the ground-truth reward in terms of the optimal policy pi* and reference policy pi_ref, eliminating the explicit reward model and RL sampling loop.",
+            "summary": "Shows r(x,y) = beta * log(pi*(y|x)/pi_ref(y|x)) + beta * log Z(x), cancels the intractable partition function Z(x) inside the Bradley-Terry difference, and analyzes the per-example gradient weighting term.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "How does the partition function Z(x) disappear when substituting the analytical optimal policy rearrangement into the Bradley-Terry preference model?",
+              "Interpret the gradient weight factor sigma(beta * log(pi_theta(y_l|x)/pi_ref(y_l|x)) - beta * log(pi_theta(y_w|x)/pi_ref(y_w|x))) in the DPO loss gradient."
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Alignment Pathologies: Length Bias, Likelihood Displacement & Off-Policy Drift",
+            "learning_objective": "Diagnose practical pathologies in DPO and RLHF including verbosity bias, simultaneous decrease in log-probability of both chosen and rejected responses, and distribution shift.",
+            "summary": "Compares online on-policy sampling in PPO vs offline static preference datasets in DPO, length-normalized variants (SimPO/IPO), and monitoring implicit reward margins during training.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why can DPO decrease the absolute log-likelihood of the winning response y_w while still increasing the implicit reward margin between y_w and y_l?",
+              "How does length bias emerge in unnormalized sequence-level log-probability ratios, and how do length-controlled objectives mitigate it?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "Excellently structured progression from Bradley-Terry reward modeling to KL-regularized PPO, followed by the exact mathematical bridge to DPO (partition function cancellation and implicit reward gradients) and real-world pathologies."
+      }
+    },
+    {
+      "id": "cq_ai_03",
+      "eval_type": "course_quality",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_context": {
+        "prompt": "We are building an adaptive educational platform using a JEV-style Clef decision classifier and LLM-as-a-judge pipeline. Teach our engineering team how to mitigate judge biases, calibrate verifier probabilities, and compute bias-corrected accuracy estimates.",
+        "what_user_wants_to_learn": "LLM-as-a-Judge biases (position, verbosity, self-preference), JEV/Clef decision threshold calibration (ECE, Brier score, temperature scaling), and Rogan-Gladen correction for estimating true pass rates with an imperfect classifier.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "description": "Learn how to design, debias, and statistically calibrate LLM verifiers and JEV-style Clef decision models for high-stakes adaptive grading and evaluation pipelines.",
+        "target_audience": "AI engineers building automated evaluation pipelines and adaptive decision systems.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Anatomy of LLM-as-a-Judge Biases and Rubric Decomposition",
+            "learning_objective": "Identify and mitigate position bias, verbosity bias, and self-enhancement bias using position-swapped pairwise evaluation and atomic binary/pointwise rubrics.",
+            "summary": "Demonstrates why 1-10 holistic Likert scales yield low inter-annotator agreement (Cohen's Kappa) and how decomposing rubrics into explicit boolean criteria plus position swapping stabilizes judge outputs.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "When running pairwise comparisons between Model A and Model B, how do you detect and handle inconsistent judgments after swapping the order of responses?",
+              "Why do decomposed binary rubric checklists outperform unconstrained 1-to-10 integer scoring prompts in LLM evaluators?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "JEV-Style Clef Decision Models: Conditioning on Goal & Learner State",
+            "learning_objective": "Design a contextual decision classifier that evaluates student responses relative to user-specific learning goals, rigor preferences, and historical misconceptions.",
+            "summary": "Explains why correctness in adaptive learning is conditioned on (question, reference_rubric, user_goal, rigor_preference) rather than static string matching, and how Clef classifiers map token logprobs to structured pedagogical actions.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Give an example where identical student answers should receive different `is_right` decisions from a Clef classifier based solely on the user's `rigor_preference`.",
+              "How do you extract normalized decision probabilities from first-token logits of a fine-tuned classifier head?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Probability Calibration, Expected Calibration Error (ECE) & Temperature Scaling",
+            "learning_objective": "Compute Brier Score and Expected Calibration Error (ECE) on a held-out gold human set and apply post-hoc Temperature Scaling or Platt Scaling to calibrate decision thresholds.",
+            "summary": "Covers reliability diagrams, why RLHF/instruction-tuned models are systematically overconfident (sharpened logit distributions), and fitting scalar temperature T > 1 on validation logits without changing argmax accuracy.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does post-hoc single-parameter Temperature Scaling alter Expected Calibration Error (ECE) and Brier Score while leaving top-1 classification accuracy unchanged?",
+              "Calculate the Expected Calibration Error (ECE) across two confidence bins given bin sample counts, mean predicted probabilities, and empirical accuracies."
+            ]
+          },
+          {
+            "module_number": 4,
+            "title": "Estimating True System Performance with Imperfect Judges (Rogan-Gladen & CIs)",
+            "learning_objective": "Apply the Rogan-Gladen estimator and bootstrap confidence intervals to adjust raw judge pass rates using the judge's measured sensitivity (TPR) and specificity (TNR) on a gold audit set.",
+            "summary": "Derives p_hat = (q_raw + q_0 - 1) / (q_1 + q_0 - 1) where q_1 is sensitivity and q_0 is specificity, showing how uncorrected biases skew benchmark rankings.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "If an LLM judge has sensitivity TPR = 0.90 and specificity TNR = 0.80 on a human-labeled gold set, and predicts a raw pass rate of 0.62 on production traffic, what is the Rogan-Gladen bias-corrected true pass rate?",
+              "Why must uncertainty from both the finite gold calibration set and the test evaluation set be propagated when constructing confidence intervals?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 5,
+          "depth_and_accuracy": 5,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "Directly addresses all three aspects of the user's request—judge biases, JEV/Clef conditional decision modeling with probability calibration (ECE, Brier, temperature scaling), and Rogan-Gladen statistical bias correction—at an appropriate intermediate-to-advanced engineering depth."
+      }
+    },
+    {
+      "id": "cq_ai_04",
+      "eval_type": "course_quality",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_context": {
+        "prompt": "I am a backend product engineer new to LLMs. I need a practical guide on when to use RAG vs LoRA fine-tuning, how hybrid search + cross-encoder reranking works in RAG, and how LoRA adapts weights without blowing up GPU memory.",
+        "what_user_wants_to_learn": "Architectural decision framework for RAG vs LoRA, hybrid lexical/dense retrieval with cross-encoder reranking, and low-rank decomposition (W_0 + BA) in LoRA/QLoRA.",
+        "background_level": "beginner",
+        "time_budget_minutes": 40
+      },
+      "candidate_course": {
+        "title": "Practical LLM Customization: Mastering RAG Pipelines and LoRA Fine-Tuning",
+        "description": "An accessible, applied engineering course teaching when to retrieve external knowledge with Hybrid RAG versus adapting model behavior and style with Low-Rank Adaptation (LoRA).",
+        "target_audience": "Software and backend engineers new to ML customization workflows.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "RAG vs. Fine-Tuning: Knowledge Injection vs. Behavioral Adaptation",
+            "learning_objective": "Decide whether a product requirement calls for RAG, LoRA fine-tuning, or both based on data volatility, citation requirements, and output format constraints.",
+            "summary": "Contrasts non-parametric runtime context injection (RAG) for dynamic facts and access control against parametric weight updates (LoRA) for domain-specific tone, structured DSL output, and latency reduction.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "A healthcare startup needs an assistant that answers questions over daily-updated patient insurance policies with strict row-level user permissions and source citations. Should they use RAG or LoRA, and why?",
+              "Why is fine-tuning alone unreliable for teaching a base LLM rapidly changing inventory prices?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Production RAG: Chunking, Hybrid Retrieval (BM25 + Dense), and Cross-Encoder Reranking",
+            "learning_objective": "Explain how lexical search (BM25) complements dense bi-encoder embeddings via Reciprocal Rank Fusion (RRF), and why a two-stage pipeline uses a Cross-Encoder for top-K reranking.",
+            "summary": "Covers semantic vs exact-keyword failure modes (part numbers, error codes), combining rankings with RRF, and the latency/accuracy trade-off between bi-encoders (independent encoding) and cross-encoders (joint query-document self-attention).",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why does a dense bi-encoder often struggle with exact alphanumeric SKU codes like 'ERR-9042-BX', and how does hybrid search with BM25 solve this?",
+              "Why can't we run a Cross-Encoder directly over all 1,000,000 documents in our corpus at query time?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "How LoRA & QLoRA Work: Low-Rank Weight Updates on a Single GPU",
+            "learning_objective": "Describe how LoRA freezes base weights W_0 and trains small low-rank matrices B and A (rank r << d), and how 4-bit NormalFloat quantization in QLoRA further cuts VRAM.",
+            "summary": "Walks through Delta W = (alpha/r) * B * A, explains why zero-initializing B and Gaussian-initializing A guarantees the adapter starts as an exact identity pass-through, and shows how merging adapters incurs zero inference latency overhead.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "In LoRA, matrix A is initialized with random Gaussian noise and matrix B is initialized to all zeros. Why is this specific initialization used at the start of training?",
+              "How does LoRA reduce optimizer state memory (AdamW moments) compared to full-parameter fine-tuning?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": true,
+        "quality_score": 4,
+        "rubric_breakdown": {
+          "alignment_with_goal": 5,
+          "pedagogical_progression": 5,
+          "module_coherence": 4,
+          "depth_and_accuracy": 4,
+          "assessment_mix": 5
+        },
+        "failure_modes": [],
+        "rationale": "Well-calibrated for a software engineer beginner to ML: builds clear intuition and practical engineering trade-offs across RAG vs LoRA, hybrid BM25+dense retrieval with cross-encoder reranking, and LoRA's low-rank matrix decomposition within the 40-minute budget."
+      }
+    },
+    {
+      "id": "cq_ai_05",
+      "eval_type": "course_quality",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_context": {
+        "prompt": "I am a frontend web developer who has never trained or deployed an ML model. I want a gentle conceptual introduction to how ChatGPT generates text one token at a time and why long prompts cost more.",
+        "what_user_wants_to_learn": "High-level conceptual intuition for tokenization, next-token prediction, and why longer context windows increase memory and compute cost.",
+        "background_level": "beginner",
+        "time_budget_minutes": 25
+      },
+      "candidate_course": {
+        "title": "CUDA Warp-Level Primitives, FlashAttention-3 Hopper TMA & PagedAttention PTX Kernels",
+        "description": "Write custom C++/CUDA PTX kernels utilizing asynchronous Tensor Memory Accelerator (TMA) loads, warp-group matrix multiply-accumulate (WGMMA), and FP8 block scaling on NVIDIA H100 GPUs.",
+        "target_audience": "Beginner web developers curious about ChatGPT.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Asynchronous WGMMA & Shared Memory Bank Conflict Avoidance in SM90",
+            "learning_objective": "Derive swizzled shared memory layouts in CUDA to eliminate 32-way bank conflicts during FP8 WGMMA instructions on Hopper H100.",
+            "summary": "Covers `wgmma.mma_async.sync.aligned.m64n128k32`, register pressure per thread block, and producer-consumer warp specialization using hardware barriers.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Which PTX instruction commits an asynchronous WGMMA group before waiting on `wgmma.wait_group.sync.aligned`?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Non-Contiguous Block Table Indexing in Triton & Custom CUDA Kernels",
+            "learning_objective": "Implement vectorized float4 global memory loads across non-contiguous physical KV pages using warp-level shuffles.",
+            "summary": "Calculates stride offsets for `[num_blocks, num_kv_heads, head_size // x, block_size, x]` memory layouts and benchmarks L2 cache hit rates.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "What is the optimal `x` vectorization factor in bytes for FP16 KV cache loads to maximize 128-byte cache line coalescing?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Online Softmax Rescaling with Warp-Level `__shfl_xor_sync` Reductions",
+            "learning_objective": "Write register-level butterfly reductions for running max `m_i` and normalization denominator `l_i` across 32 threads in a warp.",
+            "summary": "Analyzes IEEE-754 underflow edge cases in exp2f fast-math approximations and warp divergence penalties.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "How many `__shfl_xor_sync` iterations are required to reduce a thread-local maximum across a full 32-thread CUDA warp?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 1,
+          "module_coherence": 3,
+          "depth_and_accuracy": 3,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "too_advanced_for_beginner",
+          "prerequisite_inversion",
+          "no_short_answer_questions"
+        ],
+        "rationale": "The user is a beginner frontend web developer asking for a 25-minute conceptual overview of tokens and context window costs, but the course immediately jumps into Hopper H100 CUDA PTX assembly, WGMMA instructions, and warp-level reductions without ever explaining tokens or basic next-token prediction. It also lacks any short-answer questions."
+      }
+    },
+    {
+      "id": "cq_ai_06",
+      "eval_type": "course_quality",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_context": {
+        "prompt": "Teach me how Direct Preference Optimization (DPO) works for LLM alignment and how it compares to PPO-based RLHF.",
+        "what_user_wants_to_learn": "How DPO optimizes policy weights directly on preference pairs without training a separate reward model or running PPO sampling.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 40
+      },
+      "candidate_course": {
+        "title": "Mastering Direct Preference Optimization (DPO) for LLMs",
+        "description": "Learn how DPO trains reinforcement learning critics and runs Monte Carlo Tree Search over bidirectional LSTM encoders.",
+        "target_audience": "Intermediate ML practitioners.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Training the Two Value Critics and Separate Reward Network in DPO",
+            "learning_objective": "Understand why DPO requires training three separate reward models and a Generalized Advantage Estimation (GAE) critic simultaneously in GPU memory.",
+            "summary": "Explains that DPO stands for Dual Policy Critic Optimization, which doubles the number of critic networks compared to PPO and uses online rollout sampling at temperature 2.5.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "How many separate reward and value networks must be updated via backpropagation during each step of DPO?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Replacing Self-Attention with Vanishing Gradient RNNs in DPO",
+            "learning_objective": "Learn how DPO removes all Transformer attention layers and converts the LLM into a 1-layer Elman RNN to prevent KL divergence.",
+            "summary": "Details how DPO deletes Key and Query matrices and relies on TF-IDF bag-of-words vectors to compute token probabilities.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Why does DPO delete the Transformer self-attention mechanism before training?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Computing the KL Penalty Using Euclidean Distance of Token IDs",
+            "learning_objective": "Calculate the KL divergence by subtracting the integer vocabulary IDs of chosen and rejected tokens.",
+            "summary": "Shows that KL divergence between two probability distributions is simply the absolute difference between integer tokenizer IDs divided by vocabulary size.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "If token A has ID 500 and token B has ID 200, what is the KL divergence between the policy and reference model?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 1,
+          "module_coherence": 1,
+          "depth_and_accuracy": 1,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "outdated_or_inaccurate_concepts",
+          "no_short_answer_questions"
+        ],
+        "rationale": "The course is riddled with severe technical hallucinations and factual falsehoods: it claims DPO trains multiple separate reward/critic networks (the exact opposite of DPO's core contribution), claims DPO converts Transformers into Elman RNNs, and defines KL divergence as subtracting integer vocabulary IDs. It also includes only multiple-choice questions."
+      }
+    },
+    {
+      "id": "cq_ai_07",
+      "eval_type": "course_quality",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_context": {
+        "prompt": "I want to learn how to build a production RAG evaluation suite (measuring context recall, faithfulness/groundedness, and answer relevance) and debug retrieval vs generation failures.",
+        "what_user_wants_to_learn": "RAG evaluation metrics (context precision/recall, faithfulness/hallucination detection, answer relevance) and systematic debugging of retrieval vs generation bottlenecks.",
+        "background_level": "intermediate",
+        "time_budget_minutes": 45
+      },
+      "candidate_course": {
+        "title": "Evaluating RAG Systems and Building Frontend CSS Animations",
+        "description": "Start with a brief mention of RAG, then dive deep into CSS Flexbox, SVG keyframe animations, and PostgreSQL vacuum tuning.",
+        "target_audience": "Intermediate AI engineers.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "What is Retrieval-Augmented Generation?",
+            "learning_objective": "Define RAG at a high level as fetching documents before calling an LLM.",
+            "summary": "A brief two-paragraph overview that RAG retrieves text chunks from a database and puts them in a prompt.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "What does the acronym RAG stand for?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Mastering CSS Grid and Cubic-Bezier Keyframe Transitions",
+            "learning_objective": "Create smooth 60fps CSS hover animations and responsive dashboard layouts using CSS Grid.",
+            "summary": "Covers `grid-template-columns`, hardware-accelerated `transform: translate3d`, and styling dark-mode buttons in Tailwind CSS.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Which CSS property triggers browser composite layer promotion without triggering layout recalculation?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "Webpack Bundle Splitting and Tree Shaking for React Apps",
+            "learning_objective": "Reduce JavaScript bundle sizes by configuring dynamic imports and dead-code elimination in Webpack 5.",
+            "summary": "Walks through `SplitChunksPlugin`, ES module static analysis, and source-map debugging for React single-page applications.",
+            "question_types_included": ["multiple_choice", "short_answer"],
+            "sample_question_prompts": [
+              "Why do CommonJS `require()` statements prevent static tree-shaking in Webpack?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "alignment_with_goal": 1,
+          "pedagogical_progression": 1,
+          "module_coherence": 1,
+          "depth_and_accuracy": 2,
+          "assessment_mix": 3
+        },
+        "failure_modes": [
+          "off_topic_drift",
+          "superficial_coverage"
+        ],
+        "rationale": "The user specifically asked to learn RAG evaluation metrics (context recall, faithfulness, answer relevance) and failure debugging. Module 1 barely defines the RAG acronym, and Modules 2 and 3 drift completely off-topic into CSS animations and Webpack bundle splitting."
+      }
+    },
+    {
+      "id": "cq_ai_08",
+      "eval_type": "course_quality",
+      "domain": "Reinforcement Learning & Policy Gradient Methods",
+      "user_context": {
+        "prompt": "I am new to reinforcement learning and know basic calculus and probability. Teach me MDPs, policy gradients (REINFORCE), variance reduction with baselines, and Actor-Critic / PPO in a clear step-by-step order.",
+        "what_user_wants_to_learn": "Foundational progression from Markov Decision Processes (states, actions, rewards, return) to REINFORCE log-derivative policy gradients, baseline variance reduction, and PPO clipped surrogate objectives.",
+        "background_level": "beginner",
+        "time_budget_minutes": 60
+      },
+      "candidate_course": {
+        "title": "Reinforcement Learning from Clipped PPO Backwards to MDPs",
+        "description": "Jump straight into multi-node distributed PPO clipping ratios and GAE lambda return tensors before defining what a state, action, or reward is.",
+        "target_audience": "Beginners to reinforcement learning.",
+        "modules": [
+          {
+            "module_number": 1,
+            "title": "Clipped Surrogate Objectives and Dual-Ratio KL Bounds in PPO-Clip",
+            "learning_objective": "Optimize `min(r_t(theta) * A_t, clip(r_t(theta), 1-eps, 1+eps) * A_t)` with Generalized Advantage Estimation (GAE-Lambda) across pessimistic lower bounds.",
+            "summary": "Dives directly into importance sampling probability ratios `pi_theta(a_t|s_t) / pi_theta_old(a_t|s_t)` and GAE exponentially-weighted TD residuals without defining policies, value functions, or MDPs.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "When A_t < 0 and r_t(theta) > 1 + epsilon, what is the gradient of the clipped PPO surrogate objective with respect to theta?"
+            ]
+          },
+          {
+            "module_number": 2,
+            "title": "Subtracted State-Value Baselines and Control Variates in REINFORCE",
+            "learning_objective": "Prove that subtracting V(s_t) from the Monte Carlo return G_t leaves the expected policy gradient unbiased while reducing variance.",
+            "summary": "Uses the log-derivative trick `E[grad log pi(a|s) * b(s)] = 0` assuming prior familiarity with trajectories and discounted returns.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "Why does the expected value of `grad_theta log pi_theta(a_t|s_t) * V(s_t)` equal zero?"
+            ]
+          },
+          {
+            "module_number": 3,
+            "title": "What is a Markov Decision Process (States, Actions, Rewards)?",
+            "learning_objective": "Define an agent, environment, state space S, action space A, transition dynamics P(s'|s,a), scalar reward R, and discount factor gamma.",
+            "summary": "Introduces the basic vocabulary of reinforcement learning, defining what an action, state, and discounted cumulative return G_t are for the very first time.",
+            "question_types_included": ["multiple_choice"],
+            "sample_question_prompts": [
+              "In a Markov Decision Process, what does the discount factor gamma in [0, 1) control?"
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "is_good_course": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "alignment_with_goal": 2,
+          "pedagogical_progression": 1,
+          "module_coherence": 2,
+          "depth_and_accuracy": 3,
+          "assessment_mix": 1
+        },
+        "failure_modes": [
+          "prerequisite_inversion",
+          "no_short_answer_questions"
+        ],
+        "rationale": "Exhibits severe prerequisite inversion: it teaches PPO clipped importance sampling ratios and GAE-Lambda in Module 1, control variate baselines in Module 2, and waits until Module 3 to introduce what a state, action, reward, and return G_t are. Furthermore, it contains zero short-answer questions across all modules."
+      }
+    }
+  ],
+  "question_quality_evals": [
+    {
+      "id": "qq_ai_01",
+      "eval_type": "question_quality",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_context": {
+        "what_user_wants_to_learn": "Exact KV cache memory sizing and why Grouped-Query Attention (GQA) reduces memory bandwidth pressure.",
+        "background_level": "advanced",
+        "prior_feedback_summary": "User accurately explained self-attention complexity O(N^2) during prefill, now ready for quantitative KV cache calculations."
+      },
+      "module_context": {
+        "course_title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "module_title": "Multi-Head (MHA), Multi-Query (MQA), and Grouped-Query Attention (GQA)",
+        "learning_objective": "Calculate KV cache memory footprint reductions when transitioning from Multi-Head Attention to Grouped-Query Attention."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Consider a 32-layer Transformer with hidden dimension d_model = 4096, 32 query heads, head dimension d_head = 128, and FP16 (2 bytes per element) KV cache storage. If the architecture is converted from standard Multi-Head Attention (32 KV heads) to Grouped-Query Attention with 4 KV heads (GQA-4), how much KV cache memory is required to store a single sequence of 8,192 tokens?",
+        "options": [
+          "512 MB (reduced by 8x from 4,096 MB in MHA)",
+          "1,024 MB (reduced by 4x from 4,096 MB in MHA)",
+          "256 MB (reduced by 8x from 2,048 MB in MHA)",
+          "4,096 MB (GQA reduces parameter count in W_Q, not KV cache size)"
+        ],
+        "correct_answer": "512 MB (reduced by 8x from 4,096 MB in MHA)",
+        "grading_notes": "Formula: 2 (K and V) * 32 layers * 4 KV_heads * 128 d_head * 2 bytes (FP16) * 8192 tokens = 536,870,912 bytes = 512 MiB (or MB in binary megabytes). Distractor 2 forgets the 8x ratio; Distractor 3 forgets the factor of 2 for both K and V; Distractor 4 tests the misconception that GQA compresses query weights rather than KV cache."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Clear, unambiguous quantitative question tailored to an advanced learner. Every distractor maps to a specific diagnostic error (forgetting the factor of 2 for K+V, miscalculating the head reduction ratio, or confusing KV cache compression with query weight compression)."
+      }
+    },
+    {
+      "id": "qq_ai_02",
+      "eval_type": "question_quality",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_context": {
+        "what_user_wants_to_learn": "How the DPO loss gradient weights examples based on implicit reward margins and why reference policy log-ratios matter.",
+        "background_level": "advanced",
+        "prior_feedback_summary": "User mastered the Bradley-Terry reward formulation and is now analyzing the mechanics of the DPO loss gradient."
+      },
+      "module_context": {
+        "course_title": "Mathematical & Practical Foundations of LLM Preference Alignment: RLHF to DPO",
+        "module_title": "Direct Preference Optimization (DPO): Reparameterizing the Optimal Policy",
+        "learning_objective": "Derive and interpret the gradient of the DPO loss with respect to policy parameters theta."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "In the gradient of the DPO loss with respect to policy parameters theta, each preference pair (x, y_w, y_l) is weighted by the scalar term sigma(r_hat(x, y_l) - r_hat(x, y_w)), where r_hat(x, y) = beta * log(pi_theta(y|x) / pi_ref(y|x)). Explain what this weighting term does dynamically when the implicit reward model currently ranks the rejected response y_l higher than the winning response y_w, and why omitting the normalization by pi_ref(y|x) would cause policy degradation.",
+        "correct_answer": "When the implicit reward model incorrectly assigns a higher score to the rejected response y_l than to the chosen response y_w (so r_hat(x, y_l) - r_hat(x, y_w) > 0), the sigmoid weight sigma(...) exceeds 0.5 and approaches 1, scaling up the gradient update for pairs where the policy's implicit ranking is most wrong. Conversely, when y_w is already strongly preferred over y_l, the weight approaches 0. Omitting pi_ref(y|x) removes the KL-divergence anchor to the reference policy, causing the model to degenerate by assigning high probability to out-of-distribution or repetitive sequences and collapsing linguistic coherence.",
+        "grading_notes": "Must cover two key points: (1) the sigmoid term acts as an adaptive importance weight that upweights preference pairs where the policy currently prefers y_l over y_w (misordered implicit reward margin), and (2) dividing by pi_ref enforces the KL constraint to prevent policy collapse/degeneration."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "High-rigor short-answer question that directly probes the mathematical intuition of DPO's gradient weighting term and the role of the reference policy, with an explicit two-part grading rubric."
+      }
+    },
+    {
+      "id": "qq_ai_03",
+      "eval_type": "question_quality",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_context": {
+        "what_user_wants_to_learn": "Calibrating JEV/Clef classifier probabilities and correcting raw judge pass rates for sensitivity/specificity bias.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User struggled earlier with confusing raw classifier accuracy on a gold set with unbiased prevalence estimation on unlabeled test data."
+      },
+      "module_context": {
+        "course_title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "module_title": "Estimating True System Performance with Imperfect Judges (Rogan-Gladen & CIs)",
+        "learning_objective": "Apply the Rogan-Gladen prevalence adjustment using judge sensitivity (TPR) and specificity (TNR) to debias raw automated evaluation pass rates."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "You validate a JEV-style Clef grading classifier against a human-annotated gold dataset and measure a True Positive Rate (sensitivity, q_1) of 0.85 and a True Negative Rate (specificity, q_0) of 0.75. When you run this classifier on 2,000 new student submissions, it flags 55% (p_obs = 0.55) as passing. Using the Rogan-Gladen correction p_true = (p_obs + q_0 - 1) / (q_1 + q_0 - 1), what is the bias-corrected estimate of the true pass rate?",
+        "options": [
+          "50.0%",
+          "55.0%",
+          "64.7%",
+          "45.0%"
+        ],
+        "correct_answer": "50.0%",
+        "grading_notes": "Calculation: p_true = (0.55 + 0.75 - 1.0) / (0.85 + 0.75 - 1.0) = 0.30 / 0.60 = 0.50 (50.0%). Distractor 55.0% ignores bias correction; 64.7% divides p_obs by q_1 (0.55 / 0.85) while ignoring false positives (1 - q_0 = 0.25); 45.0% swaps q_1 and q_0 in the numerator."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Directly remedies the user's prior misconception about raw vs adjusted pass rates, provides clean arithmetic that can be solved quickly, and includes diagnostic distractors (e.g., dividing by sensitivity alone while ignoring false positives)."
+      }
+    },
+    {
+      "id": "qq_ai_04",
+      "eval_type": "question_quality",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_context": {
+        "what_user_wants_to_learn": "How LoRA initializes its low-rank matrices A and B and why it saves VRAM during fine-tuning.",
+        "background_level": "beginner",
+        "prior_feedback_summary": "User previously thought LoRA reduces memory primarily by shrinking the frozen base model weights W_0 rather than shrinking gradients and Adam optimizer states."
+      },
+      "module_context": {
+        "course_title": "Practical LLM Customization: Mastering RAG Pipelines and LoRA Fine-Tuning",
+        "module_title": "How LoRA & QLoRA Work: Low-Rank Weight Updates on a Single GPU",
+        "learning_objective": "Explain where VRAM savings originate in standard LoRA and why B=0, A~N(0, sigma^2) initialization is critical."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "In standard LoRA (without 4-bit quantization), the pretrained weight matrix W_0 remains in 16-bit precision in GPU memory, yet total training VRAM drops drastically compared to full fine-tuning. Addressing your earlier confusion about W_0 size: (1) Which specific memory components shrink when W_0 is frozen and only low-rank matrices A and B are trained? (2) Why is B initialized to zeros while A is initialized with random Gaussian values (rather than initializing both to zeros)?",
+        "correct_answer": "(1) Freezing W_0 eliminates the need to store weight gradients and Adam/AdamW optimizer states (first and second momentum buffers, which normally consume 2x to 4x the memory of the FP16 weights themselves) for the billions of base parameters; gradients and optimizer states are only stored for the tiny trainable matrices A and B. (2) Initializing B=0 ensures the adapter output Delta W = B*A is exactly zero at step 0 so the model starts with the exact pretrained behavior of W_0. If both A and B were initialized to zero, the gradients with respect to both A and B would be zero (a saddle point), preventing any learning via gradient descent.",
+        "grading_notes": "Check that the learner explicitly corrects their prior misconception: W_0 itself still takes FP16 memory in standard LoRA, so the savings come from not storing gradients and AdamW momentum/variance states for W_0. Also check that they explain both why B=0 (identity behavior at step 0) and why A!=0 (non-zero gradient flow)."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 4
+        },
+        "failure_modes": [],
+        "rationale": "Explicitly builds on the learner's prior misconception (`W_0` weight size vs optimizer state/gradient size) and asks a clear two-part conceptual short-answer question with a well-defined grading rubric."
+      }
+    },
+    {
+      "id": "qq_ai_05",
+      "eval_type": "question_quality",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_context": {
+        "what_user_wants_to_learn": "Two-stage RAG architecture: why bi-encoders are used for initial candidate retrieval and cross-encoders are used for reranking.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User understands dense vector cosine similarity and is now learning cross-encoder reranking."
+      },
+      "module_context": {
+        "course_title": "Practical LLM Customization: Mastering RAG Pipelines and LoRA Fine-Tuning",
+        "module_title": "Production RAG: Chunking, Hybrid Retrieval (BM25 + Dense), and Cross-Encoder Reranking",
+        "learning_objective": "Compare the computational complexity and token-level interaction capabilities of Bi-Encoders vs Cross-Encoders."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "In a two-stage RAG pipeline over 10 million document chunks, explain (1) why we cannot run a Cross-Encoder directly over all 10 million chunks at query time, and (2) why reranking the top 100 Bi-Encoder/BM25 candidates with a Cross-Encoder improves precision.",
+        "correct_answer": "(1) A Cross-Encoder concatenates the query and document chunk into a single input [CLS] query [SEP] doc [SEP] and runs full Transformer self-attention across all query and document tokens jointly; because document representations cannot be pre-computed and indexed offline independently of the query, scoring 10M chunks would require 10M full Transformer forward passes per user query, which is computationally prohibitive. (2) Unlike a Bi-Encoder that compresses an entire chunk into a single static vector (losing fine-grained token interactions), a Cross-Encoder performs token-by-token cross-attention between the query and candidate chunk, enabling much higher precision on the small top-100 candidate set.",
+        "grading_notes": "Must explain both: (1) Cross-Encoders cannot pre-index static document embeddings offline and require O(N) joint forward passes at query time, and (2) Cross-Encoders compute full token-level query-document cross-attention rather than compressing each into a single independent vector."
+      },
+      "expected": {
+        "is_good_question": true,
+        "quality_score": 5,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 5,
+          "alignment_with_user_goal": 5,
+          "distractor_or_rubric_quality": 5,
+          "adaptive_feedback_fit": 5,
+          "difficulty_calibration": 5
+        },
+        "failure_modes": [],
+        "rationale": "Tests the exact architectural trade-off between Bi-Encoders and Cross-Encoders with plausible distractors that reverse the properties of the two architectures."
+      }
+    },
+    {
+      "id": "qq_ai_06",
+      "eval_type": "question_quality",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_context": {
+        "what_user_wants_to_learn": "How PagedAttention solves KV cache memory fragmentation during LLM serving.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User is learning how vLLM manages GPU memory during autoregressive generation."
+      },
+      "module_context": {
+        "course_title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "module_title": "Eliminating Fragmentation with PagedAttention",
+        "learning_objective": "Understand how PagedAttention maps logical KV blocks to non-contiguous physical memory blocks."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Because PagedAttention eliminates memory fragmentation by dividing the KV cache into fixed-size blocks stored in non-contiguous physical GPU memory (just like OS virtual memory pages), how does PagedAttention store KV cache blocks in physical GPU memory?",
+        "options": [
+          "In non-contiguous physical GPU memory blocks mapped via a block table",
+          "By training a recurrent neural network on CPU RAM",
+          "By deleting the query projection matrix from the Transformer",
+          "By converting all text into JPEG images before attention"
+        ],
+        "correct_answer": "In non-contiguous physical GPU memory blocks mapped via a block table",
+        "grading_notes": "Select the option that says non-contiguous physical GPU memory."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 3,
+          "alignment_with_user_goal": 2,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "stem_leaks_answer",
+          "implausible_distractors"
+        ],
+        "rationale": "The question stem verbatim gives away the answer ('dividing the KV cache into fixed-size blocks stored in non-contiguous physical GPU memory') and then asks how PagedAttention stores KV cache blocks, while the three distractors are absurdly implausible (converting text to JPEG images, deleting query matrices, training an RNN on CPU)."
+      }
+    },
+    {
+      "id": "qq_ai_07",
+      "eval_type": "question_quality",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_context": {
+        "what_user_wants_to_learn": "Mitigating position bias and verbosity bias in LLM-as-a-Judge evaluation pipelines.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User wants objective engineering methods to test and debias automated LLM evaluators."
+      },
+      "module_context": {
+        "course_title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "module_title": "Anatomy of LLM-as-a-Judge Biases and Rubric Decomposition",
+        "learning_objective": "Measure and mitigate position bias and verbosity bias in LLM judge prompts."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "Do you personally feel that AI judges are cooler and more inspiring than human graders, and what is your favorite LLM vibe when reading model outputs?",
+        "correct_answer": "Yes, AI judges are much more inspiring and have a futuristic, sleek vibe, especially when they write poetic explanations.",
+        "grading_notes": "Mark correct only if the user agrees that AI judges have a sleek, inspiring vibe and mentions poetic explanations."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 1,
+          "alignment_with_user_goal": 1,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "subjective_uncalibrated_question",
+          "misaligned_with_learning_objective"
+        ],
+        "rationale": "Instead of testing position bias or verbosity bias mitigation in LLM-as-a-Judge pipelines, this asks an entirely subjective opinion question about 'favorite LLM vibe' and enforces an arbitrary opinion as the sole correct answer."
+      }
+    },
+    {
+      "id": "qq_ai_08",
+      "eval_type": "question_quality",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_context": {
+        "what_user_wants_to_learn": "Role of the KL-divergence penalty in RLHF and DPO.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "CRITICAL MISCONCEPTION DETECTED: On the previous question, the user stated that setting the KL coefficient beta = 0 makes the active policy pi_theta stay completely identical to the frozen reference policy pi_ref."
+      },
+      "module_context": {
+        "course_title": "Mathematical & Practical Foundations of LLM Preference Alignment: RLHF to DPO",
+        "module_title": "KL-Regularized Reinforcement Learning & The Four-Model PPO Loop",
+        "learning_objective": "Understand how the KL-divergence penalty coefficient beta controls policy drift and prevents reward hacking."
+      },
+      "candidate_question": {
+        "question_type": "short_answer",
+        "prompt": "List three popular open-source Python libraries used to format JSON configuration files in general software engineering projects.",
+        "correct_answer": "pydantic, marshmallow, and jsonschema.",
+        "grading_notes": "Award full credit if the student names three Python JSON libraries."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 3,
+          "alignment_with_user_goal": 1,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 1
+        },
+        "failure_modes": [
+          "ignores_prior_misconception",
+          "misaligned_with_learning_objective"
+        ],
+        "rationale": "The user just demonstrated a critical misconception inverting the role of the KL penalty coefficient `beta = 0`, yet the question completely ignores both the misconception and the RLHF module objective, asking a trivial trivia question about Python JSON libraries."
+      }
+    },
+    {
+      "id": "qq_ai_09",
+      "eval_type": "question_quality",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_context": {
+        "what_user_wants_to_learn": "Why scaled dot-product attention divides by sqrt(d_k) before applying softmax.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User understands matrix multiplication of Q and K^T."
+      },
+      "module_context": {
+        "course_title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "module_title": "Prefill vs. Decode: Arithmetic Intensity and the Memory Wall",
+        "learning_objective": "Explain the variance scaling factor 1/sqrt(d_k) in Scaled Dot-Product Attention."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "Assume the components of query vector q and key vector k are independent random variables with mean 0 and variance 1. Why does Scaled Dot-Product Attention divide the dot product q . k by sqrt(d_k) before applying the softmax function?",
+        "options": [
+          "Because the dot product q . k has mean 0 and variance d_k; dividing by sqrt(d_k) restores unit variance so softmax does not saturate into regions with vanishingly small gradients.",
+          "Because dividing by sqrt(d_k) reduces the number of trainable parameters in the Value matrix W_V by 50%.",
+          "Because softmax cannot mathematically accept negative numbers unless they are divided by a square root.",
+          "Because dividing by sqrt(d_k) converts the causal decoder mask into a bidirectional BERT encoder mask."
+        ],
+        "correct_answer": "Because softmax cannot mathematically accept negative numbers unless they are divided by a square root.",
+        "grading_notes": "The keyed answer is option C because softmax fails on negative inputs."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 1,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 4,
+          "alignment_with_user_goal": 4,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 1,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "wrong_keyed_answer"
+        ],
+        "rationale": "Option A is the mathematically correct explanation (preventing variance `d_k` from pushing logits into softmax saturation regions with vanishing gradients), but the question keys Option C—a mathematically false statement claiming `softmax` cannot accept negative numbers—as the `correct_answer`."
+      }
+    },
+    {
+      "id": "qq_ai_10",
+      "eval_type": "question_quality",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_context": {
+        "what_user_wants_to_learn": "Expected Calibration Error (ECE) and post-hoc Temperature Scaling for neural classifiers.",
+        "background_level": "intermediate",
+        "prior_feedback_summary": "User is learning how Temperature Scaling modifies logit sharpness."
+      },
+      "module_context": {
+        "course_title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "module_title": "Probability Calibration, Expected Calibration Error (ECE) & Temperature Scaling",
+        "learning_objective": "Understand how post-hoc Temperature Scaling affects predicted probabilities and top-1 classification accuracy."
+      },
+      "candidate_question": {
+        "question_type": "multiple_choice",
+        "prompt": "When applying post-hoc Temperature Scaling p_i = softmax(z_i / T) with a positive scalar T > 1 to an overconfident classifier's logits z, which statement is true?",
+        "options": [
+          "It softens the output probability distribution toward higher entropy without changing the argmax (top-1) predicted class.",
+          "It leaves the top-1 predicted class unchanged while reducing the peak confidence of the winning class.",
+          "It preserves the monotonic ordering of logits z_i / T, meaning top-1 classification accuracy remains identical.",
+          "It rescales logits by dividing by T > 1, which lowers overconfident probabilities without altering which class has the highest probability."
+        ],
+        "correct_answer": "It softens the output probability distribution toward higher entropy without changing the argmax (top-1) predicted class.",
+        "grading_notes": "Only Option A is accepted."
+      },
+      "expected": {
+        "is_good_question": false,
+        "quality_score": 2,
+        "rubric_breakdown": {
+          "clarity_and_unambiguity": 1,
+          "alignment_with_user_goal": 4,
+          "distractor_or_rubric_quality": 1,
+          "adaptive_feedback_fit": 2,
+          "difficulty_calibration": 2
+        },
+        "failure_modes": [
+          "distractors_not_mutually_exclusive",
+          "multiple_correct_options"
+        ],
+        "rationale": "All four options (A, B, C, and D) state the exact same mathematically true fact in slightly different words (dividing logits by T > 1 softens confidence while preserving monotonic order and top-1 argmax accuracy), making it impossible for a knowledgeable learner to distinguish a unique correct option."
+      }
+    }
+  ],
+  "decision_grading_evals": [
+    {
+      "id": "dg_ai_01",
+      "eval_type": "decision_grading",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_profile": {
+        "what_user_wants_to_learn": "High-level product intuition on when to use RAG vs fine-tuning and why hybrid search helps enterprise search.",
+        "background_level": "beginner",
+        "rigor_preference": "conceptual_intuition"
+      },
+      "module_context": {
+        "course_title": "Practical LLM Customization: Mastering RAG Pipelines and LoRA Fine-Tuning",
+        "module_title": "Production RAG: Chunking, Hybrid Retrieval (BM25 + Dense), and Cross-Encoder Reranking",
+        "learning_objective": "Understand conceptually why combining keyword search and semantic vector search improves retrieval quality."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.85,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Why do production RAG systems often combine keyword search (like BM25) with vector embedding search (hybrid search) instead of relying only on vector embeddings?",
+        "reference_answer": "Vector embeddings capture semantic meaning and synonyms (e.g., matching 'automobile' to 'car'), whereas keyword search (BM25) excels at exact matches for specific product SKUs, error codes, proper nouns, or acronyms. Combining both ensures you don't miss exact terms while still understanding intent.",
+        "required_concepts_for_user_goal": [
+          "semantic/conceptual matching from vector embeddings",
+          "exact keyword/SKU/identifier matching from lexical search"
+        ],
+        "grading_rubric": "For a beginner seeking conceptual_intuition, accept any clear explanation contrasting meaning/synonym matching (embeddings) with exact word/code/ID matching (keyword search). Do not require BM25 IDF equations or Reciprocal Rank Fusion formulas."
+      },
+      "user_submission": {
+        "answer": "Embeddings are great for understanding the overall meaning and synonyms even when the user uses different words, but they can be fuzzy on exact product IDs, error codes, or specific names. Keyword search catches those exact word matches, so using both together gives you the best of both worlds.",
+        "response_time_seconds": 38
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "semantic/conceptual matching from vector embeddings",
+          "exact keyword/SKU/identifier matching from lexical search"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Affirm the clear distinction between semantic synonym matching and exact identifier/keyword matching, and advance to the next module.",
+        "rationale": "Given the user's profile (`beginner`, `conceptual_intuition` for product decisions), this answer captures 100% of the required conceptual trade-off between semantic embeddings and exact lexical search without needing mathematical formulas."
+      }
+    },
+    {
+      "id": "dg_ai_02",
+      "eval_type": "decision_grading",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_profile": {
+        "what_user_wants_to_learn": "Exact mathematical formulation of Direct Preference Optimization (DPO), specifically how the optimal policy reparameterization cancels the partition function Z(x) and yields the log-ratio loss.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Mathematical & Practical Foundations of LLM Preference Alignment: RLHF to DPO",
+        "module_title": "Direct Preference Optimization (DPO): Reparameterizing the Optimal Policy",
+        "learning_objective": "Derive the exact DPO loss objective from the KL-constrained reward maximization optimal policy equation."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.9,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Starting from the closed-form relationship between the reward function r(x, y) and the optimal KL-regularized policy pi*(y|x), show mathematically how DPO substitutes r(x, y) into the Bradley-Terry preference model P(y_w > y_l | x) and eliminates the intractable partition function Z(x).",
+        "reference_answer": "From KL-constrained RL, the optimal policy satisfies r(x,y) = beta * log(pi*(y|x) / pi_ref(y|x)) + beta * log Z(x). Substituting this into the Bradley-Terry model P(y_w > y_l | x) = sigma(r(x, y_w) - r(x, y_l)), the prompt-dependent partition term +beta * log Z(x) appears identically in both r(x, y_w) and r(x, y_l) and cancels out in the subtraction r(x, y_w) - r(x, y_l), yielding L_DPO = -E[log sigma(beta * log(pi_theta(y_w|x)/pi_ref(y_w|x)) - beta * log(pi_theta(y_l|x)/pi_ref(y_l|x)))].",
+        "required_concepts_for_user_goal": [
+          "reparameterization r(x,y) = beta * log(pi(y|x)/pi_ref(y|x)) + beta * log Z(x)",
+          "subtraction r(x, y_w) - r(x, y_l) inside Bradley-Terry sigmoid",
+          "algebraic cancellation of prompt-only partition function Z(x)"
+        ],
+        "grading_rubric": "Because user_profile has background_level='advanced' and rigor_preference='rigorous_formal' specifically requesting the exact mathematical formulation of DPO, a vague high-level statement that 'DPO trains on good and bad responses without a reward model' is NOT sufficient for is_right=true. The learner must state the log-ratio reparameterization and explain why Z(x) cancels in the pairwise difference."
+      },
+      "user_submission": {
+        "answer": "DPO is a cool trick that skips training a reward model by just training the LLM directly to make the good answer more likely and the bad answer less likely using a sigmoid loss.",
+        "response_time_seconds": 22
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.3,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "reparameterization r(x,y) = beta * log(pi(y|x)/pi_ref(y|x)) + beta * log Z(x)",
+          "subtraction r(x, y_w) - r(x, y_l) inside Bradley-Terry sigmoid",
+          "algebraic cancellation of prompt-only partition function Z(x)"
+        ],
+        "detected_misconception": null,
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Acknowledge the high-level intuition, but prompt the learner to write out the explicit reward reparameterization `r(x,y) = beta * log(pi(y|x)/pi_ref(y|x)) + beta * log Z(x)` and show how `Z(x)` cancels in `r(x, y_w) - r(x, y_l)` to meet their rigorous mathematical goal.",
+        "rationale": "Although this summary would pass for a beginner wanting conceptual intuition, the JEV/Clef decision model must mark `is_right: false` (`partially_correct`) here because the user explicitly requested `rigorous_formal` mastery of the exact mathematical derivation and partition function cancellation."
+      }
+    },
+    {
+      "id": "dg_ai_03",
+      "eval_type": "decision_grading",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_profile": {
+        "what_user_wants_to_learn": "Rigorous mathematical derivation of Scaled Dot-Product Attention variance and KV cache memory bandwidth scaling.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "module_title": "Prefill vs. Decode: Arithmetic Intensity and the Memory Wall",
+        "learning_objective": "Derive the variance of unscaled query-key dot products and compute exact KV cache memory traffic during autoregressive decoding."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.92,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "Let q, k in R^{d_k} have independent components with mean 0 and variance 1. (1) Show why Var(q^T k) = d_k and why scaling by 1/sqrt(d_k) prevents softmax Jacobian collapse. (2) Write the exact byte expression for the KV cache read per decode step for batch size B, sequence length S, layers L, KV heads H_kv, head dimension d_k, and 2-byte FP16 precision.",
+        "reference_answer": "(1) Each product q_i k_i has E[q_i k_i] = E[q_i]E[k_i] = 0 and Var(q_i k_i) = E[q_i^2]E[k_i^2] = 1. Summing d_k independent terms gives Var(sum_{i=1}^{d_k} q_i k_i) = d_k. Without dividing by sqrt(d_k), large d_k causes logits to grow as O(sqrt(d_k)), driving softmax outputs toward 0 or 1 where the Jacobian diag(p) - pp^T vanishes. (2) Bytes read per decode step = 2 * B * S * L * H_kv * d_k * 2 = 4 * B * S * L * H_kv * d_k bytes.",
+        "required_concepts_for_user_goal": [
+          "Var(q_i k_i) = 1 summed over d_k independent components yields Var(q^T k) = d_k",
+          "scaling by 1/sqrt(d_k) normalizes variance to 1 to prevent softmax saturation / vanishing Jacobian",
+          "exact KV cache bytes read = 2 (K and V) * B * S * L * H_kv * d_k * 2 bytes"
+        ],
+        "grading_rubric": "Requires both the formal variance derivation Var(q^T k) = d_k with softmax saturation explanation and the exact byte formula including the factor of 2 for K and V and 2 bytes for FP16."
+      },
+      "user_submission": {
+        "answer": "1) Since q_i and k_i are independent with mean 0 and variance 1, E[q_i k_i] = 0 and Var(q_i k_i) = E[q_i^2]E[k_i^2] = 1. Summing over d_k independent coordinates gives Var(q^T k) = d_k. Dividing by sqrt(d_k) scales the variance back to 1; otherwise for large d_k the logit magnitudes blow up, pushing softmax into saturation where p_i -> 1 or 0 and the gradient/Jacobian diag(p) - p p^T vanishes. 2) Per decode step, we read both K and V (factor of 2) across L layers, H_kv heads, d_k dimension, sequence length S, and batch B at 2 bytes per FP16 element: 2 * B * S * L * H_kv * d_k * 2 = 4 * B * S * L * H_kv * d_k bytes.",
+        "response_time_seconds": 85
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "Var(q_i k_i) = 1 summed over d_k independent components yields Var(q^T k) = d_k",
+          "scaling by 1/sqrt(d_k) normalizes variance to 1 to prevent softmax saturation / vanishing Jacobian",
+          "exact KV cache bytes read = 2 (K and V) * B * S * L * H_kv * d_k * 2 bytes"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "ask_harder_challenge",
+        "feedback_focus": "Praise the exact variance derivation, Jacobian saturation analysis, and KV bandwidth formula, then offer an advanced challenge on FlashDecoding arithmetic intensity.",
+        "rationale": "The user satisfied all three formal mathematical requirements matching their `advanced` background and `rigorous_formal` preference with high recent accuracy (0.92), warranting `is_right: true` and `ask_harder_challenge`."
+      }
+    },
+    {
+      "id": "dg_ai_04",
+      "eval_type": "decision_grading",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_profile": {
+        "what_user_wants_to_learn": "Practical engineering techniques to calibrate LLM judge probabilities and mitigate position bias.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "module_title": "Probability Calibration, Expected Calibration Error (ECE) & Temperature Scaling",
+        "learning_objective": "Apply post-hoc Temperature Scaling to calibrate an overconfident JEV/Clef classifier on a validation set."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.75,
+        "prior_misconceptions": [
+          "Previously thought Temperature Scaling changes which class wins the argmax prediction."
+        ]
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "Your fine-tuned JEV/Clef decision classifier achieves 88% top-1 accuracy on your human-labeled validation set, but its Expected Calibration Error (ECE) is 0.19 because its predicted probabilities cluster near 0.99. You fit post-hoc Temperature Scaling (dividing logits by a learned scalar T = 1.8 before softmax) on the validation set. What happens to the classifier's top-1 accuracy and predicted probability distribution?",
+        "options": [
+          "Top-1 accuracy remains 88% because dividing by T > 0 is a monotonic transformation that preserves the argmax logit, while predicted probabilities soften toward better-calibrated confidence levels (lowering ECE).",
+          "Top-1 accuracy increases to ~94% because Temperature Scaling flips incorrect high-confidence predictions into the correct class.",
+          "Top-1 accuracy drops because T = 1.8 injects random Gaussian noise into the logits during inference.",
+          "Both top-1 accuracy and ECE remain completely unchanged because softmax is invariant to scalar division."
+        ],
+        "reference_answer": "Top-1 accuracy remains 88% because dividing by T > 0 is a monotonic transformation that preserves the argmax logit, while predicted probabilities soften toward better-calibrated confidence levels (lowering ECE).",
+        "required_concepts_for_user_goal": [
+          "Temperature Scaling preserves argmax / top-1 accuracy",
+          "T > 1 softens overconfident probabilities to reduce ECE"
+        ],
+        "grading_rubric": "Must select Option A. Selecting Option B indicates persistence of the prior misconception that Temperature Scaling alters argmax class predictions."
+      },
+      "user_submission": {
+        "answer": "Top-1 accuracy remains 88% because dividing by T > 0 is a monotonic transformation that preserves the argmax logit, while predicted probabilities soften toward better-calibrated confidence levels (lowering ECE).",
+        "response_time_seconds": 19
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "Temperature Scaling preserves argmax / top-1 accuracy",
+          "T > 1 softens overconfident probabilities to reduce ECE"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Confirm that the learner has resolved their earlier misconception: scaling logits by T > 1 dampens overconfidence and lowers ECE while strictly preserving the argmax class.",
+        "rationale": "The learner selected the exact correct option, demonstrating they overcame their prior misconception that Temperature Scaling changes top-1 accuracy."
+      }
+    },
+    {
+      "id": "dg_ai_05",
+      "eval_type": "decision_grading",
+      "domain": "Post-Training Alignment: RLHF & Direct Preference Optimization (DPO)",
+      "user_profile": {
+        "what_user_wants_to_learn": "How PPO-based RLHF prevents reward hacking using the KL-divergence penalty.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Mathematical & Practical Foundations of LLM Preference Alignment: RLHF to DPO",
+        "module_title": "KL-Regularized Reinforcement Learning & The Four-Model PPO Loop",
+        "learning_objective": "Diagnose reward hacking (Goodhart's Law) when the KL penalty coefficient beta is too small."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.6,
+        "prior_misconceptions": [
+          "Confuses proxy reward model score r_phi(x,y) with true human preference quality."
+        ]
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "During PPO training for RLHF, you set the KL penalty coefficient beta = 0.0 and observe that the learned reward model score r_phi(x, y) climbs rapidly to extreme positive values, yet human evaluators rate the generated text as incoherent, repetitive gibberish. What is this phenomenon called, and why did setting beta = 0.0 cause it?",
+        "options": [
+          "Reward hacking (or reward over-optimization): without the KL penalty anchoring pi_theta to pi_ref, the policy drifts out-of-distribution where the imperfect proxy reward model assigns spuriously high scores to degenerate outputs.",
+          "Underfitting: setting beta = 0.0 freezes the policy weights so the model can only output random initialization tokens.",
+          "Catastrophic vanishing gradients: beta = 0.0 zeroes out the reward signal in the PPO objective so the critic cannot update.",
+          "Perfect convergence: human evaluators are mistaken because a rising proxy reward score r_phi(x, y) mathematically guarantees higher human quality."
+        ],
+        "reference_answer": "Reward hacking (or reward over-optimization): without the KL penalty anchoring pi_theta to pi_ref, the policy drifts out-of-distribution where the imperfect proxy reward model assigns spuriously high scores to degenerate outputs.",
+        "required_concepts_for_user_goal": [
+          "reward hacking / Goodhart's Law on imperfect proxy reward model",
+          "KL penalty anchors active policy to reference distribution"
+        ],
+        "grading_rubric": "Option A is correct. Option D reflects the misconception that proxy reward score equals true human quality."
+      },
+      "user_submission": {
+        "answer": "Perfect convergence: human evaluators are mistaken because a rising proxy reward score r_phi(x, y) mathematically guarantees higher human quality.",
+        "response_time_seconds": 14
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "reward hacking / Goodhart's Law on imperfect proxy reward model",
+          "KL penalty anchors active policy to reference distribution"
+        ],
+        "detected_misconception": "Believes the learned reward model r_phi(x, y) is a ground-truth oracle rather than a learned proxy vulnerable to out-of-distribution exploitation (Goodhart's Law).",
+        "next_action": "re_explain_concept",
+        "feedback_focus": "Explain Goodhart's Law in RLHF: `r_phi(x, y)` is only an imperfect neural proxy trained on finite data, so when `beta = 0` removes the KL anchor to `pi_ref`, the policy exploits out-of-distribution blind spots of the reward model.",
+        "rationale": "The learner repeated their tracked misconception by equating proxy reward model scores with ground-truth human quality. Because this is a foundational conceptual block, the model should `re_explain_concept`."
+      }
+    },
+    {
+      "id": "dg_ai_06",
+      "eval_type": "decision_grading",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_profile": {
+        "what_user_wants_to_learn": "Practical implementation of LoRA fine-tuning, including hyperparameter selection (rank r, alpha, target modules) and adapter merging.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Practical LLM Customization: Mastering RAG Pipelines and LoRA Fine-Tuning",
+        "module_title": "How LoRA & QLoRA Work: Low-Rank Weight Updates on a Single GPU",
+        "learning_objective": "Explain how LoRA adapters are merged into base weights for zero-latency single-tenant inference vs unmerged for multi-tenant serving."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.7,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "After training a LoRA adapter (matrices A and B with scaling factor alpha/r) on a frozen base weight matrix W_0, how can you deploy the adapted model for a single dedicated model endpoint with zero additional inference latency compared to the original base model? Furthermore, what is the trade-off if you instead need to serve 50 different customer-specific LoRA adapters simultaneously on the same GPU?",
+        "reference_answer": "For a single endpoint, you can offline merge the adapter directly into the base weights by computing W_merged = W_0 + (alpha / r) * B * A because matrix multiplication is linear; at inference time, only W_merged is executed with zero extra latency or parameters. However, if serving 50 customer adapters on one GPU, merging creates 50 full copies of the multi-gigabyte model in VRAM; instead, you keep one shared frozen W_0 in VRAM and dynamically compute the small low-rank branch (alpha/r)*B_i*(A_i*x) per request in batch (e.g., S-LoRA/Punica) at a slight compute overhead.",
+        "required_concepts_for_user_goal": [
+          "linear weight merging W_merged = W_0 + (alpha/r) * B * A eliminates single-model inference latency overhead",
+          "multi-tenant trade-off: merging duplicates full model VRAM vs keeping shared W_0 and applying unmerged adapters dynamically per request"
+        ],
+        "grading_rubric": "Requires both: (1) explaining how W_0 + (alpha/r)*B*A merges weights for zero single-tenant latency, and (2) explaining the multi-tenant VRAM vs compute trade-off when serving 50 adapters."
+      },
+      "user_submission": {
+        "answer": "Because the LoRA update is linear, you can just add the trained low-rank matrices directly into the base weights before deployment: W_new = W_0 + (alpha/r) * B * A. That way the matrix dimensions are identical to the original model and inference has zero extra latency.",
+        "response_time_seconds": 41
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "partially_correct",
+        "score": 0.55,
+        "matched_concepts": [
+          "linear weight merging W_merged = W_0 + (alpha/r) * B * A eliminates single-model inference latency overhead"
+        ],
+        "missed_concepts": [
+          "multi-tenant trade-off: merging duplicates full model VRAM vs keeping shared W_0 and applying unmerged adapters dynamically per request"
+        ],
+        "detected_misconception": null,
+        "next_action": "ask_followup_short_answer",
+        "feedback_focus": "Validate the exact formula `W_new = W_0 + (alpha/r) * B * A` for zero-latency single-model inference, then ask a targeted follow-up on why merging breaks down when serving 50 customer adapters on a single GPU.",
+        "rationale": "The learner nailed the first half of the question (linear weight merging for zero single-tenant latency) but omitted the second half regarding multi-tenant serving of 50 adapters on one GPU."
+      }
+    },
+    {
+      "id": "dg_ai_07",
+      "eval_type": "decision_grading",
+      "domain": "JEV/Clef Decision Classifiers, Calibration & LLM-as-a-Judge Evaluations",
+      "user_profile": {
+        "what_user_wants_to_learn": "Diagnosing and eliminating position bias and verbosity bias in LLM-as-a-Judge pairwise evaluations.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Calibrated Decision Classifiers & Robust LLM-as-a-Judge Systems",
+        "module_title": "Anatomy of LLM-as-a-Judge Biases and Rubric Decomposition",
+        "learning_objective": "Implement position-swapped pairwise evaluation protocols to detect and neutralize position bias."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.8,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "You are using an LLM-as-a-Judge to compare Candidate Response A and Candidate Response B, and you suspect the judge suffers from position bias (favoring whichever response appears first in the prompt). Describe the exact inference protocol used to detect and neutralize position bias for each evaluation pair, including how you score cases where the judge's verdict flips.",
+        "reference_answer": "Run every pairwise comparison twice: once in order (A, B) and once with positions swapped as (B, A). A model only wins if the judge consistently selects that same underlying response in both orderings (e.g., picks Slot 1 in (A,B) and Slot 2 in (B,A)). If the judge picks Slot 1 in both calls (or Slot 2 in both calls), the judgment is position-biased/inconsistent and should be recorded as a tie (or routed to a tie-breaker/human audit).",
+        "required_concepts_for_user_goal": [
+          "evaluate each pair twice with swapped positions (A,B) and (B,A)",
+          "require consistent winner across both orderings; treat position-dependent flips as ties/inconsistent"
+        ],
+        "grading_rubric": "Must mention running both (A,B) and (B,A) orderings and treating inconsistent/position-locked outcomes as ties (or routing for tie-breaking)."
+      },
+      "user_submission": {
+        "answer": "For every test prompt, call the judge twice: first passing (Response A, Response B) and second swapping their slots to (Response B, Response A). We only award a win to A or B if the judge picks the same actual response in both runs. If the judge just picks the first slot both times (picking A in run 1 and B in run 2), we flag it as position bias and score the pair as a tie.",
+        "response_time_seconds": 47
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "evaluate each pair twice with swapped positions (A,B) and (B,A)",
+          "require consistent winner across both orderings; treat position-dependent flips as ties/inconsistent"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Confirm the position-swapping protocol `(A,B)` + `(B,A)` and tie-handling rule for inconsistent judgments.",
+        "rationale": "The student's response clearly and accurately describes both the position-swapped dual invocation and how inconsistent slot-locked verdicts are scored as ties."
+      }
+    },
+    {
+      "id": "dg_ai_08",
+      "eval_type": "decision_grading",
+      "domain": "Transformer Architecture & Inference Optimization",
+      "user_profile": {
+        "what_user_wants_to_learn": "Why autoregressive LLM generation uses a KV cache and why the decode step is memory-bandwidth bound.",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Transformer Inference Mechanics: From KV Cache Math to PagedAttention",
+        "module_title": "Prefill vs. Decode: Arithmetic Intensity and the Memory Wall",
+        "learning_objective": "Understand what values are cached in the KV cache and why Query vectors do not need to be cached across past tokens."
+      },
+      "learner_state": {
+        "attempt_number": 2,
+        "recent_accuracy": 0.45,
+        "prior_misconceptions": [
+          "Confuses causal attention dependencies at step t with needing past Query vectors Q_{1..t-1}."
+        ]
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "During autoregressive decoding at token step t, why do we cache the Key (K) and Value (V) vectors for all previous tokens 1..t-1 in GPU memory, but we do NOT cache the Query (Q) vectors for previous tokens 1..t-1?",
+        "reference_answer": "Under causal masking, the hidden states and outputs for tokens 1..t-1 have already been computed and never change (since past tokens cannot attend to future token t). To generate token t+1, we only need to compute the attention output for the newest token t, which requires multiplying the current token's query vector q_t against all past keys K_{1..t} and weighting all past values V_{1..t}. Past query vectors q_{1..t-1} are never used again.",
+        "required_concepts_for_user_goal": [
+          "only current query q_t is needed at step t to attend over all past keys K_{1..t} and values V_{1..t}",
+          "causal masking means past tokens 1..t-1 do not attend to future tokens so their outputs are already finalized"
+        ],
+        "grading_rubric": "Must explain that generating the next token at step t only requires computing attention for the new query q_t against past K_{1..t} and V_{1..t}, whereas past queries q_{1..t-1} were only needed at their own earlier steps."
+      },
+      "user_submission": {
+        "answer": "We don't cache Q because the Query matrix W_Q has zero trainable parameters and is deleted after prefill, whereas K and V are updated via gradient descent on every generated token.",
+        "response_time_seconds": 29
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "only current query q_t is needed at step t to attend over all past keys K_{1..t} and values V_{1..t}",
+          "causal masking means past tokens 1..t-1 do not attend to future tokens so their outputs are already finalized"
+        ],
+        "detected_misconception": "Confuses inference-time KV caching with gradient descent weight updates and falsely believes W_Q has no parameters or is deleted after prefill.",
+        "next_action": "ask_remedial_multiple_choice",
+        "feedback_focus": "Clarify that all projection matrices (`W_Q`, `W_K`, `W_V`) remain frozen during inference and `W_Q` projects the newest token `x_t` into `q_t` at every step; past `q_{1..t-1}` aren't cached simply because step `t` only computes `softmax(q_t K_{1..t}^T / sqrt(d_k)) V_{1..t}`.",
+        "rationale": "This is the learner's 2nd attempt with low recent accuracy (0.45) and reveals a fundamental misconception about inference vs training and how `q_t` interacts with `K_{1..t}` and `V_{1..t}`. Stepping down to a scaffolded `ask_remedial_multiple_choice` is the appropriate pedagogical action."
+      }
+    },
+    {
+      "id": "dg_ai_09",
+      "eval_type": "decision_grading",
+      "domain": "Reinforcement Learning & Policy Gradient Methods",
+      "user_profile": {
+        "what_user_wants_to_learn": "Why subtracting a state-dependent baseline V(s) in REINFORCE/Actor-Critic reduces gradient variance without introducing bias.",
+        "background_level": "advanced",
+        "rigor_preference": "rigorous_formal"
+      },
+      "module_context": {
+        "course_title": "Reinforcement Learning Foundations: From REINFORCE to PPO",
+        "module_title": "Variance Reduction via State-Value Baselines and Advantage Estimation",
+        "learning_objective": "Prove that subtracting any action-independent baseline b(s_t) from the return G_t has zero expectation in the policy gradient."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.85,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "short_answer",
+        "prompt": "In the policy gradient estimator E[grad_theta log pi_theta(a_t | s_t) * (G_t - b(s_t))], prove mathematically why subtracting any baseline function b(s_t) that depends only on state s_t (and not action a_t) leaves the expected gradient completely unbiased.",
+        "reference_answer": "By linearity of expectation, the subtracted term is E_{a ~ pi}[grad_theta log pi_theta(a|s) * b(s)]. Conditioning on s, b(s) factors out of the sum/integral over actions a: b(s) * sum_a pi_theta(a|s) * (grad_theta pi_theta(a|s) / pi_theta(a|s)) = b(s) * sum_a grad_theta pi_theta(a|s) = b(s) * grad_theta (sum_a pi_theta(a|s)) = b(s) * grad_theta(1) = 0.",
+        "required_concepts_for_user_goal": [
+          "factoring action-independent b(s) out of the expectation over a ~ pi_theta(.|s)",
+          "applying log-derivative identity pi(a|s) * grad log pi(a|s) = grad pi(a|s)",
+          "sum/integral of probabilities sum_a pi_theta(a|s) = 1 has zero gradient grad_theta(1) = 0"
+        ],
+        "grading_rubric": "For rigorous_formal preference, the learner must write out the identity sum_a pi(a|s) grad log pi(a|s) = grad sum_a pi(a|s) = grad(1) = 0 and explain that b(s) factors out because it does not depend on action a."
+      },
+      "user_submission": {
+        "answer": "Conditioned on state s_t, the expected value of the baseline term over actions a ~ pi_theta(a|s_t) is sum_a pi_theta(a|s_t) grad_theta log pi_theta(a|s_t) b(s_t). Since b(s_t) does not depend on a, we factor it out: b(s_t) sum_a pi_theta(a|s_t) (grad_theta pi_theta(a|s_t) / pi_theta(a|s_t)) = b(s_t) grad_theta (sum_a pi_theta(a|s_t)) = b(s_t) grad_theta(1) = 0.",
+        "response_time_seconds": 64
+      },
+      "expected_decision": {
+        "is_right": true,
+        "verdict": "correct",
+        "score": 1.0,
+        "matched_concepts": [
+          "factoring action-independent b(s) out of the expectation over a ~ pi_theta(.|s)",
+          "applying log-derivative identity pi(a|s) * grad log pi(a|s) = grad pi(a|s)",
+          "sum/integral of probabilities sum_a pi_theta(a|s) = 1 has zero gradient grad_theta(1) = 0"
+        ],
+        "missed_concepts": [],
+        "detected_misconception": null,
+        "next_action": "advance_to_next_module",
+        "feedback_focus": "Commend the clean formal proof showing `b(s_t) * grad_theta(1) = 0` and transition to Generalized Advantage Estimation (GAE) and PPO.",
+        "rationale": "The learner provided the complete, rigorous derivation factoring `b(s_t)` out of the action sum and using `grad_theta sum_a pi_theta(a|s) = grad_theta(1) = 0`."
+      }
+    },
+    {
+      "id": "dg_ai_10",
+      "eval_type": "decision_grading",
+      "domain": "Retrieval-Augmented Generation (RAG) & Parameter-Efficient Fine-Tuning (LoRA)",
+      "user_profile": {
+        "what_user_wants_to_learn": "Diagnosing RAG evaluation failures using RAGAS/TruLens triad metrics (Context Recall, Faithfulness/Groundedness, Answer Relevance).",
+        "background_level": "intermediate",
+        "rigor_preference": "practical_applied"
+      },
+      "module_context": {
+        "course_title": "Evaluating & Debugging Production RAG Systems",
+        "module_title": "The RAG Triad: Context Relevance/Recall, Groundedness (Faithfulness), and Answer Relevance",
+        "learning_objective": "Isolate whether a bad RAG response stems from a retrieval failure or a generation hallucination using triad evaluation scores."
+      },
+      "learner_state": {
+        "attempt_number": 1,
+        "recent_accuracy": 0.78,
+        "prior_misconceptions": []
+      },
+      "question": {
+        "question_type": "multiple_choice",
+        "prompt": "On a failing test query in your RAG benchmark, your evaluation pipeline reports: Context Recall = 0.96, Context Precision = 0.92, Faithfulness (Groundedness) = 0.21, and Answer Relevance = 0.88. Which component of your RAG pipeline is failing, and what is the most targeted fix?",
+        "options": [
+          "The generator LLM is hallucinating claims not supported by the retrieved chunks despite the retriever fetching the right context; fix by tightening system prompt grounding constraints, lowering generation temperature, or fine-tuning/swapping the generator.",
+          "The vector database embedding model is failing to retrieve the relevant documents; fix by reducing chunk size and adding BM25 hybrid search.",
+          "The user query rewriter is stripping essential keywords before retrieval; fix by disabling query expansion.",
+          "The cross-encoder reranker is dropping the gold document chunk before it reaches the prompt; fix by increasing top-K from 5 to 20."
+        ],
+        "reference_answer": "The generator LLM is hallucinating claims not supported by the retrieved chunks despite the retriever fetching the right context; fix by tightening system prompt grounding constraints, lowering generation temperature, or fine-tuning/swapping the generator.",
+        "required_concepts_for_user_goal": [
+          "high Context Recall/Precision (0.96/0.92) proves retrieval succeeded",
+          "low Faithfulness/Groundedness (0.21) isolates the failure to ungrounded generator hallucination"
+        ],
+        "grading_rubric": "Option A is correct. Options B, C, and D misdiagnose the issue as a retrieval failure despite Context Recall = 0.96 and Context Precision = 0.92."
+      },
+      "user_submission": {
+        "answer": "The vector database embedding model is failing to retrieve the relevant documents; fix by reducing chunk size and adding BM25 hybrid search.",
+        "response_time_seconds": 25
+      },
+      "expected_decision": {
+        "is_right": false,
+        "verdict": "incorrect",
+        "score": 0.0,
+        "matched_concepts": [],
+        "missed_concepts": [
+          "high Context Recall/Precision (0.96/0.92) proves retrieval succeeded",
+          "low Faithfulness/Groundedness (0.21) isolates the failure to ungrounded generator hallucination"
+        ],
+        "detected_misconception": "Confuses low Faithfulness (generator hallucinating beyond retrieved context) with low Context Recall (retriever failing to fetch relevant chunks).",
+        "next_action": "re_explain_concept",
+        "feedback_focus": "Contrast Context Recall (0.96 means the retriever already placed the needed facts into the prompt) with Faithfulness/Groundedness (0.21 means the generator fabricated claims unsupported by that retrieved context).",
+        "rationale": "The student diagnosed a retrieval failure even though Context Recall (0.96) and Context Precision (0.92) are both near-perfect and only Faithfulness (0.21) is low. Re-explaining how the RAG Triad separates retrieval metrics from generation faithfulness directly addresses this confusion."
+      }
+    }
+  ]
+}
