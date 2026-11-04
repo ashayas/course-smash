@@ -106,10 +106,15 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-export async function createCourse(env: Env, prompt: string): Promise<string> {
+/** Every entry point checks this first. `owner` is null for the admin account. */
+async function owns(env: Env, courseId: string, owner: string | null) {
+  return Boolean(await env.DB.prepare("SELECT 1 FROM courses WHERE id = ? AND owner IS ?").bind(courseId, owner).first());
+}
+
+export async function createCourse(env: Env, prompt: string, owner: string | null): Promise<string> {
   const id = crypto.randomUUID();
   await env.DB.batch([
-    env.DB.prepare("INSERT INTO courses (id, prompt, created_at) VALUES (?, ?, ?)").bind(id, prompt, now()),
+    env.DB.prepare("INSERT INTO courses (id, prompt, owner, created_at) VALUES (?, ?, ?, ?)").bind(id, prompt, owner, now()),
     log(env, id, "Got your request. Planning the course."),
   ]);
   return id;
@@ -240,9 +245,10 @@ async function reviewModule(env: Env, course: Course, module: Module, roundQuest
   }
 }
 
-export type AdvanceResult = { status: "ready" | "busy" | "error"; error?: string };
+export type AdvanceResult = { status: "ready" | "busy" | "error" | "missing"; error?: string };
 
-export async function advance(env: Env, courseId: string): Promise<AdvanceResult> {
+export async function advance(env: Env, courseId: string, owner: string | null): Promise<AdvanceResult> {
+  if (!(await owns(env, courseId, owner))) return { status: "missing" };
   const claim = await env.DB.prepare("UPDATE courses SET lease_until = ?, last_error = NULL WHERE id = ? AND lease_until < ? AND status != 'complete'")
     .bind(now() + LEASE_MS, courseId, now())
     .run();
@@ -338,8 +344,10 @@ function reveal(question: Question, answer: Answer) {
 }
 
 /** Grade one answer. Multiple choice uses the answer key. Short answers are rated by the decision model and explained by gpt-oss. */
-export async function answerQuestion(env: Env, questionId: string, rawResponse: string) {
-  const question = await env.DB.prepare("SELECT * FROM questions WHERE id = ?").bind(questionId).first<Question>();
+export async function answerQuestion(env: Env, questionId: string, rawResponse: string, owner: string | null) {
+  const question = await env.DB.prepare("SELECT q.* FROM questions q JOIN courses c ON c.id = q.course_id WHERE q.id = ? AND c.owner IS ?")
+    .bind(questionId, owner)
+    .first<Question>();
   if (!question) throw new AnswerError("That question doesn't exist.", 404);
   const existing = await env.DB.prepare("SELECT * FROM answers WHERE question_id = ?").bind(questionId).first<Answer>();
   if (existing) return reveal(question, existing);
@@ -426,20 +434,21 @@ export async function answerQuestion(env: Env, questionId: string, rawResponse: 
   return reveal(question, stored!);
 }
 
-export async function listCourses(env: Env) {
+export async function listCourses(env: Env, owner: string | null) {
   const { results } = await env.DB.prepare(
     `SELECT c.id, c.prompt, c.title, c.summary, c.status, c.created_at,
        (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS modules,
        (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id AND m.status = 'passed') AS passed,
        (SELECT COUNT(*) FROM answers a WHERE a.course_id = c.id) AS answered,
        (SELECT AVG(a.score) FROM answers a WHERE a.course_id = c.id) AS average
-     FROM courses c ORDER BY c.created_at DESC LIMIT 100`,
-  ).all();
+     FROM courses c WHERE c.owner IS ? ORDER BY c.created_at DESC LIMIT 100`,
+  ).bind(owner).all();
   return results;
 }
 
 /** Everything a client needs to show a course. Unanswered questions never include the answer key. */
-export async function courseView(env: Env, id: string) {
+export async function courseView(env: Env, id: string, owner: string | null) {
+  if (!(await owns(env, id, owner))) return null;
   const course = await getCourse(env, id);
   if (!course) return null;
   const [modules, questions, answers, events] = await Promise.all([
@@ -485,7 +494,7 @@ export async function courseView(env: Env, id: string) {
   };
 }
 
-export async function deleteCourse(env: Env, id: string) {
+export async function deleteCourse(env: Env, id: string, owner: string | null) {
   // D1 enforces foreign keys, so children go via ON DELETE CASCADE.
-  await env.DB.prepare("DELETE FROM courses WHERE id = ?").bind(id).run();
+  await env.DB.prepare("DELETE FROM courses WHERE id = ? AND owner IS ?").bind(id, owner).run();
 }

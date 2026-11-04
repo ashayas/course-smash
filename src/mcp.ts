@@ -6,7 +6,8 @@ import { AnswerError, advance, answerQuestion, courseView, createCourse, listCou
 const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });
 const failure = (message: string) => ({ content: [{ type: "text" as const, text: message }], isError: true });
 
-export function createMcpServer(env: Env): McpServer {
+/** `owner` is the signed-in account, null for admin. Every tool is scoped to it. */
+export function createMcpServer(env: Env, owner: string | null): McpServer {
   const server = new McpServer({ name: "coursesmash", version: "1.0.0" });
 
   server.registerTool(
@@ -16,14 +17,14 @@ export function createMcpServer(env: Env): McpServer {
       inputSchema: { prompt: z.string().min(3).max(2000).describe("What the learner wants to learn, and why") },
     },
     async ({ prompt }) => {
-      const id = await createCourse(env, prompt);
-      const result = await advance(env, id);
+      const id = await createCourse(env, prompt, owner);
+      const result = await advance(env, id, owner);
       if (result.status === "error") return failure(`${result.error} Course id: ${id}. Call advance_course to retry.`);
-      return text(await courseView(env, id));
+      return text(await courseView(env, id, owner));
     },
   );
 
-  server.registerTool("list_courses", { description: "List all courses with their progress." }, async () => text(await listCourses(env)));
+  server.registerTool("list_courses", { description: "List all courses with their progress." }, async () => text(await listCourses(env, owner)));
 
   server.registerTool(
     "get_course",
@@ -32,7 +33,7 @@ export function createMcpServer(env: Env): McpServer {
       inputSchema: { course_id: z.string() },
     },
     async ({ course_id }) => {
-      const view = await courseView(env, course_id);
+      const view = await courseView(env, course_id, owner);
       return view ? text(view) : failure("Course not found.");
     },
   );
@@ -45,7 +46,7 @@ export function createMcpServer(env: Env): McpServer {
     },
     async ({ question_id, response }) => {
       try {
-        return text(await answerQuestion(env, question_id, response));
+        return text(await answerQuestion(env, question_id, response, owner));
       } catch (error) {
         if (error instanceof AnswerError) return failure(error.message);
         throw error;
@@ -60,9 +61,10 @@ export function createMcpServer(env: Env): McpServer {
       inputSchema: { course_id: z.string() },
     },
     async ({ course_id }) => {
-      const result = await advance(env, course_id);
+      const result = await advance(env, course_id, owner);
+      if (result.status === "missing") return failure("Course not found.");
       if (result.status === "error") return failure(result.error ?? "The agent failed.");
-      return text({ result: result.status, course: await courseView(env, course_id) });
+      return text({ result: result.status, course: await courseView(env, course_id, owner) });
     },
   );
 

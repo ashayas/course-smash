@@ -345,5 +345,6 @@ function route() {
   if (match) renderCourse(match[1]);
   else renderHome();
 }
+api("/api/me").then(({ username }) => { document.getElementById("who").textContent = username; }).catch(() => {});
 window.addEventListener("hashchange", route);
 route();

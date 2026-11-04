@@ -75,9 +75,24 @@ npm run dev
 
 To deploy on every git push, connect the repo in Workers Builds and use `npm run deploy` as the deploy command. The build's API token needs D1 edit access, since the command runs migrations.
 
+## Accounts
+
+The admin login comes from the `USER_NAME` and `PW` secrets. Add more people with `scripts/add-user.mjs`, which stores a PBKDF2 hash of the password, never the password itself. Each account sees only its own courses, on the web and over MCP.
+
+```sh
+# Cloudflare
+NEW_PASSWORD='their-password' node scripts/add-user.mjs <username> > user.sql
+npx wrangler d1 execute coursesmash-db --remote --file user.sql && rm user.sql
+
+# Docker
+docker compose exec -e NEW_PASSWORD='their-password' coursesmash node scripts/add-user.mjs <username> --sqlite /data/coursesmash.db
+```
+
+Run the same command again to change a password. That also signs the person out everywhere.
+
 ## MCP
 
-`/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(USER_NAME:PW)`. Tools: `create_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
+`/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(username:password)` for any account. Tools: `create_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
 
 ## Check your work
 

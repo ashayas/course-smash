@@ -14,6 +14,7 @@ COPY --from=build /app/dist ./dist
 COPY package.json ./
 COPY public ./public
 COPY migrations ./migrations
+COPY scripts ./scripts
 RUN mkdir /data && chown node:node /data
 VOLUME /data
 USER node
