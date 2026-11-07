@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-11-02",
   "compatibility_flags": ["nodejs_compat"],
-  "routes": [{ "pattern": "coursesmash.ashaya.xyz", "custom_domain": true }],
+  "routes": [{ "pattern": "coursesmash.app", "custom_domain": true }],
   "observability": { "enabled": true, "traces": { "enabled": true } },
   // run_worker_first keeps the app behind the login gate.
   "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },

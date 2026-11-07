@@ -8,13 +8,12 @@
 <body>
 <a class="skip" href="#app">Skip to content</a>
 <header class="site-header">
-  <a class="wordmark wordmark-small" href="#/" aria-label="Course Smash home">
-    <span class="word" aria-hidden="true"><i class="t-orange">C</i><i class="t-yellow">S</i></span>
-  </a>
+  <a class="brand" href="#/" aria-label="Course Smash home"><span class="brand-mark" id="mark" aria-hidden="true"></span><span class="brand-name" aria-hidden="true">Course Smash</span></a>
   <form class="account" method="post" action="/logout"><span class="muted" id="who"></span><button class="button button-quiet" type="submit">Log out</button></form>
 </header>
 <main id="app" tabindex="-1"></main>
 <div id="live" class="visually-hidden" aria-live="polite"></div>
+<script src="/vendor/katex.min.js"></script>
 <script src="/app.js" type="module"></script>
 </body>
 </html>

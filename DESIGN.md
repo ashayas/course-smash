@@ -1,174 +1,123 @@
-# Design kit: `hex.inc/bio-web`
+# Design kit: Course Smash city
 
-When anyone says **"use hex.inc/bio-web theme"**, they mean this file.
+Read this before building any UI for Course Smash.
 
-The look is **3D, geometric and fun**: chunky, flat-colour shapes that pop off a near-black page. It comes from the "Not Bios Sphere" page by Ayush.
-
-## How far to trust these values
-
-This kit was built from five screenshots, not from the page's source.
-
-- **Sampled:** colour values marked as sampled were read from screenshot pixels.
-- **Measured:** sizes are estimates from the screenshots, assuming a 2x display and a viewport about 1457px wide. Round them to the scale below.
-- **Inferred:** the font and all motion could not be confirmed. Replace them if the source becomes available.
+The look is a **playful isometric city on a dark page**. Every course is a building, drawn in flat pixel-art isometric, and the rest of the interface stays quiet, so the colour comes from the buildings.
 
 ## The idea
 
-1. **Dark page, loud shapes.** Neutrals stay quiet so that all the colour comes from illustrations, tiles and the occasional full-colour block.
-2. **Depth without realism.** 3D comes from isometric forms and overlapping layers. Colours are always flat, with no gradients, bevels, glows or shadows.
-3. **Built from simple geometry.** Everything is made of circles, arches, petals, stripes, stars and rounded squares.
-4. **Friendly.** Smiling faces, planets and flowers keep it playful, while the type and layout stay tidy.
+1. **Your learning is a city.** A course is a building, each module is one floor, and a floor's windows light up when you pass its module. A course the agent is still planning is a building site with scaffolding and a crane.
+2. **Dark page, bright buildings.** Neutrals carry the layout. Colour lives in the art and in the occasional full-colour block.
+3. **Flat isometric, no realism.** Surfaces are flat fills with three tones per material (top, lit face, shaded face). No gradients, glows, blur or drop shadows.
+4. **Friendly and alive.** Small motion makes the city feel lived in: rippling water, a ferry, a blinking antenna light, smoke, a swaying crane.
 
 ## Colour
 
-### Neutrals (sampled)
+### Neutrals
 
 | Token | Hex | Use |
 |---|---|---|
-| `--bio-ink` | `#141414` | Page background, text and buttons on colour, dark insets |
-| `--bio-surface` | `#1F1F1D` | Cards and the hero panel |
-| `--bio-paper` | `#FBFBFB` | Main text on dark, light buttons, window title bars |
-| `--bio-muted` | `#A3A3A0` | Secondary text on dark. Estimated by eye, not sampled |
+| `--bio-ink` | `#141414` | Page background, insets behind art, text and buttons on colour |
+| `--bio-surface` | `#1F1F1D` | Cards and panels |
+| `--bio-paper` | `#FBFBFB` | Main text on dark, light buttons |
+| `--bio-muted` | `#A3A3A0` | Secondary text |
 
-### Accents (sampled)
+The `--bio-` token names are historical. Keep them so the CSS stays stable.
 
-| Token | Hex |
-|---|---|
-| `--bio-orange` | `#E65F2B` |
-| `--bio-yellow` | `#F5D556` |
-| `--bio-green` | `#469B5B` |
-| `--bio-blue` | `#5889F7` |
-| `--bio-purple` | `#904CF6` |
-| `--bio-pink` | `#E7A0EA` |
+### Accents
 
-Use only these six accents. The hero wordmark also shows in-between shades such as olive and lavender. They look like frames of a colour animation, so don't use them as tokens.
+| Token | Hex | Use |
+|---|---|---|
+| `--bio-orange` | `#E65F2B` | Wrong answers, cranes, trim |
+| `--bio-yellow` | `#F5D556` | Lit windows, progress pips, focus rings, scaffolding |
+| `--bio-green` | `#469B5B` | Correct answers, passed modules |
+| `--bio-blue` | `#5889F7` | Selected options, trim |
+| `--bio-purple` | `#904CF6` | Trim |
+| `--bio-pink` | `#E7A0EA` | The finished-course panel, trim |
 
-### Using colour
+- Text on any accent is `--bio-ink`.
+- One full-colour block per screen at most, such as the verdict or the finished panel.
+- Don't use accents for body text on dark.
+- The theme is dark only.
 
-- Pair accents at high contrast, such as yellow on orange, pink on purple or yellow on green.
-- Reserve full-colour blocks for moments of emphasis, usually one per screen. Orange and pink are the two seen in use.
-- Text on any accent is `--bio-ink`, never white. On purple, `--bio-ink` reaches only about 4:1, so use it for large bold text only.
-- Don't use accents for body text on dark. Keep colour in shapes.
-- The theme is dark only. No light mode appears in the source.
+### Building materials
 
-```css
-:root {
-  --bio-ink: #141414;
-  --bio-surface: #1f1f1d;
-  --bio-paper: #fbfbfb;
-  --bio-muted: #a3a3a0;
+Each material has three tones: top, left (lit) face, right (shaded) face. They live in `public/city.js`.
 
-  --bio-orange: #e65f2b;
-  --bio-yellow: #f5d556;
-  --bio-green: #469b5b;
-  --bio-blue: #5889f7;
-  --bio-purple: #904cf6;
-  --bio-pink: #e7a0ea;
+| Material | Top | Left | Right |
+|---|---|---|---|
+| sandstone | `#EAD3A6` | `#D4B27C` | `#A9865A` |
+| brick | `#D9826A` | `#B9533E` | `#86392D` |
+| glass | `#9CC0F2` | `#5B8BD6` | `#3B62A6` |
+| teal | `#9AD9D2` | `#4FA39D` | `#2F736F` |
+| concrete | `#C9CCD1` | `#9EA3AB` | `#70757E` |
+| white | `#FFFFFF` | `#E2E4E8` | `#B5BAC3` |
 
-  --bio-radius-card: 28px;
-  --bio-radius-panel: 36px;
-  --bio-radius-pill: 999px;
-  --bio-gutter: 32px;
-  --bio-gap: 28px;
-  --bio-font: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
-}
-```
+Unlit windows are `#27303F`, and lit windows are `--bio-yellow`. Water is `#1F4F8F` with `#2F68B0` ripples.
 
 ## Type
 
-The source uses one tight neo-grotesque sans. The exact font is unconfirmed, so `Inter Tight` is the stand-in.
+One font: **Inter Tight**.
 
 | Role | Size | Weight | Tracking |
 |---|---|---|---|
+| Hero title ("Course Smash") | 52 to 104px | 800 | -0.055em |
 | Section heading | 52px | 600 | -0.04em |
-| Talk or card title, large | 35px | 600 | -0.03em |
+| Card title, large | 35px | 600 | -0.03em |
 | Card title, small | 25px | 600 | -0.03em |
 | Hero lead | 22px | 400 | -0.01em |
-| Body and intro text | 19px | 400 | -0.01em |
-| Button | 16px | 500 | 0 |
+| Body | 19px | 400 | -0.01em |
+| Button, small text | 16px | 500 | 0 |
 
-- Line height is about 1.05 for headings and 1.35 for body text.
-- Use sentence case everywhere. Only tile letters are capitals.
-- Don't use serif, monospace or italic type.
+Use sentence case everywhere, with no serif, monospace or italic type.
 
 ## Layout and shape
 
-- **Page:** `--bio-gutter` side margins, with a minimal header of wordmark on the left and one pill button on the right.
-- **Section header:** a large heading on the left, with a muted intro starting just past the midpoint of the page. Stack them on mobile.
-- **Grids:** four columns for feature illustrations and three for cards, with a `--bio-gap` gap. Collapse to one column on phones.
-- **Spacing:** generous, with about 100px or more between sections.
-- **Corners:** cards are about 28px, large panels about 36px, buttons are full pills. Illustrated window frames stay square.
+- **Header:** the logo mark and "Course Smash" on the left, the account and a pill button on the right.
+- **Hero:** title, lead and composer on the left, and the city on the right. On phones the city sits under the composer.
+- **Grids:** three columns of cards, two on tablets, one on phones.
+- **Corners:** cards 28px, panels 36px, insets 20px, buttons full pills.
 - **Surfaces:** separate them by colour only, with no borders or shadows.
 
-## Signature components
+## The city art
 
-### Letter-tile wordmark
+All art is SVG built in `public/city.js` from numbers and the palette. Model text never goes into it.
 
-The most recognisable element.
+- **Projection:** 2:1 pixel-art isometric. x runs down-right, y runs down-left, z is up.
+- **Building types:** tower, setback, rotunda, capitol, factory, datacenter, port, greenhouse and townhall.
+- **Roof add-ons:** garden, helipad, antenna, dish, water tank and solar.
+- **Lots:** each building stands on a 6 × 6 paved plaza.
+- **The hero city:** a 3 × 3 block island on a water slab, with a pier and a ferry. Your newest courses take the front lots, the next free lot is a building site, and the back row is a skyline.
+- **Course cards:** the building sits in an ink inset, cropped tightly to what was drawn.
+- **Loader:** floors dropping onto a tower.
+- **Finished course:** the fully lit building with confetti.
 
-- Each letter sits on its own rounded square in a different accent, with heavy `--bio-ink` capitals.
-- An O can be drawn as a solid `--bio-ink` circle.
-- Short words such as "NOT" can share one wider tile.
-- Hero tiles are about 92px, with radius 26px and a 5px gap. Footer tiles are about 44px with radius 13px.
-- In the hero, tiles sit slightly out of line, by a few pixels vertically, so the word feels bouncy.
+### How a course gets its building
 
-### Buttons
-
-- A full pill about 50px tall with 26px horizontal padding.
-- `--bio-paper` with ink text on dark surfaces, and `--bio-ink` with paper text on colour.
-- Use one action label consistently across the page.
-
-### Cards
-
-- **Content card:** `--bio-surface`, about 21px padding, with the title and muted subtitle anchored at the bottom.
-- **Colour card:** the same shape filled with an accent, using ink text and a dark button. Use it to break up a grid.
-- **Call-to-action panel:** a full-width accent panel with heading, sentence and button on the left, and an illustration in a dark rounded inset on the right.
-
-### Patterned photo frame
-
-- A square photo with an L-shaped patterned strip offset behind it to the lower right, about 24px out.
-- The strip is a repeating two-colour pattern of diamonds, dots, arches, quarter circles or blocks.
-- Give each card a different pattern and colour pair.
-
-## Illustration
-
-Draw these as inline SVG, using flat fills from the accent palette only.
-
-- **Isometric cube:** three visible faces in different colours, each with its own surface pattern, such as dots, an arch or stripes.
-- **Stacked browser windows:** 3 to 5 windows cascading diagonally. Each has a paper title bar with three small dots and a colourful scene inside. A black-outlined white cursor often sits on top.
-- **Ringed planets:** a two-colour or striped sphere with a tilted ring passing in front and behind, plus small four-point sparkles.
-- **Characters:** arch-shaped or round smiling faces with simple eyes and rounded cheeks.
-- **Flowers and suns:** layered petals or radial dashes around a circle.
-- **Sticker grid:** a 3×3 block of colour squares, with one icon per square and rounded outer corners only.
-
-Keep shapes bold enough to read at small sizes, and avoid thin outlines. The cursor and the occasional ring are the exceptions.
+When the planner writes a course outline, it also picks an `icon`, which is the building type, material, roof and accent from the fixed lists in `src/icon.ts`. The icon is stored as JSON on the course. Courses without one, including library courses, get a building from keywords in their title and topic. The building is drawn with the course's own seed, so it always looks the same.
 
 ## Motion
 
-Static screenshots can't confirm any motion, so treat this as a suggested direction.
-
-- Give tiles a gentle bob and slowly cycle their colours.
-- Let windows fan out or planets drift slowly, with springy easing that has a slight overshoot.
-- On hover, lift elements a few pixels or nudge them slightly.
-- Honour `prefers-reduced-motion` by stopping all looping animation.
+- Use springy easing with a slight overshoot (`--spring`) for hover lifts and pops.
+- Lift buildings and cards a few pixels on hover.
+- Keep loops slow and small: water, ferry, antenna blink, smoke, crane sway, the floating city.
+- Honour `prefers-reduced-motion` by stopping all animation.
 
 ## Voice
 
-- Short, warm and concrete: "Bring an idea in the morning, leave with something real by the end of the day."
-- Plain words and an active tone, with no corporate hype.
-- Headings are short phrases: "Save your spot".
+- Short, warm and concrete: "Every course goes up as a building in your city, one floor per module."
+- Plain words and an active tone, with no hype.
 
 ## Do and don't
 
 **Do**
 
-- Start from `--bio-ink` and add colour through shapes.
-- Make one illustration or wordmark the hero of each screen.
-- Vary colour pairs so that repeated items feel different.
+- Let the buildings carry the colour.
+- Tie the art to real progress: floors are modules, and lights are passed modules.
+- Vary building, material and accent so each course is recognisable.
 
 **Don't**
 
-- Use gradients, drop shadows, glows, glass effects or photorealistic 3D.
-- Add colours outside the palette.
-- Use pale pastel versions of the accents, or put colour on every surface.
-- Reuse the event's name, speakers or copy, unless the work is for that event.
+- Use gradients, drop shadows, glows, glass effects or photoreal 3D.
+- Add colours outside the palette and materials above.
+- Let a model write markup for the art.

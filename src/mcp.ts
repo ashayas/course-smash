@@ -1,7 +1,7 @@
 // The same agent, exposed over MCP so any MCP client (opencode, for one) can drive it.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AnswerError, advance, answerQuestion, courseView, createCourse, listCourses } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, listCatalog, listCourses, startCatalogCourse } from "./agent";
 
 const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });
 const failure = (message: string) => ({ content: [{ type: "text" as const, text: message }], isError: true });
@@ -18,6 +18,33 @@ export function createMcpServer(env: Env, owner: string | null): McpServer {
     },
     async ({ prompt }) => {
       const id = await createCourse(env, prompt, owner);
+      const result = await advance(env, id, owner);
+      if (result.status === "error") return failure(`${result.error} Course id: ${id}. Call advance_course to retry.`);
+      return text(await courseView(env, id, owner));
+    },
+  );
+
+  server.registerTool(
+    "list_library",
+    { description: "List the ready-made library courses (AI engineering, Kubernetes, inference engineering, identity and integrations, cybersecurity, robotics and hardware) with their tracks, levels and question counts." },
+    async () => {
+      const { courses } = await listCatalog(env);
+      return text(courses.map(({ id, track_title, title, summary, level, modules, questions }) => ({ id, track: track_title, title, summary, level, modules, questions })));
+    },
+  );
+
+  server.registerTool(
+    "start_library_course",
+    {
+      description: "Start a library course for the learner. Faster than create_course because the outline and questions already exist. Returns the course and its first questions.",
+      inputSchema: {
+        library_id: z.string().describe("An id from list_library"),
+        goal: z.string().max(1000).optional().describe("What the learner wants out of it. It sets how well they must know each module."),
+      },
+    },
+    async ({ library_id, goal }) => {
+      if (!(await catalogCourse(env, library_id))) return failure("That course isn't in the library. Call list_library.");
+      const id = (await startCatalogCourse(env, library_id, goal ?? "", owner))!;
       const result = await advance(env, id, owner);
       if (result.status === "error") return failure(`${result.error} Course id: ${id}. Call advance_course to retry.`);
       return text(await courseView(env, id, owner));

@@ -5,7 +5,7 @@
 - Use the cloudflare API token as CLOUDFLARE_API_KEY in .env for inference
 - Use wrangler to deploy the completed app to cloudflare and attach a domain maybe you can just make it the root name,
 - use secrets to assign the username and password that are in the .env USER_NAME and PW on the cloudflare worker itself so thats the login gate. it should be a login page where the PW is hidden from the user
-- use the `hex.inc/bio-web` theme as the UI theme for this. "Use hex.inc/bio-web theme" always means the design kit in [DESIGN.md](DESIGN.md), so read that file before building any UI
+- the UI theme is the Course Smash city design kit in [DESIGN.md](DESIGN.md), so read that file before building any UI
 - use the JEV style clef model from cloudflare to determine if questions are right or wrong for each user based on what they want to learn
 
 ## What's already set up
@@ -14,7 +14,7 @@ The infrastructure below already exists. Do not recreate it. `src/index.ts` is a
 
 | Piece | Value |
 |---|---|
-| MCP URL | `https://coursesmash.ashaya.xyz/mcp` |
+| MCP URL | `https://coursesmash.app/mcp` |
 | Worker | `coursesmash` (config in `wrangler.jsonc`) |
 | D1 database | `coursesmash-db`, bound as `env.DB`; it has no tables yet |
 | Worker secrets | `USER_NAME` and `PW`, copied from `.env` |

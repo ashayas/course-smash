@@ -7,3 +7,7 @@ node_modules/
 .wrangler/
 dist/
 data/
+catalog/.state/
+# Library courses are private and stay local; they deploy from disk. A few samples are public.
+catalog/courses/*.json
+!catalog/courses/llm-api-fundamentals k8s-architecture inference-basics.json

@@ -1,9 +1,9 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { AnswerError, advance, answerQuestion, courseView, createCourse, deleteCourse, listCourses } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, deleteCourse, listCatalog, listCourses, startCatalogCourse } from "./agent";
 import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionUser } from "./auth";
 import { createMcpServer } from "./mcp";
 
-const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js"]);
+const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js"]);
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -61,6 +61,22 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     if (prompt.length < 3) return json({ error: "Tell me a bit more about what you want to learn." }, 400);
     if (prompt.length > 2000) return json({ error: "Keep your request under 2000 characters." }, 400);
     return json({ id: await createCourse(env, prompt, owner) }, 201);
+  }
+
+  if (path === "/api/catalog" && method === "GET") return json(await listCatalog(env));
+  const library = path.match(/^\/api\/catalog\/([\w-]+)(\/start)?$/);
+  if (library) {
+    if (!library[2] && method === "GET") {
+      const view = await catalogCourse(env, library[1]!);
+      return view ? json(view) : json({ error: "That course isn't in the library." }, 404);
+    }
+    if (library[2] && method === "POST") {
+      const body = (await request.json().catch(() => null)) as { goal?: unknown } | null;
+      const goal = typeof body?.goal === "string" ? body.goal : "";
+      if (goal.length > 1000) return json({ error: "Keep your goal under 1000 characters." }, 400);
+      const id = await startCatalogCourse(env, library[1]!, goal, owner);
+      return id ? json({ id }, 201) : json({ error: "That course isn't in the library." }, 404);
+    }
   }
 
   const course = path.match(/^\/api\/courses\/([\w-]+)(\/advance)?$/);

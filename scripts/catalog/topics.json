@@ -1,0 +1,549 @@
+{
+  "ai-engineering": [
+    [
+      "llm-api-fundamentals",
+      "intro",
+      "Calling LLM APIs well: tokens, context windows, sampling parameters, streaming, rate limits and error handling"
+    ],
+    [
+      "tokenization",
+      "intro",
+      "Tokenizers for engineers: BPE, vocabularies, multilingual and code token counts, and token-count pitfalls"
+    ],
+    [
+      "prompt-engineering",
+      "intro",
+      "Prompt design for production: system prompts, examples, decomposition, prompt versioning and regression"
+    ],
+    [
+      "llm-product-ux",
+      "intro",
+      "UX for AI features: latency budgets, streaming, showing uncertainty, human-in-the-loop review and feedback capture"
+    ],
+    [
+      "rag-fundamentals",
+      "intro",
+      "Retrieval-augmented generation end to end: indexing, retrieval, grounding, citations and when RAG is the wrong tool"
+    ],
+    [
+      "structured-outputs",
+      "intermediate",
+      "Structured outputs: JSON schemas, constrained decoding, validation, repair and retries"
+    ],
+    [
+      "tool-use-agents",
+      "intermediate",
+      "Tool calling and agent loops: tool design, tool results, stop conditions and error recovery"
+    ],
+    [
+      "embeddings-vector-search",
+      "intermediate",
+      "Embeddings and vector search: similarity metrics, normalization, ANN indexes like HNSW, IVF and product quantization"
+    ],
+    [
+      "retrieval-quality",
+      "intermediate",
+      "Retrieval quality: chunking strategies, hybrid lexical and dense search, reranking and query rewriting"
+    ],
+    [
+      "llm-evals",
+      "intermediate",
+      "Building evals for LLM apps: datasets, graders, LLM-as-judge, rubrics and regression suites"
+    ],
+    [
+      "llm-observability",
+      "intermediate",
+      "Observability for LLM apps: tracing, logging prompts safely, cost and latency monitoring, drift"
+    ],
+    [
+      "llm-cost-engineering",
+      "intermediate",
+      "Cost engineering for LLM apps: prompt caching, batching, model routing, token budgets and cost per task"
+    ],
+    [
+      "llm-security",
+      "intermediate",
+      "Security for LLM apps: prompt injection, data exfiltration through tools, jailbreaks, output handling and least privilege"
+    ],
+    [
+      "fine-tuning-basics",
+      "intermediate",
+      "When and how to fine-tune: supervised fine-tuning, data preparation, overfitting and comparing against prompting"
+    ],
+    [
+      "transformer-internals",
+      "intermediate",
+      "Transformer internals for engineers: attention, positional encodings, residual stream, layer norm and MLPs"
+    ],
+    [
+      "context-engineering",
+      "intermediate",
+      "Context engineering: long context trade-offs, compaction, summarization, memory and retrieval versus stuffing"
+    ],
+    [
+      "mcp-integration",
+      "intermediate",
+      "Model Context Protocol: servers and clients, tools, resources, prompts, transports and auth"
+    ],
+    [
+      "multimodal-apps",
+      "intermediate",
+      "Building with multimodal models: images, documents, audio, OCR versus vision, and their failure modes"
+    ],
+    [
+      "llm-app-architecture",
+      "intermediate",
+      "Production architecture for LLM apps: queues, timeouts, retries, idempotency, fallbacks and streaming backends"
+    ],
+    [
+      "synthetic-data",
+      "intermediate",
+      "Synthetic data for training and evals: generation strategies, diversity, filtering and contamination"
+    ],
+    [
+      "agent-architecture",
+      "advanced",
+      "Designing multi-step agents: planning, memory, subagents, orchestration patterns and failure handling"
+    ],
+    [
+      "eval-statistics",
+      "advanced",
+      "Statistics for evals: variance, confidence intervals, paired comparisons, significance and sample size"
+    ],
+    [
+      "lora-peft",
+      "advanced",
+      "LoRA, QLoRA and parameter-efficient fine-tuning: rank, adapters, merging and serving many adapters"
+    ],
+    [
+      "preference-tuning",
+      "advanced",
+      "Preference tuning: reward models, RLHF with PPO, DPO and its variants, reward hacking"
+    ],
+    [
+      "coding-agents",
+      "advanced",
+      "Coding agents: sandboxes, test-driven loops, applying diffs, repository context and review"
+    ]
+  ],
+  "kubernetes": [
+    [
+      "k8s-architecture",
+      "intro",
+      "Kubernetes architecture: API server, etcd, scheduler, controller manager, kubelet and the reconciliation model"
+    ],
+    [
+      "pods-containers",
+      "intro",
+      "Pods and containers: init containers, sidecars, restart policies, probes and the pod lifecycle"
+    ],
+    [
+      "deployments-rollouts",
+      "intro",
+      "Deployments and rollouts: ReplicaSets, rolling update settings, rollbacks and revision history"
+    ],
+    [
+      "config-secrets",
+      "intro",
+      "Configuration and secrets: ConfigMaps, Secrets, env versus mounted files, updates and external secret stores"
+    ],
+    [
+      "k8s-debugging",
+      "intro",
+      "Debugging workloads: Pending pods, CrashLoopBackOff, ImagePullBackOff, OOMKilled, events and kubectl debug"
+    ],
+    [
+      "helm-kustomize",
+      "intro",
+      "Packaging and config management with Helm and Kustomize: charts, values, overlays and patches"
+    ],
+    [
+      "services-networking",
+      "intermediate",
+      "Services and cluster networking: ClusterIP, NodePort, LoadBalancer, kube-proxy, EndpointSlices and DNS"
+    ],
+    [
+      "ingress-gateway-api",
+      "intermediate",
+      "Ingress controllers and the Gateway API: routing, TLS termination and traffic splitting"
+    ],
+    [
+      "storage-volumes",
+      "intermediate",
+      "Storage: volumes, PersistentVolumes and claims, StorageClasses, CSI drivers and StatefulSets"
+    ],
+    [
+      "scheduling",
+      "intermediate",
+      "Scheduling: requests, node affinity, pod affinity, taints and tolerations, topology spread and priority"
+    ],
+    [
+      "resources-qos",
+      "intermediate",
+      "Resource management: requests and limits, QoS classes, CPU throttling, OOM kills, LimitRanges and quotas"
+    ],
+    [
+      "autoscaling",
+      "intermediate",
+      "Autoscaling: HPA, VPA, Cluster Autoscaler, Karpenter and KEDA, and how they interact"
+    ],
+    [
+      "rbac-security",
+      "intermediate",
+      "Access and pod security: RBAC, service accounts, tokens, Pod Security Standards and securityContext"
+    ],
+    [
+      "k8s-observability",
+      "intermediate",
+      "Observability on Kubernetes: metrics-server, Prometheus, kube-state-metrics, logs, events and alerting"
+    ],
+    [
+      "gitops",
+      "intermediate",
+      "GitOps with Argo CD and Flux: desired state in git, sync, drift, promotion between environments"
+    ],
+    [
+      "batch-jobs",
+      "intermediate",
+      "Batch on Kubernetes: Jobs, CronJobs, indexed jobs, backoff, Kueue and gang scheduling"
+    ],
+    [
+      "cluster-upgrades-ops",
+      "intermediate",
+      "Day-2 operations: cluster upgrades, version skew, node drains, PodDisruptionBudgets and maintenance"
+    ],
+    [
+      "cni-network-policy",
+      "advanced",
+      "Pod networking internals: CNI plugins, overlays versus native routing, eBPF dataplanes and NetworkPolicies"
+    ],
+    [
+      "operators-crds",
+      "advanced",
+      "Extending Kubernetes: CRDs, controllers, reconcile loops, finalizers, owner references and operators"
+    ],
+    [
+      "gpu-workloads",
+      "advanced",
+      "GPUs on Kubernetes: device plugins, the GPU operator, MIG, time-slicing, and scheduling GPU pods"
+    ],
+    [
+      "multitenancy",
+      "advanced",
+      "Multi-tenancy: namespaces, quotas, isolation boundaries, policy and virtual clusters"
+    ],
+    [
+      "service-mesh",
+      "advanced",
+      "Service meshes: sidecar and ambient models, mTLS, retries and timeouts, and traffic shifting"
+    ],
+    [
+      "model-serving-k8s",
+      "advanced",
+      "Serving ML models on Kubernetes: KServe, GPU autoscaling, cold starts, model caching and canaries"
+    ],
+    [
+      "supply-chain-policy",
+      "advanced",
+      "Supply chain and policy: image provenance, signing, admission controllers, OPA Gatekeeper and Kyverno"
+    ],
+    [
+      "etcd-control-plane",
+      "advanced",
+      "Control plane internals: etcd consistency, watches, backups, API server load and flow control"
+    ]
+  ],
+  "inference": [
+    [
+      "inference-basics",
+      "intro",
+      "LLM inference basics: prefill versus decode, time to first token, time per output token, throughput versus latency"
+    ],
+    [
+      "sampling-decoding",
+      "intro",
+      "Sampling and decoding: greedy, temperature, top-p, top-k, repetition penalties, logprobs and constrained decoding"
+    ],
+    [
+      "kv-cache",
+      "intermediate",
+      "The KV cache: what it stores, memory math per token, PagedAttention and eviction"
+    ],
+    [
+      "batching",
+      "intermediate",
+      "Batching for LLM serving: static, dynamic and continuous batching, and the latency-throughput trade-off"
+    ],
+    [
+      "gpu-fundamentals",
+      "intermediate",
+      "GPU fundamentals for inference: SMs, tensor cores, HBM and memory bandwidth, and why decode is memory-bound"
+    ],
+    [
+      "quantization",
+      "intermediate",
+      "Quantization for inference: INT8, FP8 and INT4 weights, GPTQ, AWQ, activation and KV cache quantization"
+    ],
+    [
+      "serving-frameworks",
+      "intermediate",
+      "Serving frameworks: vLLM, SGLang, TensorRT-LLM and TGI, what each optimizes and how to choose"
+    ],
+    [
+      "prefix-caching",
+      "intermediate",
+      "Prefix caching: reusing KV across requests, radix trees, cache-aware routing and hit rates"
+    ],
+    [
+      "inference-benchmarking",
+      "intermediate",
+      "Benchmarking inference: load generation, latency percentiles, goodput, SLOs and avoiding misleading numbers"
+    ],
+    [
+      "capacity-planning",
+      "intermediate",
+      "Capacity planning for LLM serving: GPU sizing, cost per million tokens, utilization and headroom"
+    ],
+    [
+      "model-compilation",
+      "intermediate",
+      "Graph compilers and runtimes: ONNX, TensorRT, torch.compile and graph-level optimizations"
+    ],
+    [
+      "edge-inference",
+      "intermediate",
+      "On-device inference: llama.cpp, GGUF, Apple silicon unified memory and fitting models into small devices"
+    ],
+    [
+      "routing-load-balancing",
+      "intermediate",
+      "Routing and load balancing LLM endpoints: queueing basics, Little's law, admission control and autoscaling signals"
+    ],
+    [
+      "distillation-small-models",
+      "intermediate",
+      "Smaller models for serving: distillation, pruning, and choosing the smallest model that holds quality"
+    ],
+    [
+      "embedding-reranker-serving",
+      "intermediate",
+      "Serving embedding and reranker models: batching short requests, throughput, and index refresh"
+    ],
+    [
+      "inference-reliability",
+      "intermediate",
+      "Reliability for inference services: OOMs, timeouts, overload, graceful degradation and multi-region failover"
+    ],
+    [
+      "roofline-analysis",
+      "advanced",
+      "Roofline analysis: arithmetic intensity, memory-bound versus compute-bound kernels, and batch size effects"
+    ],
+    [
+      "speculative-decoding",
+      "advanced",
+      "Speculative decoding: draft models, verification, acceptance rate, Medusa, EAGLE and when it pays off"
+    ],
+    [
+      "attention-optimizations",
+      "advanced",
+      "Attention optimizations: FlashAttention, multi-query and grouped-query attention, and sliding windows"
+    ],
+    [
+      "model-parallelism",
+      "advanced",
+      "Parallelism for serving: tensor, pipeline, expert and data parallelism and their communication costs"
+    ],
+    [
+      "moe-serving",
+      "advanced",
+      "Serving mixture-of-experts models: routing, expert parallelism, load imbalance and memory footprint"
+    ],
+    [
+      "disaggregated-serving",
+      "advanced",
+      "Disaggregated serving: splitting prefill and decode across GPUs, KV transfer and scheduling"
+    ],
+    [
+      "long-context-inference",
+      "advanced",
+      "Long-context inference: RoPE scaling, quadratic attention cost, chunked prefill and context caching"
+    ],
+    [
+      "gpu-interconnects",
+      "advanced",
+      "GPU interconnects and collectives: NVLink, InfiniBand, all-reduce, NCCL and topology"
+    ],
+    [
+      "kernel-optimization",
+      "advanced",
+      "Kernel optimization: CUDA kernels, operator fusion, CUDA graphs, occupancy and profiling"
+    ]
+  ],
+  "identity": [
+    [
+      "api-auth-basics",
+      "intro",
+      "API authentication for beginners: API keys, bearer tokens, basic auth, HMAC signatures and mTLS, and when each fits"
+    ],
+    [
+      "oauth2-fundamentals",
+      "intro",
+      "OAuth 2.0 and 2.1 from scratch: roles, authorization code flow with PKCE, client credentials, scopes, access and refresh tokens"
+    ],
+    [
+      "openid-connect",
+      "intermediate",
+      "OpenID Connect: ID tokens, discovery documents, JWKS, claims, nonce and state, logout, and common integration mistakes"
+    ],
+    [
+      "jwt-and-tokens",
+      "intermediate",
+      "JWTs and token handling: structure, signing algorithms, validation pitfalls, lifetimes, revocation, and opaque versus self-contained tokens"
+    ],
+    [
+      "saml-enterprise-sso",
+      "intermediate",
+      "Enterprise SSO with SAML: IdP and SP, assertions, metadata, signing certificates, IdP-initiated flows and migrating to OIDC"
+    ],
+    [
+      "scim-provisioning",
+      "intermediate",
+      "User provisioning with SCIM: user and group lifecycle, deprovisioning, just-in-time provisioning, and directory sync"
+    ],
+    [
+      "saas-connectors",
+      "intermediate",
+      "Building SaaS connectors and integration infrastructure: storing and refreshing OAuth tokens per tenant, rate limits, pagination, incremental sync and backfills"
+    ],
+    [
+      "webhooks-delivery",
+      "intermediate",
+      "Webhooks done right: signing and verifying, retries with backoff, idempotency keys, ordering, replay protection and dead-letter handling"
+    ],
+    [
+      "workload-identity",
+      "advanced",
+      "Workload identity: OIDC federation from CI to cloud, SPIFFE and SPIRE, cloud IAM roles, short-lived credentials and removing static secrets"
+    ],
+    [
+      "authorization-models",
+      "advanced",
+      "Authorization models: RBAC, ABAC, relationship-based access like Zanzibar, and policy engines such as OPA and Cedar"
+    ],
+    [
+      "agent-auth",
+      "advanced",
+      "Auth for AI agents: delegated access, OAuth for MCP servers, token exchange, consent, scoping what an agent can do on a user's behalf"
+    ]
+  ],
+  "security": [
+    [
+      "security-fundamentals",
+      "intro",
+      "Cybersecurity fundamentals for beginners: confidentiality, integrity and availability, threat modeling, attack surface and defense in depth"
+    ],
+    [
+      "web-app-security",
+      "intro",
+      "Web application security: the OWASP Top 10, injection, XSS, CSRF, SSRF, broken access control and how to prevent each"
+    ],
+    [
+      "ethical-hacking-basics",
+      "intro",
+      "How penetration testing works: scope and authorization, reconnaissance, enumeration, finding vulnerabilities and writing the report"
+    ],
+    [
+      "applied-cryptography",
+      "intermediate",
+      "Cryptography for engineers: hashing, password storage, symmetric and public-key encryption, signatures, key management and the post-quantum migration"
+    ],
+    [
+      "network-security",
+      "intermediate",
+      "Network security: TLS, certificates, firewalls, segmentation, VPNs and zero trust access, DNS attacks"
+    ],
+    [
+      "cloud-security",
+      "intermediate",
+      "Cloud security: IAM least privilege, common misconfigurations, KMS and secrets, logging, and the shared responsibility model"
+    ],
+    [
+      "software-supply-chain",
+      "intermediate",
+      "Software supply chain security: dependency risk, SBOMs, SLSA, signing with Sigstore, CI hardening and secrets scanning"
+    ],
+    [
+      "incident-response",
+      "intermediate",
+      "Incident response: detection, triage, containment, evidence handling, communication and blameless postmortems"
+    ],
+    [
+      "detection-engineering",
+      "advanced",
+      "Detection engineering: log sources, SIEM, writing detections, MITRE ATT&CK mapping, tuning false positives"
+    ],
+    [
+      "ai-security",
+      "advanced",
+      "Security for AI systems: prompt injection, data exfiltration through tools, model and dataset supply chain, data poisoning and red-teaming LLM apps"
+    ]
+  ],
+  "robotics": [
+    [
+      "electronics-basics",
+      "intro",
+      "Electronics for complete beginners, assuming no background: voltage, current, resistance, Ohm's law, series and parallel circuits, breadboards and staying safe"
+    ],
+    [
+      "microcontrollers",
+      "intro",
+      "Microcontrollers for complete beginners: what Arduino and ESP32 boards are, GPIO, digital and analog signals, PWM, serial and your first programs"
+    ],
+    [
+      "sensors-and-motors",
+      "intro",
+      "Sensors and motors for beginners: reading distance, light and motion sensors, DC motors, servos, steppers and why motors need drivers"
+    ],
+    [
+      "power-and-batteries",
+      "intro",
+      "Powering hardware projects for beginners: batteries, voltage regulators, current draw, LiPo safety and why projects brown out"
+    ],
+    [
+      "robot-mechanics",
+      "intro",
+      "Robot mechanics for beginners: torque, gears, wheels and drivetrains, weight and center of mass, choosing a motor for a job"
+    ],
+    [
+      "control-systems",
+      "intermediate",
+      "Control for robots: open versus closed loop, feedback, PID control, tuning, and what makes a controller unstable"
+    ],
+    [
+      "robot-kinematics",
+      "intermediate",
+      "Robot kinematics: coordinate frames, degrees of freedom, forward and inverse kinematics for arms and mobile robots"
+    ],
+    [
+      "ros2-basics",
+      "intermediate",
+      "ROS 2 for newcomers: nodes, topics, services, actions, tf frames, launch files and simulation with Gazebo"
+    ],
+    [
+      "robot-perception",
+      "intermediate",
+      "Robot perception: cameras, depth sensors and lidar, calibration, sensor fusion, localization and SLAM basics"
+    ],
+    [
+      "pcb-design-basics",
+      "intermediate",
+      "From breadboard to PCB: schematics, footprints, KiCad layout basics, traces and ground planes, ordering boards"
+    ],
+    [
+      "embodied-ai",
+      "advanced",
+      "Embodied AI: vision-language-action models, imitation learning from teleoperation data, sim-to-real transfer and robot foundation models"
+    ]
+  ]
+}

@@ -7,9 +7,8 @@
 </head>
 <body class="login-page">
 <main class="login">
-  <h1 class="wordmark wordmark-hero" aria-label="Course Smash">
-    <span class="word" aria-hidden="true"><i class="t-orange">C</i><i class="t-yellow t-o"></i><i class="t-green">U</i><i class="t-blue">R</i><i class="t-pink">S</i><i class="t-yellow">E</i></span>
-  </h1>
+  <div class="login-city" id="city" aria-hidden="true"></div>
+  <h1 class="hero-title">Course Smash</h1>
   <p class="lead">Log in and tell me what you want to learn.</p>
   <form class="panel login-form" method="post" action="/login">
     <p class="form-error" id="error" role="alert" hidden></p>
@@ -21,5 +20,6 @@
   </form>
 </main>
 <script src="/login.js"></script>
+<script src="/login-city.js" type="module"></script>
 </body>
 </html>

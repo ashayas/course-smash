@@ -6,7 +6,7 @@ Say what you want to learn. An agent builds a course of multiple-choice and shor
 
 The same app runs on Cloudflare or in Docker.
 
-The design is by [Ayush Soni](https://x.com/ayushsoni_io).
+The design is an isometric city: every course is a building, one floor per module, and floors light up as you pass them. See [DESIGN.md](DESIGN.md).
 
 ## How it works
 
@@ -15,6 +15,26 @@ The design is by [Ayush Soni](https://x.com/ayushsoni_io).
 1. You describe what you want to learn, and the agent plans modules and writes the first questions.
 2. You answer. Multiple-choice answers are checked against the answer key with no model involved. Short answers are rated by the decision model against your goal, and a writing model explains the result.
 3. Your answers go into the learner state. When a round ends, the decision model reads that state and either adds follow-up questions on weak concepts or moves you on.
+
+### How well you need to know a module
+
+When a course starts, the decision model rates each module against your goal as core, supporting or background. That sets the module's bar and how many follow-up rounds it can get:
+
+| Importance | Bar per subtopic | Follow-up rounds |
+|---|---|---|
+| Core | 80% | up to 3 |
+| Supporting | 70% | up to 2 |
+| Background | 55% | 1 |
+
+After each round, a module with every subtopic at or above its bar passes straight away. Otherwise the decision model sees the bar, the subtopics below it and any not yet asked, and decides whether the gaps matter for your goal. Mastery is per subtopic, and recent answers count most.
+
+### The library
+
+Besides courses written on demand, there's a library of ready-made short courses on AI engineering, Kubernetes, inference engineering, identity and integrations (OAuth, OIDC, SCIM, connectors), cybersecurity, and robotics and hardware for beginners. Each module comes with a bank of about 16 reviewed questions: the core set is the first round, and the follow-ups come from the reserve questions on whatever you missed. When the bank runs out, the writing model takes over. Starting a library course asks what you want out of it, so the bars fit you.
+
+Questions can include diagrams and formulas. Diagrams are SVG, cleaned against an allowlist on the server and shown through `<img>`, where SVG can't run scripts. Formulas are LaTeX between `\(` and `\)`, rendered to MathML by a local copy of KaTeX. Dollar signs stay literal, because prices come up a lot.
+
+The library is generated with Claude by `scripts/catalog/generate.mjs` and loaded with `scripts/catalog/import.mjs`. See [Build the library](#build-the-library).
 
 ## Screenshots
 
@@ -92,7 +112,20 @@ Run the same command again to change a password. That also signs the person out 
 
 ## MCP
 
-`/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(username:password)` for any account. Tools: `create_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
+`/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(username:password)` for any account. Tools: `create_course`, `list_library`, `start_library_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
+
+## Build the library
+
+The topics live in `scripts/catalog/topics.json`. The generator sends Message Batches to Claude Opus 5.5, at half the normal price: an outline per course, a question bank per module, then a review of every bank that fixes or drops questions with a wrong key. Two more stages grow live modules: each expansion adds 8 follow-up questions that don't repeat the existing ones, and only those 8 are reviewed before they join the bank. Results go to `catalog/courses/`, and a rerun only does what's missing.
+
+```sh
+set -a; source .env; set +a      # needs ANTHROPIC_API_KEY
+node --experimental-strip-types scripts/catalog/generate.mjs run --cap 150
+node --experimental-strip-types scripts/catalog/generate.mjs status
+node scripts/catalog/import.mjs --remote   # or --local, or --sqlite <path> for Docker
+```
+
+Every response's token usage is logged to `catalog/.state/ledger.jsonl`. Before a batch is sent, its worst case (every request using all of its `max_tokens`) is added to the spend so far, and requests are dropped until that fits under `--cap`. Only modules that passed review are imported.
 
 ## Check your work
 

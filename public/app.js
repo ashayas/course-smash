@@ -1,11 +1,45 @@
 // Course Smash client. Everything the models write goes in through textContent, never innerHTML.
+import { buildingSvg, citySvg, finishedSvg, markSvg, progressOf, stackSvg } from "./city.js";
 const app = document.getElementById("app");
 const live = document.getElementById("live");
-const ACCENTS = ["orange", "yellow", "green", "blue", "purple", "pink"];
-const COLORS = { orange: "#E65F2B", yellow: "#F5D556", green: "#469B5B", blue: "#5889F7", purple: "#904CF6", pink: "#E7A0EA", ink: "#141414", paper: "#FBFBFB" };
 
 // Models sometimes write markdown. Only paired markers go, so code like "2 ** 3" survives.
 const plainText = (text) => text.replace(/\*\*(\S(?:.*?\S)?)\*\*/g, "$1").replace(/`([^`\n]+)`/g, "$1");
+
+// Formulas are LaTeX inside \( \) or \[ \]. Dollar signs stay literal, since prices are common.
+// KaTeX builds MathML nodes itself, so model text still never reaches innerHTML.
+const MATH = /\\\((.+?)\\\)|\\\[([\s\S]+?)\\\]/g;
+function rich(text) {
+  if (!text) return [];
+  const nodes = [];
+  let last = 0;
+  for (const m of text.matchAll(MATH)) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    nodes.push(formula(m[1] ?? m[2], m[2] != null));
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+function formula(tex, display) {
+  const span = document.createElement("span");
+  span.className = display ? "math math-display" : "math";
+  try {
+    window.katex.render(tex, span, { output: "mathml", displayMode: display, throwOnError: false, trust: false, maxSize: 20, maxExpand: 200 });
+  } catch {
+    span.textContent = tex;
+  }
+  return span;
+}
+
+// Figures are model-drawn SVG, sanitized on the server and shown through <img>, where SVG can't run scripts.
+function figureView(q) {
+  if (!q.figure) return null;
+  const img = h("img", { src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(q.figure)}`, alt: q.figure_alt || "Diagram for this question", decoding: "async" });
+  const wrap = h("figure", { class: "figure" }, img);
+  img.addEventListener("error", () => wrap.remove());
+  return wrap;
+}
 
 function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
@@ -19,33 +53,13 @@ function h(tag, props = {}, ...children) {
   return el;
 }
 
-// Illustrations are static, trusted markup with palette colours only.
+// Illustrations come from city.js: static markup built from numbers and palette colours only.
 function art(markup) {
   const wrap = document.createElement("div");
   wrap.innerHTML = markup;
   return wrap.firstElementChild;
 }
-const c = COLORS;
-const PLANET = `<svg viewBox="0 0 440 400" role="img" aria-label="A smiling ringed planet with sparkles"><g class="planet">
-  <path d="M60 240 C110 300 330 240 382 150" fill="none" stroke="${c.yellow}" stroke-width="22" stroke-linecap="round"/>
-  <circle cx="220" cy="195" r="118" fill="${c.purple}"/><path d="M102 195a118 118 0 0 1 236 0z" fill="${c.pink}"/>
-  <rect x="104" y="172" width="232" height="24" fill="${c.blue}"/>
-  <circle cx="183" cy="222" r="11" fill="${c.ink}"/><circle cx="257" cy="222" r="11" fill="${c.ink}"/>
-  <path d="M192 250a28 28 0 0 0 56 0z" fill="${c.ink}"/>
-  <path d="M116 300 C190 320 300 290 370 200" fill="none" stroke="${c.orange}" stroke-width="22" stroke-linecap="round"/></g>
-  <path d="M70 70q8 28 36 36-28 8-36 36-8-28-36-36 28-8 36-36z" fill="${c.yellow}"/>
-  <path d="M376 266q6 20 26 26-20 6-26 26-6-20-26-26 20-6 26-26z" fill="${c.pink}"/>
-  <path d="M362 30q5 16 21 21-16 5-21 21-5-16-21-21 16-5 21-21z" fill="${c.green}"/></svg>`;
-const shapes = [
-  (a, b) => `<svg viewBox="0 0 104 104" aria-hidden="true"><path d="M52 8 96 30 52 52 8 30z" fill="${a}"/><path d="M8 30 52 52V98L8 76z" fill="${b}"/><path d="M96 30 52 52V98L96 76z" fill="${c.paper}"/><circle cx="52" cy="30" r="9" fill="${c.ink}"/></svg>`,
-  (a, b) => `<svg viewBox="0 0 104 104" aria-hidden="true"><path d="M12 96V52a40 40 0 0 1 80 0v44z" fill="${a}"/><circle cx="38" cy="54" r="7" fill="${c.ink}"/><circle cx="66" cy="54" r="7" fill="${c.ink}"/><path d="M38 70a14 14 0 0 0 28 0z" fill="${c.ink}"/><circle cx="84" cy="18" r="12" fill="${b}"/></svg>`,
-  (a, b) => `<svg viewBox="0 0 104 104" aria-hidden="true"><g fill="${a}"><circle cx="52" cy="20" r="18"/><circle cx="52" cy="84" r="18"/><circle cx="20" cy="52" r="18"/><circle cx="84" cy="52" r="18"/></g><circle cx="52" cy="52" r="20" fill="${b}"/><circle cx="52" cy="52" r="7" fill="${c.ink}"/></svg>`,
-];
-function cardArt(index) {
-  const a = COLORS[ACCENTS[index % 6]];
-  const b = COLORS[ACCENTS[(index + 2) % 6]];
-  return art(shapes[index % shapes.length](a, b));
-}
+const plot = (markup, label) => h("div", { class: "plot", ...(label ? { role: "img", "aria-label": label } : {}) }, art(markup));
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -107,46 +121,173 @@ async function renderHome() {
     h("div", { class: "composer-row" }, submit),
   );
   const coursesGrid = h("div", { class: "grid" }, h("p", { class: "muted" }, "Loading your courses..."));
+  const cityView = h("div", { class: "hero-art" });
+  const drawCity = (courses) => {
+    cityView.replaceChildren(art(citySvg(courses)));
+    // Course buildings link to their course; the building site starts a new one.
+    for (const lot of cityView.querySelectorAll("[data-lot]")) {
+      const course = courses[Number(lot.dataset.lot)];
+      const link = document.createElementNS("http://www.w3.org/2000/svg", "a");
+      link.setAttribute("href", course ? `#/course/${course.id}` : "#prompt");
+      link.setAttribute("aria-label", course ? (course.title || course.prompt) : "Start a new course");
+      const tip = document.createElementNS("http://www.w3.org/2000/svg", "title");
+      tip.textContent = course ? (course.title || course.prompt) : "Your next building: start a course";
+      if (!course) link.addEventListener("click", (event) => { event.preventDefault(); prompt.focus(); });
+      lot.replaceWith(link);
+      link.append(tip, lot);
+    }
+  };
+  drawCity([]);
+  const librarySection = h("section", { class: "section", hidden: true });
   app.replaceChildren(
     h("section", { class: "panel hero" },
-      h("div", {},
-        h("h1", { class: "wordmark wordmark-hero", "aria-label": "Course Smash" }, wordTiles()),
+      h("div", { class: "hero-copy" },
+        h("h1", { class: "hero-title" }, "Course Smash"),
         h("p", { class: "lead" }, "Say what you want to learn. I'll build a course of questions, read how you answer, and change what comes next."),
+        h("p", { class: "hero-note" }, "Every course goes up as a building in your city, one floor per module. Pass a module and its floor lights up."),
         form),
-      h("div", { class: "hero-art" }, art(PLANET))),
+      cityView),
     h("section", { class: "section" },
       h("div", { class: "section-head" }, h("h2", {}, "Your courses"), h("p", { class: "muted" }, "Pick up where you left off. Every answer you give shapes the next set of questions.")),
       coursesGrid),
+    librarySection,
   );
+  loadLibraryTeaser(librarySection, token);
   try {
     const { courses } = await api("/api/courses");
     if (token !== renderToken) return;
-    coursesGrid.replaceChildren(...(courses.length ? courses.map(courseCard) : [h("p", { class: "card empty" }, "Nothing here yet. Your first course starts with one sentence.")]));
+    drawCity(courses);
+    coursesGrid.replaceChildren(...(courses.length ? courses.map(courseCard) : [h("p", { class: "card empty" }, "Nothing here yet. Your first building starts with one sentence.")]));
     if (!courses.length) coursesGrid.className = "";
   } catch (e) {
     if (token === renderToken) coursesGrid.replaceChildren(h("p", { class: "error-text" }, e.message));
   }
 }
 
-function wordTiles() {
-  const tile = (letter, i) => h("i", { class: `t-${ACCENTS[i % 6]}` }, letter);
-  return h("span", { class: "word", "aria-hidden": "true" },
-    [..."COURSE"].map((l, i) => (l === "O" ? h("i", { class: "t-yellow t-o" }) : tile(l, i))),
-    h("span", { class: "word-break" }),
-    [..."SMASH"].map((l, i) => tile(l, i + 3)));
-}
-
-function courseCard(course, index) {
+function courseCard(course) {
   const pips = Array.from({ length: course.modules }, (_, i) => h("span", { class: `pip${i < course.passed ? " on" : ""}` }));
   let status = "The agent is planning this one";
   if (course.status === "complete") status = "Finished";
   else if (course.modules) status = `${course.passed} of ${course.modules} modules done`;
   const average = course.average == null ? "" : ` · ${Math.round(course.average * 100)}% so far`;
   return h("a", { class: "card course-card", href: `#/course/${course.id}` },
-    h("div", { class: "art" }, cardArt(index)),
+    h("div", { class: "art" }, art(buildingSvg(course, progressOf(course)))),
     pips.length ? h("div", { class: "pips", "aria-hidden": "true" }, pips) : null,
     h("h3", {}, course.title || course.prompt),
     h("p", {}, status + average));
+}
+
+/* Library */
+let libraryCache = null;
+const loadLibrary = async () => (libraryCache ??= await api("/api/catalog"));
+
+function libraryCard(course) {
+  return h("a", { class: "card course-card", href: `#/library/${course.id}` },
+    h("div", { class: "art" }, art(buildingSvg(course, { floors: course.modules, lit: 0, ambient: 0.18 }))),
+    h("p", { class: "eyebrow" }, `${course.track_title} · ${course.level}`),
+    h("h3", {}, course.title),
+    h("p", {}, `${course.modules} modules · ${course.questions} questions`));
+}
+
+async function loadLibraryTeaser(section, token) {
+  try {
+    const { tracks, courses } = await loadLibrary();
+    if (token !== renderToken || !courses.length) return;
+    section.hidden = false;
+    section.replaceChildren(
+      h("div", { class: "section-head" },
+        h("h2", {}, "Library"),
+        h("div", {}, h("p", { class: "muted" }, `${courses.length} ready-made courses with a question bank behind each module. Start one and it adapts to you like any other.`),
+          h("div", { class: "actions" }, h("a", { class: "button button-quiet", href: "#/library" }, "Browse the library")))),
+      ...Object.entries(tracks).filter(([key]) => courses.some((c) => c.track === key)).map(([key, title]) => {
+        const inTrack = courses.filter((c) => c.track === key);
+        return h("div", { class: "track" },
+          h("div", { class: "track-head" }, h("h3", {}, title), h("a", { class: "link-button", href: `#/library?track=${key}` }, `All ${inTrack.length}`)),
+          h("div", { class: "grid" }, inTrack.slice(0, 3).map(libraryCard)));
+      }),
+    );
+  } catch {
+    // The library is optional on the home page.
+  }
+}
+
+async function renderLibrary(params) {
+  const token = ++renderToken;
+  app.replaceChildren(h("div", { class: "panel stage" }, workingView("Opening the library")));
+  let data;
+  try {
+    data = await loadLibrary();
+  } catch (e) {
+    if (token === renderToken) app.replaceChildren(h("p", { class: "error-text", role: "alert" }, e.message));
+    return;
+  }
+  if (token !== renderToken) return;
+  let track = params.get("track") || "";
+  const search = h("input", { type: "search", class: "search", placeholder: "Search by topic, like KV cache or HPA", "aria-label": "Search the library" });
+  const grid = h("div", { class: "grid" });
+  const count = h("p", { class: "muted", role: "status" });
+  const chips = h("div", { class: "chips" });
+  const draw = () => {
+    const words = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+    const shown = data.courses.filter((c) => (!track || c.track === track) &&
+      words.every((w) => `${c.title} ${c.summary} ${c.tags.join(" ")} ${c.level}`.toLowerCase().includes(w)));
+    grid.replaceChildren(...shown.map(libraryCard));
+    count.textContent = `${shown.length} course${shown.length === 1 ? "" : "s"}`;
+    chips.replaceChildren(...[["", "All tracks"], ...Object.entries(data.tracks)].map(([key, title]) =>
+      h("button", { class: `chip${key === track ? " chip-on" : ""}`, type: "button", "aria-pressed": String(key === track), onclick: () => { track = key; draw(); } }, title)));
+  };
+  search.addEventListener("input", draw);
+  app.replaceChildren(
+    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, security, identity and robotics. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
+    h("section", { class: "panel library-tools" }, search, chips, count),
+    h("section", { class: "section" }, grid),
+  );
+  draw();
+}
+
+async function renderLibraryCourse(id) {
+  const token = ++renderToken;
+  app.replaceChildren(h("div", { class: "panel stage" }, workingView("Opening the course")));
+  let course;
+  try {
+    course = await api(`/api/catalog/${id}`);
+  } catch (e) {
+    if (token === renderToken) app.replaceChildren(h("p", { class: "error-text", role: "alert" }, e.message), h("a", { class: "button button-quiet", href: "#/library" }, "Back to the library"));
+    return;
+  }
+  if (token !== renderToken) return;
+  const goal = h("textarea", { id: "goal", maxlength: "1000", placeholder: "Optional: what you want out of it, like \"I'm on call for our GPU cluster\". It sets how well you need to know each module." });
+  const error = h("p", { class: "error-text", role: "alert", hidden: true });
+  const submit = h("button", { class: "button", type: "submit" }, "Start this course");
+  const form = h("form", {
+    class: "composer",
+    onsubmit: async (event) => {
+      event.preventDefault();
+      submit.disabled = true;
+      submit.textContent = "Starting...";
+      error.hidden = true;
+      try {
+        const { id: courseId } = await api(`/api/catalog/${id}/start`, { method: "POST", body: JSON.stringify({ goal: goal.value }) });
+        location.hash = `#/course/${courseId}`;
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        submit.disabled = false;
+        submit.textContent = "Start this course";
+      }
+    },
+  }, h("label", { for: "goal", class: "visually-hidden" }, "What you want out of this course"), goal, error, h("div", { class: "composer-row" }, submit));
+  app.replaceChildren(
+    h("header", { class: "course-head" },
+      h("div", {}, h("p", { class: "eyebrow" }, `${course.track_title} · ${course.level}`), h("h1", {}, course.title), h("p", {}, course.summary)),
+      h("a", { class: "link-button", href: `#/library?track=${course.track}` }, "Back to the library")),
+    h("div", { class: "course-layout" },
+      h("section", { class: "panel stage" }, h("h2", {}, "Make it yours"), form),
+      h("aside", { class: "side" }, h("section", { class: "card" }, h("h2", {}, "Modules"),
+        course.modules.map((m) => h("div", { class: "module locked" },
+          h("span", { class: "dot", "aria-hidden": "true" }),
+          h("div", {}, h("strong", {}, m.title), h("span", {}, m.concepts.join(" · ")))))))),
+  );
 }
 
 /* Course */
@@ -208,16 +349,20 @@ function workingDetail(view) {
 
 function workingView(title, detail) {
   return h("div", { class: "working", role: "status" },
-    h("div", { class: "working-tiles", "aria-hidden": "true" }, ["orange", "yellow", "green", "pink"].map((a) => h("i", { class: `t-${a}` }))),
+    h("div", { class: "working-stack", "aria-hidden": "true" }, art(stackSvg())),
     h("h2", {}, title),
     detail ? h("p", { class: "muted" }, detail) : null);
 }
 
 function drawCourse(view, stage) {
+  const passed = view.modules.filter((m) => m.status === "passed").length;
+  const progress = progressOf({ status: view.modules.length ? view.status : "building", modules: view.modules.length, passed });
   const head = h("header", { class: "course-head" },
-    h("div", {},
+    h("div", { class: "course-title" },
+      h("div", { class: "course-building", "aria-hidden": "true" }, art(buildingSvg(view, progress))),
+      h("div", {},
       h("h1", {}, view.title || view.prompt),
-      view.summary ? h("p", {}, view.summary) : null),
+      view.summary ? h("p", {}, view.summary) : null)),
     h("button", { class: "link-button", onclick: () => removeCourse(view) }, "Delete course"));
   const main = view.status === "complete"
     ? finishedView(view)
@@ -239,7 +384,7 @@ function finishedView(view) {
       h("h2", {}, "You did it"),
       strongest ? h("p", {}, `You're strongest on ${strongest.concept}.${weakest && weakest.mastery < 0.7 ? ` Come back to ${weakest.concept} when you can.` : ""}`) : null,
       h("div", { class: "actions" }, h("a", { class: "button button-ink", href: "#/" }, "Build another course"))),
-    art(shapes[1](COLORS.yellow, COLORS.orange)));
+    plot(finishedSvg(view), "Your building with every floor lit"));
 }
 
 function sideView(view) {
@@ -248,7 +393,7 @@ function sideView(view) {
     view.modules.length ? h("section", { class: "card" }, h("h2", {}, "Modules"),
       view.modules.map((m) => h("div", { class: `module ${m.status}` },
         h("span", { class: "dot", "aria-hidden": "true" }),
-        h("div", {}, h("strong", {}, m.title), h("span", {}, m.status === "passed" ? "Done" : m.status === "active" ? `${m.answered} answered` : "Up next"))))) : null,
+        h("div", {}, h("strong", {}, m.title), h("span", {}, (m.status === "passed" ? "Done" : m.status === "active" ? `${m.answered} answered` : "Up next") + (m.mastery_target ? ` · bar ${Math.round(m.mastery_target * 100)}%` : "")))))) : null,
     view.mastery.length ? h("section", { class: "card" }, h("h2", {}, "What you know"),
       view.mastery.map((m) => {
         const percent = Math.round(m.mastery * 100);
@@ -268,7 +413,7 @@ function questionView(view, token) {
   const module = view.modules.find((m) => m.status === "active");
   const roundLabel = view.round > 1 ? "Follow-up" : "Question";
   const eyebrow = h("p", { class: "eyebrow" }, `${module.title} · ${roundLabel} ${index} of ${view.round_questions.length}`);
-  const prompt = h("h2", { class: "question" }, q.prompt);
+  const prompt = h("h2", { class: "question" }, rich(q.prompt));
   const error = h("p", { class: "error-text", role: "alert", hidden: true });
   const submit = h("button", { class: "button", type: "submit" }, "Check my answer");
   const body = q.options
@@ -277,7 +422,7 @@ function questionView(view, token) {
         q.options.map((option, i) => h("label", { class: "option", "data-index": i },
           h("input", { type: "radio", name: "answer", value: String(i), required: true }),
           h("span", { class: "mark", "aria-hidden": "true" }, "ABCD"[i]),
-          h("span", {}, option))))
+          h("span", {}, rich(option)))))
     : h("div", {},
         h("label", { for: "short", class: "visually-hidden" }, "Your answer"),
         h("textarea", { id: "short", name: "answer", maxlength: "4000", required: true, placeholder: "Answer in your own words, in a sentence or three." }));
@@ -301,7 +446,7 @@ function questionView(view, token) {
       }
     },
   }, body, error, h("div", { class: "actions" }, submit));
-  return h("div", {}, eyebrow, q.why ? h("p", { class: "why" }, q.why) : null, prompt, form);
+  return h("div", {}, eyebrow, q.why ? h("p", { class: "why" }, rich(q.why)) : null, prompt, figureView(q), form);
 }
 
 const VERDICTS = {
@@ -329,8 +474,8 @@ function showResult(view, q, form, result, token) {
   const sure = result.confidence == null ? null : h("p", { class: "small" }, `Graded by ${view.models.grader}, ${Math.round(result.confidence * 100)}% sure.`);
   const block = h("div", { class: `verdict verdict-${result.verdict}`, role: "status" },
     h("h3", {}, title),
-    h("p", {}, result.feedback),
-    result.verdict !== "correct" && !q.options ? h("p", { class: "reference" }, result.reference) : null,
+    h("p", {}, rich(result.feedback)),
+    result.verdict !== "correct" && !q.options ? h("p", { class: "reference" }, rich(result.reference)) : null,
     sure,
     next);
   form.replaceChildren(...parts, block);
@@ -340,11 +485,16 @@ function showResult(view, q, form, result, token) {
 
 /* Routing */
 function route() {
-  const match = location.hash.match(/^#\/course\/([\w-]+)$/);
+  const [path, query = ""] = location.hash.split("?");
+  const course = path.match(/^#\/course\/([\w-]+)$/);
+  const library = path.match(/^#\/library(?:\/([\w-]+))?$/);
   window.scrollTo(0, 0);
-  if (match) renderCourse(match[1]);
+  if (course) renderCourse(course[1]);
+  else if (library?.[1]) renderLibraryCourse(library[1]);
+  else if (library) renderLibrary(new URLSearchParams(query));
   else renderHome();
 }
+document.getElementById("mark").replaceChildren(art(markSvg(40)));
 api("/api/me").then(({ username }) => { document.getElementById("who").textContent = username; }).catch(() => {});
 window.addEventListener("hashchange", route);
 route();
