@@ -1077,12 +1077,144 @@
           "correct_index": null,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "temperature",
+          "prompt": "At temperature 0, the model keeps giving the same wrong answer to a factual question about your product. A teammate suggests raising temperature to 1 so the model will try harder. Explain what raising temperature would and would not do here, and what you would try instead.",
+          "reference": "Temperature only changes how randomly the model picks among tokens it already finds likely. It adds no knowledge and no extra effort, so a higher value may sometimes produce the right answer by chance but also more varied wrong ones. Better fixes are putting the correct facts in the prompt or context, improving the instructions, or using a stronger or reasoning model.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "temperature",
+          "prompt": "You ask the model to solve a maths word problem five times and take the majority answer, hoping the vote catches occasional mistakes. All five calls use temperature 0, and the five answers almost always match word for word. What change makes the vote useful?",
+          "reference": "Voting only helps if the attempts are independent samples that can disagree, which needs some randomness from a moderate temperature. Changing the seed at temperature 0 adds little variety, because near-greedy decoding picks the top token regardless of the random draw.",
+          "options": [
+            "Raise temperature to a moderate value so the five attempts actually differ",
+            "Keep temperature 0, since voting works best when every attempt is most accurate",
+            "Give each request a different seed but keep temperature at 0 for variety",
+            "Lower top_p to 0.1 so each attempt focuses on the most likely reasoning"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "top-p and top-k",
+          "prompt": "Top_p keeps only the smallest set of most likely tokens whose probabilities add up to at least the value you set, then samples from that set. With temperature 1 and top_p set to 0.01, how will the model behave?",
+          "reference": "The top token alone almost always has probability above 0.01, so the kept set is usually just that one token, making output close to greedy. The tempting mistake is thinking top_p selects the bottom of the distribution; it always keeps the most likely tokens.",
+          "options": [
+            "It nearly always picks the single most likely token, much like greedy decoding",
+            "It samples from the least likely 1 percent of tokens, giving odd word choices",
+            "It behaves normally, because temperature 1 overrides any top_p setting",
+            "It adds about 1 percent extra randomness on top of ordinary sampling"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "top-p and top-k",
+          "prompt": "The diagram shows next-token probabilities at two different steps, both at temperature 1. Top_k keeps only the k most likely tokens. With top_k set to 2, what happens at each step, and what does this show?",
+          "reference": "At step A the top two tokens hold only 0.43, so top_k discards 0.57 of the mass and several equally reasonable colours, while at step B the top two already hold 0.95. Top_k keeps a fixed number of tokens, not a fixed share of probability, which is why top_p adapts better to how confident the model is.",
+          "options": [
+            "Step A loses over half its probability mass while step B barely changes; a fixed count ignores model confidence",
+            "Both steps lose the same share of probability, because top_k always keeps a fixed fraction of the distribution",
+            "Step B loses most of its probability mass because the rare cities are cut, while step A is left unaffected",
+            "Neither step changes, because top_k only takes effect when temperature is set below 1"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 360\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"360\" fill=\"#FBFBFB\"/><text x=\"170\" y=\"40\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\" text-anchor=\"middle\">Step A: colour of a car</text><text x=\"470\" y=\"40\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\" text-anchor=\"middle\">Step B: capital of France</text><line x1=\"40\" y1=\"300\" x2=\"300\" y2=\"300\" stroke=\"#141414\" stroke-width=\"2\"/><line x1=\"350\" y1=\"300\" x2=\"610\" y2=\"300\" stroke=\"#141414\" stroke-width=\"2\"/><rect x=\"50\" y=\"252\" width=\"40\" height=\"48\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"100\" y=\"254\" width=\"40\" height=\"46\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"150\" y=\"256\" width=\"40\" height=\"44\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"200\" y=\"258\" width=\"40\" height=\"42\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"250\" y=\"260\" width=\"40\" height=\"40\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"70\" y=\"244\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.22</text><text x=\"120\" y=\"246\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.21</text><text x=\"170\" y=\"248\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.20</text><text x=\"220\" y=\"250\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.19</text><text x=\"270\" y=\"252\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.18</text><text x=\"70\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">red</text><text x=\"120\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">blue</text><text x=\"170\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">green</text><text x=\"220\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">gold</text><text x=\"270\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">teal</text><rect x=\"370\" y=\"102\" width=\"44\" height=\"198\" rx=\"8\" fill=\"#469B5B\" stroke=\"#141414\"/><rect x=\"430\" y=\"289\" width=\"44\" height=\"11\" rx=\"4\" fill=\"#469B5B\" stroke=\"#141414\"/><rect x=\"490\" y=\"293\" width=\"44\" height=\"7\" rx=\"3\" fill=\"#469B5B\" stroke=\"#141414\"/><rect x=\"550\" y=\"295\" width=\"44\" height=\"5\" rx=\"2\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"392\" y=\"94\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.90</text><text x=\"452\" y=\"281\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.05</text><text x=\"512\" y=\"285\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.03</text><text x=\"572\" y=\"287\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">0.02</text><text x=\"392\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">Paris</text><text x=\"452\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">Lyon</text><text x=\"512\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">Nice</text><text x=\"572\" y=\"322\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\" text-anchor=\"middle\">Lille</text></svg>",
+          "figure_alt": "Two bar charts of next-token probabilities: step A has five colour tokens with nearly equal probabilities around 0.2, and step B has one city token at 0.90 and three cities with small probabilities."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "stop sequences",
+          "prompt": "Your prompt shows example lines starting with Q: and A:, and you pass Q: as a stop sequence so the model answers once and does not invent new questions. Most replies are fine, but answers that point users to the help page end abruptly at the text 'see our FA'. What is the most likely cause?",
+          "reference": "Stop sequences match anywhere in the generated text, not just at the start of a line, so the Q: inside FAQ: triggers the stop and the matched text is removed. A token-limit cut would show a length finish reason rather than a stop, and would not reliably land at the same spot; a more distinctive stop string such as a newline followed by Q: avoids the clash.",
+          "options": [
+            "The stop sequence matched the Q: inside FAQ:, ending generation mid-word",
+            "The output token limit was reached just as the model began writing FAQ:",
+            "The model treats colons as special end tokens and stopped at the first one",
+            "The model emitted its own end-of-turn token because the answer seemed complete"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "stop sequences",
+          "prompt": "With a plain text-completion model, after answering, the model keeps inventing extra lines starting with User: and Assistant:, which your code trims off afterwards. Explain how a stop sequence helps here beyond giving cleaner output, and what kind of string you would choose.",
+          "reference": "A stop sequence ends generation as soon as the model starts the next invented turn, so you stop paying for and waiting on tokens you would throw away, not just trimming them later. Choose a string that only appears where you want to stop, such as a newline followed by User:, so normal answer text never triggers it by accident.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "seeds and nondeterminism",
+          "prompt": "A user reports a bizarre reply from your assistant, which runs at temperature 0.8. You want the best chance of reproducing such replies in future investigations. What should your service log for each request?",
+          "reference": "A seed only helps reproduce output when every other input matches: the full message list, model, all sampling parameters, and ideally the same backend configuration, and even then providers treat reproducibility as best effort. Logging only the seed misses that any change in prompt, parameters or backend gives a different result.",
+          "options": [
+            "The exact messages, model name, all sampling parameters, seed and backend identifier",
+            "Only the seed, since resending the same seed returns the same reply every time",
+            "The user's message and the temperature, since other settings rarely change output",
+            "Nothing extra, because rerunning at temperature 0 shows what the model intended"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "reasoning effort settings",
+          "prompt": "A route using a reasoning model meets your quality goals, but its response time is too slow for a chat interface. You must keep the same model. Which change most directly cuts latency without risking broken replies?",
+          "reference": "Most of a reasoning model's latency comes from hidden reasoning tokens, and reasoning effort directly controls how many it spends. Cutting the output token cap is tempting, but reasoning tokens count against it, so replies can come back empty; temperature and top_p do not reduce token count and are often rejected by reasoning models.",
+          "options": [
+            "Lower the reasoning effort so the model spends fewer hidden tokens thinking",
+            "Set temperature to 0 so the model reaches its answer in fewer sampling steps",
+            "Sharply cut the maximum output tokens so the reply is forced to be shorter",
+            "Lower top_p so the model weighs fewer candidate tokens at each step"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.349Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T07:51:06.785Z"
       }
     },
     {
@@ -1342,12 +1474,144 @@
           "correct_index": 0,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "server-sent events format",
+          "prompt": "Your SSE parser buffers incoming text and finds event boundaries by looking for two line-feed characters in a row. Against one provider's stream it emits nothing until the connection closes. In that stream, each line ends with a carriage return followed by a line feed. What is the right fix?",
+          "reference": "The SSE format allows three line-ending styles, so a parser that only recognises plain line feeds never sees an event boundary in a CRLF stream. A spec-compliant parser, or one that normalises line endings first, fixes this. Blaming server flushing is tempting, but the events did arrive; the parser just never recognised where they ended.",
+          "options": [
+            "Make the parser accept carriage return plus line feed, plain line feed, or plain carriage return as line endings",
+            "Send an Accept header asking for text/event-stream so the server switches to the expected format",
+            "Increase the read buffer size so whole events fit inside a single network read",
+            "Ask the server to flush after every event, because it is holding events back until the end"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 1,
+          "concept": "server-sent events format",
+          "prompt": "A teammate asks why LLM APIs stream by keeping one HTTP response open and sending server-sent events, instead of having the client poll an endpoint every half second for new text. Explain the advantage in plain terms.",
+          "reference": "With one open response, the server can push each small piece of text the moment it is generated, so there is no polling delay and no waiting for the next check. Polling adds latency of up to one polling interval and wastes requests and connection overhead, many of which return nothing new. A good answer mentions push as soon as tokens exist, and lower latency and overhead than repeated requests.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "assembling content deltas",
+          "prompt": "You request two alternative answers in one streamed call, with n set to 2 in a Chat Completions style API. The diagram shows the chunks in the order they arrived. Your UI shows the garbled text ParisRome is lovely is old. What should the assembly code do?",
+          "reference": "Each delta carries the index of the choice it belongs to, and deltas from different choices can interleave, so text must be accumulated per index. Reading the first choice in each chunk is the tempting bug: each chunk may hold a delta for either answer, so this still mixes them into one string.",
+          "options": [
+            "Keep a separate text buffer for each choice index and append every delta to the buffer for its index",
+            "Read the first entry in each chunk's list of choices and append its delta to a single shared string",
+            "Insert a line break into the shared string whenever the choice index differs from the previous chunk",
+            "Buffer the whole stream, then keep only the longer of the two answers once the stream has ended"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 240\"><defs><marker id=\"a\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"640\" height=\"240\" fill=\"#FBFBFB\"/><text x=\"320\" y=\"32\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"17\" text-anchor=\"middle\" fill=\"#141414\">Chunks in arrival order</text><rect x=\"20\" y=\"60\" width=\"135\" height=\"76\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"87\" y=\"92\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">choice index 0</text><text x=\"87\" y=\"117\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">delta: Paris</text><rect x=\"175\" y=\"60\" width=\"135\" height=\"76\" rx=\"10\" fill=\"#F5D556\" stroke=\"#141414\"/><text x=\"242\" y=\"92\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">choice index 1</text><text x=\"242\" y=\"117\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">delta: Rome</text><rect x=\"330\" y=\"60\" width=\"135\" height=\"76\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"397\" y=\"92\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">choice index 0</text><text x=\"397\" y=\"117\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">delta: is lovely</text><rect x=\"485\" y=\"60\" width=\"135\" height=\"76\" rx=\"10\" fill=\"#F5D556\" stroke=\"#141414\"/><text x=\"552\" y=\"92\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">choice index 1</text><text x=\"552\" y=\"117\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">delta: is old</text><line x1=\"20\" y1=\"170\" x2=\"618\" y2=\"170\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/><text x=\"600\" y=\"198\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"end\" fill=\"#141414\">time</text></svg>",
+          "figure_alt": "Four chunks arranged left to right along a time arrow, alternating between choice index 0 and choice index 1, each showing a short text delta."
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "assembling content deltas",
+          "prompt": "Your chat UI converts each incoming text delta from markdown to HTML on its own and appends the result. Users sometimes see stray asterisks around words that should be bold, and code blocks render wrongly, but the final saved message is fine. Diagnose the cause and suggest a better approach.",
+          "reference": "Markdown syntax such as a pair of asterisks or a code fence often spans several deltas, so rendering each fragment alone sees an unmatched opening marker and shows it literally. The fix is to accumulate the full text so far and re-render that accumulated text on each update, or use a renderer designed for incremental input. Key points: formatting spans delta boundaries, and rendering must work on the accumulated text rather than on isolated fragments.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "usage and finish events",
+          "prompt": "You give the model a weather tool and stream the reply. The stream ends cleanly, the assembled text is empty, and the finish reason indicates a tool call. You did receive argument fragments for a tool call during the stream. What should your code do next?",
+          "reference": "A tool-call finish reason means the model deliberately stopped to ask you to run a tool; the turn is complete, not broken. You execute the call and return the result so the model can write its answer. Retrying treats a normal stop as an error, which wastes tokens and can loop forever.",
+          "options": [
+            "Run the tool with the assembled arguments, send its result back in a follow-up request, and let the model continue",
+            "Treat the empty text as a failed generation and retry the same request until text comes back",
+            "Raise the maximum output tokens and retry, since an empty answer means the output was cut short",
+            "Show the assembled tool arguments to the user as the final answer, since that is what the model produced"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "time to first token",
+          "prompt": "When your laptop calls the LLM API directly, text starts streaming within a second. In production, browsers reach your backend through a reverse proxy, and the whole answer appears at once after about 8 seconds. Your measured time to first token now roughly equals the total response time. What is the most likely cause?",
+          "reference": "When the first token arrives at the same moment as the last, something is holding the stream back, and reverse proxies commonly buffer whole responses by default. Disabling buffering for the streaming route, and flushing each event from your backend, restores incremental delivery. Longer prompts would raise time to first token, but text would still trickle in afterwards rather than all arriving together.",
+          "options": [
+            "The proxy is buffering the response and only forwarding it when complete, so streaming must be unbuffered on that route",
+            "The production region runs a slower model deployment, which delays the first token by several seconds",
+            "The proxy's read timeout is too short, so it waits and retries before passing the response through",
+            "The prompts in production are much longer, so prompt processing delays everything until the end"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "interrupted streams",
+          "prompt": "Your app has a stop button for long answers. Clicking it hides any further text, but your code keeps reading the stream quietly until it finishes. Token spend barely dropped after you added the button. What should the stop button do instead?",
+          "reference": "Closing the connection is how a client cancels a stream, which lets the server stop producing tokens you would otherwise pay for. Reading quietly to the end is tempting for collecting usage, but it means the full answer is still generated and billed. A separate request cannot reach the generation already in progress.",
+          "options": [
+            "Abort the HTTP request so the connection closes and the server can stop generating",
+            "Keep reading in the background but discard the text, so usage numbers still arrive",
+            "Lower the maximum output tokens on the next request so answers end sooner",
+            "Send a second request telling the model to stop generating the current answer"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "interrupted streams",
+          "prompt": "Your agent streams a payment tool call. The connection drops partway through the arguments, with no finish event. A lenient JSON repair library closes the open braces and gives a valid object containing a recipient and an amount of 10. What should the code do with this tool call?",
+          "reference": "Without a finish event you cannot know the arguments were complete; an amount of 10 could be the start of 1000, and the repair just hides the truncation. Only act on tool calls from a stream that finished normally. Successful parsing is the tempting trap, because valid JSON is not the same as complete JSON.",
+          "options": [
+            "Discard it, since the arguments may be truncated, and retry the request instead of executing anything",
+            "Execute it, because the repaired arguments parsed successfully and contain every required field",
+            "Execute it, then ask the model in a follow-up request to confirm the amount was correct",
+            "Retry the request and append the new argument fragments onto the repaired partial arguments"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.427Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T08:09:28.745Z"
       }
     },
     {

@@ -1043,12 +1043,144 @@
           "correct_index": null,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "eventual consistency and convergence",
+          "prompt": "You scale a Deployment from 3 to 5 replicas, but the cluster has no spare capacity, so two new pods sit in Pending. Nobody touches the Deployment again. Twenty minutes later an administrator adds a new node to the cluster. What happens to the two Pending pods?",
+          "reference": "The desired state of 5 replicas is still recorded, and the scheduler keeps retrying unscheduled pods, so once capacity appears the system converges with no human action. The tempting mistake is thinking a request is a one-shot command that must be resent; in Kubernetes the desired state persists until it is reached or changed.",
+          "options": [
+            "They are scheduled onto the new node automatically, because the scheduler keeps retrying pods that could not be placed",
+            "They stay Pending until someone re-applies the Deployment, because the scale request was already processed once",
+            "They were deleted when scheduling first failed, so the Deployment must be scaled down and up again",
+            "They stay Pending forever, because the Deployment marked itself failed when it could not reach 5 replicas"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "eventual consistency and convergence",
+          "prompt": "A HorizontalPodAutoscaler (a built-in controller that changes a Deployment's replica count based on load) scales web up to 8 during busy hours. Your CI pipeline runs kubectl apply with a manifest containing replicas: 3 on every merge. The replica count keeps jumping between 3 and 8. Explain why the system never settles and how to fix it.",
+          "reference": "Two writers are each declaring a different desired value for the same field, so each one keeps undoing the other and there is no single target to converge to. Convergence needs one owner per field: remove replicas from the manifest so the autoscaler alone controls it. A good answer names the conflicting writers and the single-owner fix.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "eventual consistency and convergence",
+          "prompt": "You update a Deployment's image to web:v2, but that tag was never pushed, so every new pod fails to pull its image. The Deployment uses the default rolling update strategy. After fifteen minutes, what state is the system in?",
+          "reference": "Convergence only happens when the desired state is achievable; here it is not, so the controllers keep trying while the rolling update keeps most old pods running. A common misconception is that Deployments roll back automatically on failure; they only report that progress stalled, and a human or tool must change the spec or run a rollback.",
+          "options": [
+            "The rollout is stuck: old pods keep serving, new pods keep retrying the pull, and it stays that way until you fix or roll back the spec",
+            "Kubernetes noticed the rollout was failing and automatically rolled the Deployment back to the previous image",
+            "All old pods were replaced by failing new pods, so the app is fully down until a valid image is pushed",
+            "The Deployment controller gave up and deleted the new ReplicaSet, so the cluster looks as if the update never happened"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "spec versus status",
+          "prompt": "On a cluster running on your own hardware with no cloud integration, you create a Service with spec type LoadBalancer. Hours later, its status still shows no external address, and kubectl shows the external IP as pending. What is the best interpretation?",
+          "reference": "Spec is a request; status only changes when some controller actually does the work and reports back. With no component that knows how to create a load balancer here, nothing ever fulfils the request. The tempting error is assuming the user should fill in status, but status is written by controllers to report reality, not by users.",
+          "options": [
+            "The desired state is recorded, but no controller exists that can provision a load balancer, so status is never filled in",
+            "The Service object was rejected by the API server, and the pending value is how kubectl shows a failed create",
+            "The spec is incomplete, and you need to add the external IP to status yourself to finish the request",
+            "The load balancer was created, but status updates are delayed because status is only refreshed once a day"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 1,
+          "concept": "declarative versus imperative changes",
+          "prompt": "To set up a new test environment, a teammate replays a saved list of commands from their shell history: kubectl create, then kubectl scale, then kubectl set image, in order. Another teammate suggests running kubectl apply on a folder of manifest files instead. Explain why the manifest approach is more reliable.",
+          "reference": "The command list is imperative: its result depends on running every step, in the right order, from the right starting state, and create steps fail if objects already exist, while the history may be incomplete. Manifests describe the final desired state, can be applied repeatedly with the same result, and can be reviewed and version controlled. A good answer mentions order or starting-state dependence and repeatability of describing the end state.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "level-triggered reconcile loops",
+          "prompt": "The diagram shows what a ReplicaSet controller observes during one reconcile: spec.replicas is 3, and three pods match its selector, but one of them has just been deleted and is still shutting down (Terminating). What does the controller do on this pass?",
+          "reference": "Each pass compares the desired level with the current observed level of active pods, and pods marked for deletion are not counted as active, so one replacement is created immediately. The tempting mistake is to count every pod object that still exists; the controller counts only pods that will keep running.",
+          "options": [
+            "Creates one new pod right away, because a pod that is being deleted does not count toward the desired 3",
+            "Does nothing, because three matching pods currently exist and that equals the desired count",
+            "Waits until the Terminating pod is fully gone, and only then decides whether a new pod is needed",
+            "Cancels the deletion of the Terminating pod so that the count stays at 3 without creating anything"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"300\" fill=\"#FBFBFB\"/><defs><marker id=\"ar\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"30\" y=\"100\" width=\"200\" height=\"100\" rx=\"12\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"130\" y=\"135\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">ReplicaSet web</text><text x=\"130\" y=\"160\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">spec.replicas: 3</text><text x=\"130\" y=\"182\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">selector app=web</text><line x1=\"232\" y1=\"150\" x2=\"358\" y2=\"150\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#ar)\"/><text x=\"295\" y=\"140\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">observe</text><rect x=\"370\" y=\"30\" width=\"240\" height=\"66\" rx=\"10\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"490\" y=\"58\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">pod web-a  app=web</text><text x=\"490\" y=\"80\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">Running</text><rect x=\"370\" y=\"117\" width=\"240\" height=\"66\" rx=\"10\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"490\" y=\"145\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">pod web-b  app=web</text><text x=\"490\" y=\"167\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">Running</text><rect x=\"370\" y=\"204\" width=\"240\" height=\"66\" rx=\"10\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"490\" y=\"232\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" text-anchor=\"middle\" fill=\"#141414\">pod web-c  app=web</text><text x=\"490\" y=\"254\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">Terminating</text></svg>",
+          "figure_alt": "A ReplicaSet named web with spec.replicas 3 observes three pods labelled app=web: two Running and one Terminating."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "level-triggered reconcile loops",
+          "prompt": "Your controller's reconcile function is also called on a timer every few minutes, even when nothing has changed. On one such call, the real world already matches the object's spec exactly. What should a well-written reconcile function do?",
+          "reference": "A level-triggered reconcile always compares desired and actual state and acts only on differences, so a call with nothing to fix is a harmless no-op. Skipping the check because no event arrived is the tempting mistake: periodic calls exist precisely to catch drift or missed events, so the function must still look.",
+          "options": [
+            "Read the current state, find no difference from the spec, and finish without changing anything",
+            "Delete and recreate the resources it manages, to be certain they match the spec exactly",
+            "Return immediately without reading anything, since no new change event triggered this call",
+            "Report an error, because being called with no new event means the controller is misconfigured"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "built-in controllers in the controller manager",
+          "prompt": "A Deployment's pod template uses image web:v1, and its ReplicaSet runs three pods. To test a fix, someone runs kubectl edit on one of those pods, changes its image to web:v2, and saves. Nothing else is changed. What happens to that pod over the next hour?",
+          "reference": "The ReplicaSet controller reconciles the number of pods matching its selector, not their contents, so it never compares a live pod's image with the template; the edited pod keeps v2 until it is deleted or replaced. Assuming every controller enforces every field is the common mistake, and while most pod fields cannot be changed, a container's image can.",
+          "options": [
+            "It runs v2 and stays that way until it is replaced, because the ReplicaSet only checks how many matching pods exist",
+            "The ReplicaSet controller notices the image differs from its template and reverts the pod to v1 within seconds",
+            "The API server rejects the edit, because no field of a running pod can be changed after it is created",
+            "The Deployment controller sees the drift and rolls the other two pods to v2 so that all three match"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 1,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.495Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T08:04:21.850Z"
       }
     },
     {

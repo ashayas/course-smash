@@ -1065,12 +1065,144 @@
           "correct_index": 0,
           "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 220\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"220\" fill=\"#FBFBFB\"/><defs><marker id=\"a\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"8\" markerHeight=\"8\" orient=\"auto\"><path d=\"M0 0L10 5L0 10z\" fill=\"#141414\"/></marker></defs><text x=\"320\" y=\"34\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"17\" fill=\"#141414\">TTFT breakdown for a typical request (1.2 s total)</text><rect x=\"80\" y=\"90\" width=\"40\" height=\"50\" rx=\"8\" fill=\"#F5D556\" stroke=\"#141414\"/><rect x=\"120\" y=\"90\" width=\"320\" height=\"50\" rx=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><rect x=\"440\" y=\"90\" width=\"120\" height=\"50\" rx=\"8\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"80\" y=\"76\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">network + tokenize 100 ms</text><text x=\"280\" y=\"120\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">queue wait 800 ms</text><text x=\"500\" y=\"120\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">prefill 300 ms</text><line x1=\"560\" y1=\"145\" x2=\"560\" y2=\"168\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/><text x=\"600\" y=\"192\" text-anchor=\"end\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">first token streamed</text><text x=\"80\" y=\"192\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">request sent</text></svg>",
           "figure_alt": "A horizontal stacked bar splitting one request's TTFT into network and tokenization, queue wait and prefill segments, with their durations in milliseconds."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "inter-token latency versus tpot",
+          "prompt": "A streamed response has 11 tokens. After the first token, nine of the gaps between consecutive tokens are 20 ms and one gap is 380 ms. Inter-token latency (ITL) is the gap between each pair of consecutive tokens. Which statement is correct?",
+          "reference": "TPOT averages the decode time over the tokens after the first: (9 x 20 + 380) / 10 = 56 ms, which hides the single stall, while ITL keeps each gap so the 380 ms pause is visible. Dividing by 11 wrongly counts the first token, which belongs to TTFT.",
+          "options": [
+            "TPOT is 56 ms, and the 380 ms stall shows up clearly only in the ITL distribution",
+            "TPOT is 20 ms, because the typical gap between tokens is 20 ms",
+            "TPOT is 380 ms, because TPOT tracks the slowest gap in the request",
+            "TPOT is about 51 ms, because the total time is divided across all 11 tokens"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "inter-token latency versus tpot",
+          "prompt": "Your dashboard shows p99 TPOT of 45 ms but p99 inter-token latency of 600 ms for the same traffic. A teammate thinks one of the metrics is buggy. Explain how both numbers can be correct.",
+          "reference": "TPOT is one average per request, so a few long stalls get diluted across many fast tokens, while ITL is measured per gap, so occasional long pauses (for example when the server pauses decoding to run another request's prefill) land in its tail. Both are correct; ITL captures the stutters users notice and TPOT does not.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "inter-token latency versus tpot",
+          "prompt": "The diagram shows when tokens arrived for two streamed responses, measured from each response's first token. Each produced six tokens, finishing 250 ms after its first token. Which statement is correct?",
+          "reference": "Both spend 250 ms on 5 gaps, so TPOT is 50 ms for each; the difference is in inter-token latency, where B has one long 210 ms stall. Judging by B's many short gaps ignores that users perceive a sudden freeze more than a steady pace.",
+          "options": [
+            "Both have a TPOT of 50 ms, but B has a 210 ms gap its user will notice as a pause",
+            "B has the lower TPOT, because most of its tokens arrived only 10 ms apart",
+            "A streams worse, because its typical gap between tokens is five times longer than B's",
+            "Their TPOTs differ, because TPOT is set by the longest gap between two tokens"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"300\" fill=\"#FBFBFB\"/><defs><marker id=\"ah\" markerWidth=\"10\" markerHeight=\"10\" refX=\"8\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><text x=\"320\" y=\"32\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"17\" fill=\"#141414\">Token arrival times after the first token</text><text x=\"20\" y=\"105\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Request A</text><line x1=\"100\" y1=\"100\" x2=\"600\" y2=\"100\" stroke=\"#141414\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><circle cx=\"200\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><circle cx=\"300\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><circle cx=\"400\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><circle cx=\"500\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><circle cx=\"600\" cy=\"100\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"20\" y=\"185\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Request B</text><line x1=\"100\" y1=\"180\" x2=\"600\" y2=\"180\" stroke=\"#141414\" stroke-width=\"1\"/><circle cx=\"100\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><circle cx=\"120\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><circle cx=\"140\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><circle cx=\"160\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><circle cx=\"180\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><circle cx=\"600\" cy=\"180\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><line x1=\"100\" y1=\"235\" x2=\"620\" y2=\"235\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#ah)\"/><text x=\"100\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">0</text><text x=\"200\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">50</text><text x=\"300\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">100</text><text x=\"400\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">150</text><text x=\"500\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">200</text><text x=\"600\" y=\"260\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">250</text><text x=\"360\" y=\"288\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">time since first token (ms)</text></svg>",
+          "figure_alt": "Timeline with dots marking token arrivals for request A and request B over the 250 ms after each one's first token."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "time to first token",
+          "prompt": "To simplify the client, your team switches a chat feature from streaming to returning the whole reply at once. Server-side TTFT and TPOT are unchanged, yet users say the app now feels much slower. What best explains this?",
+          "reference": "The model works just as fast, but the user's first visible output now arrives only when generation finishes, so their felt wait jumps from TTFT to end-to-end latency. Blaming queues or TPOT ignores that the server metrics did not change at all.",
+          "options": [
+            "Without streaming, users see nothing until the last token arrives, so the wait they feel is the full end-to-end latency",
+            "Non-streaming requests make the server run prefill a second time over the generated output before replying",
+            "Turning off streaming raises TPOT, because tokens are held and sent in larger network packets",
+            "Non-streaming requests are placed in a lower-priority queue, which adds queueing time to every request"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "time per output token",
+          "prompt": "On one replica, the number of requests generating at the same time grows from 4 to 64, with similar prompts and output lengths. TPOT rises from 20 ms to 45 ms. What is the best interpretation?",
+          "reference": "Decode runs all active requests together in a batch; a bigger batch makes each step slower, raising per-request TPOT, while the replica produces more tokens in total. Reading a higher TPOT as lower total throughput confuses the per-user pace with the whole replica's output.",
+          "options": [
+            "Each decode step now serves many more requests at once, so every step takes longer, though total tokens per second likely rose",
+            "Prompts must have become longer under load, since TPOT mainly depends on how long the prompt is",
+            "Requests are waiting longer in the queue, and that waiting time is counted inside each request's TPOT",
+            "The replica's total throughput must have fallen by more than half, since TPOT more than doubled"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "end-to-end latency formula",
+          "prompt": "Your product requires a streamed reply to be fully delivered within 5 s. Under current load, TTFT is 0.5 s and TPOT is 30 ms. Roughly what is the longest reply, in output tokens, that still meets the target?",
+          "reference": "Using \\( \\text{E2E} = \\text{TTFT} + (N-1) \\times \\text{TPOT} \\), the time left for decode is 4.5 s, and 4.5 / 0.03 = 150 gaps, so about 150 tokens. The tempting 167 comes from dividing the full 5 s by TPOT and forgetting the TTFT has to fit in the budget too.",
+          "options": [
+            "About 150 tokens",
+            "About 167 tokens",
+            "About 1,500 tokens",
+            "About 15 tokens"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "queueing time inside ttft",
+          "prompt": "Your server runs prefill (processing the prompt) for one waiting request at a time, first come first served. A new request arrives and finds three requests ahead of it, each needing 200 ms of prefill. Its own prefill also takes 200 ms. Ignoring network time, roughly what TTFT will it see?",
+          "reference": "TTFT includes the 600 ms spent waiting for the three earlier prefills plus its own 200 ms prefill, about 800 ms. Answering 200 ms treats TTFT as pure prefill compute and forgets that queueing time counts too, while 600 ms counts only the wait.",
+          "options": [
+            "About 800 ms",
+            "About 600 ms",
+            "About 200 ms",
+            "About 400 ms"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "queueing time inside ttft",
+          "prompt": "Your benchmark script sends one request, waits for it to finish, then sends the next, and it reports a p99 TTFT of 250 ms. In production, with the same prompts, p99 TTFT is 2 s. Explain why the benchmark missed this and how you would change it.",
+          "reference": "Sending one request at a time means the server is never busy when a request arrives, so there is no queueing and TTFT is only prefill. Production has many concurrent requests that wait for a turn, and that waiting is part of TTFT; the benchmark should send requests concurrently at realistic arrival rates to expose it.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.409Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T08:04:21.856Z"
       }
     },
     {
@@ -1330,12 +1462,144 @@
           "correct_index": null,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 1,
+          "concept": "input versus output token throughput",
+          "prompt": "A server reads through a 2,000-token prompt in a fraction of a second, but then takes many seconds to write a 2,000-token answer. In plain words, explain why prompt (input) tokens get processed so much faster per token than output tokens.",
+          "reference": "Prompt tokens are all known up front, so the model can process them together in parallel in one big pass (prefill). Output tokens must be produced one at a time, because each new token depends on the one before it (decode), so every output token needs its own step. A good answer mentions parallel processing of the known prompt versus sequential, one-token-per-step generation.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "input versus output token throughput",
+          "prompt": "While 40 users are streaming chat answers from one replica, a new request arrives with a 30,000-token document attached. For roughly a second, every other user's stream visibly stalls. What is the most likely cause?",
+          "reference": "Processing 30,000 input tokens at once is a big burst of compute, and when it runs alongside decoding, the decode steps for all active streams wait behind it. Engines reduce this by splitting long prefills into chunks. The tempting mistake is to think the new request's output is prioritized, but the stall comes from its input processing, not its answer.",
+          "options": [
+            "The huge prompt's prefill is heavy compute work that shares the GPU with decoding, so everyone's next decode steps are delayed",
+            "The new request's output tokens are generated first, so the server pauses the other streams until its answer finishes",
+            "The long document forces the server to evict and rebuild every other user's stored context before continuing",
+            "Uploading the large document saturates the network link, so the other users' tokens cannot be delivered"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "per-request versus aggregate tokens per second",
+          "prompt": "Alone on a replica, a request streams at 60 tokens/s. At concurrency 32 (32 requests decoding together), the replica delivers 1,280 aggregate output tokens/s, shared evenly. Ignoring time to first token, roughly how long does one user wait for a 500-token answer at concurrency 32?",
+          "reference": "Each stream gets \\(1280 / 32 = 40\\) tokens/s, so 500 tokens take about 12.5 seconds. The tempting 0.4 seconds wrongly divides by the aggregate rate, as if one user received the whole replica's output; 8.3 seconds uses the single-user speed and ignores the slowdown from sharing.",
+          "options": [
+            "About 12.5 seconds",
+            "About 0.4 seconds",
+            "About 8.3 seconds",
+            "About 25 seconds"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "per-request versus aggregate tokens per second",
+          "prompt": "You are writing a latency target for a chat feature so that each user sees smooth, fast streaming text. Which metric should that target be written against?",
+          "reference": "What a user feels is how fast their own stream arrives, which is per-request time per output token, and a high percentile protects slower users rather than just the average. Aggregate tokens/s is tempting because it is the headline throughput number, but it can rise while every individual stream gets slower.",
+          "options": [
+            "Per-request time per output token at a high percentile such as p95",
+            "Aggregate output tokens per second delivered by each replica",
+            "Average GPU utilization across the serving fleet during peak",
+            "Total requests per second the service completes at peak"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "concurrency and its effect on tpot",
+          "prompt": "You load-test one replica twice at the same concurrency of 64. In test A, each conversation carries about 1,000 tokens of context; in test B, about 16,000. TPOT (time per output token) is much higher in test B. What best explains this?",
+          "reference": "To generate each new token, the model attends over all earlier tokens, reading their stored keys and values from memory; with 16 times more context per sequence, every step moves far more data and takes longer. So concurrency alone does not set TPOT, context length matters too. The re-prefill idea is a common misunderstanding: the KV cache exists precisely so prompts are not reprocessed each step.",
+          "options": [
+            "Each decode step must read every sequence's stored context (the KV cache), and that grows with context length",
+            "Test B's output tokens are physically larger, so each one takes longer to send over the network",
+            "Test B forces the server to re-read every prompt from scratch on each step instead of reusing it",
+            "Longer text makes the tokenizer slower, and tokenizing happens before every generated token"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "concurrency and its effect on tpot",
+          "prompt": "The chart shows one replica's aggregate output throughput and p95 TPOT at five concurrency limits. Your chat product requires p95 TPOT under 40 ms. Which concurrency limit should you configure to serve the most tokens per replica while meeting that target?",
+          "reference": "Concurrency 128 has p95 TPOT of 36 ms, inside the 40 ms target, and gives much more throughput than 64 or 16. The tempting choice, 256, maximizes aggregate throughput but pushes p95 TPOT to 64 ms, breaking the per-user target.",
+          "options": [
+            "128, because it is the highest level whose p95 TPOT stays under 40 ms",
+            "256, because it delivers the most aggregate tokens per second",
+            "64, because it keeps TPOT well below the target for extra safety",
+            "16, because throughput per sequence is highest at low concurrency"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 340\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"340\" fill=\"#FBFBFB\"/><text x=\"320\" y=\"30\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Aggregate output tokens/s (bars) and p95 TPOT by concurrency</text><line x1=\"50\" y1=\"280\" x2=\"600\" y2=\"280\" stroke=\"#141414\" stroke-width=\"2\"/><rect x=\"70\" y=\"275\" width=\"70\" height=\"5\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"180\" y=\"220\" width=\"70\" height=\"60\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"290\" y=\"140\" width=\"70\" height=\"140\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"400\" y=\"100\" width=\"70\" height=\"180\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"510\" y=\"80\" width=\"70\" height=\"200\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"105\" y=\"267\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">100</text><text x=\"215\" y=\"212\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">1,200</text><text x=\"325\" y=\"132\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">2,800</text><text x=\"435\" y=\"92\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">3,600</text><text x=\"545\" y=\"72\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">4,000</text><text x=\"105\" y=\"302\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">conc. 1</text><text x=\"215\" y=\"302\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">conc. 16</text><text x=\"325\" y=\"302\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">conc. 64</text><text x=\"435\" y=\"302\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">conc. 128</text><text x=\"545\" y=\"302\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">conc. 256</text><text x=\"105\" y=\"324\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">10 ms</text><text x=\"215\" y=\"324\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">13 ms</text><text x=\"325\" y=\"324\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">23 ms</text><text x=\"435\" y=\"324\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">36 ms</text><text x=\"545\" y=\"324\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">64 ms</text></svg>",
+          "figure_alt": "A bar chart of aggregate output tokens per second at concurrency 1, 16, 64, 128 and 256, with the p95 TPOT for each level printed under its bar."
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "requests per second versus tokens per second",
+          "prompt": "Your autoscaler adds replicas when requests per second per replica crosses a threshold. You launch an agent feature whose requests produce very long outputs, at a similar request rate to today. Predict how the autoscaler will behave and name a better signal to scale on.",
+          "reference": "Because the request rate barely changes, the autoscaler will not add replicas even though each request now needs far more decode work, so replicas overload and TPOT and queueing delay climb. It should scale on a signal that reflects actual work or user experience, such as output tokens per second, number of active decoding sequences, queue depth or KV cache usage, or measured TPOT and TTFT.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "utilization versus responsiveness",
+          "prompt": "Your fleet serves interactive chat and also has a large backlog of offline document-labelling jobs. Leadership wants high GPU utilization without hurting chat latency. Which plan best achieves both goals?",
+          "reference": "Latency-tolerant batch work can soak up idle capacity, while a concurrency cap and priority for chat keep interactive TPOT and TTFT within target, so utilization stays high without hurting responsiveness. Overprovisioning to 30% utilization is tempting because chat stays fast, but it achieves responsiveness only by giving up the utilization goal.",
+          "options": [
+            "Cap chat concurrency at a level that meets its latency target, and fill spare capacity with low-priority batch work that yields to chat",
+            "Raise the concurrency limit for all traffic so every replica runs at maximum batch size at all times",
+            "Add replicas until average utilization drops to about 30%, so chat always has plenty of headroom",
+            "Send batch jobs and chat to the same queue in arrival order so the GPUs never sit idle"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.438Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T08:19:42.074Z"
       }
     },
     {
