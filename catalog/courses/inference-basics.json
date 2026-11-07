@@ -283,12 +283,144 @@
           "correct_index": null,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "tokenization and token counts",
+          "prompt": "A token is a chunk of text the model reads, often a whole word or part of one. You want to send a 3,000-word English report to a model. Using the common rule of thumb for English text, roughly how many tokens should you budget for the report?",
+          "reference": "For typical English, one token is about three quarters of a word, so 3,000 words is roughly 4,000 tokens. The tempting 3,000 assumes one token per word, but many words split into several pieces, so counts usually run higher than word counts.",
+          "options": [
+            "About 750 tokens",
+            "About 3,000 tokens",
+            "About 4,000 tokens",
+            "About 12,000 tokens"
+          ],
+          "correct_index": 2,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "tokenization and token counts",
+          "prompt": "You move your feature from one model family to another. The exact same prompt text is now reported as about 15% more input tokens, which changes your cost estimate. What best explains the difference?",
+          "reference": "Token counts depend on the tokenizer's vocabulary of text pieces, and different model families use different tokenizers, so the same text can split into more or fewer tokens. Token counts are not tied to model size or context window length; always measure counts with the target model's own tokenizer.",
+          "options": [
+            "Each model family uses its own tokenizer, which splits the same text into different pieces",
+            "The new model counts spaces and punctuation as tokens, while the old one ignored them",
+            "Larger models need more tokens to represent the same text, so counts scale with size",
+            "Token counts grow with the context window, so a model with a longer window counts more"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 1,
+          "concept": "forward pass and logits",
+          "prompt": "You log the raw logits for the next token and see values like 12.3, 8.7 and -4.1. A teammate says this must be a bug because probabilities should be between 0 and 1. Explain what logits are and how they become probabilities.",
+          "reference": "Logits are raw, unnormalized scores, one per vocabulary token, so they can be any size or negative and are not a bug. A softmax step (optionally after dividing by temperature) turns them into probabilities between 0 and 1 that sum to 1; higher logits mean higher probability.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "autoregressive generation loop",
+          "prompt": "A colleague asks why the model cannot just compute all 200 tokens of its answer at once in a single forward pass, the way it processes all prompt tokens together. What is the core reason?",
+          "reference": "The prompt is fully known, so it can be processed in parallel, but each output token is an input to the next step and does not exist until it is chosen, forcing one step per token. The tempting idea that the prompt is reprocessed each step is wrong when a KV cache stores earlier work; the sequential dependency is what forces the loop.",
+          "options": [
+            "Each new token depends on the tokens chosen before it, which are unknown until they are picked",
+            "The GPU lacks the memory to hold more than one output position in a single pass",
+            "The whole prompt must be reprocessed from scratch before each new output token",
+            "The tokenizer can only turn one token back into text at a time, so the model must wait"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "stop conditions and max tokens",
+          "prompt": "You set no stop sequences and a generous max tokens limit. Most answers still end at a natural point, and the API reports a finish reason of stop. What ended these generations?",
+          "reference": "Models are trained to emit a special end-of-sequence token when an answer is done, and the loop stops when that token is sampled, reported as stop. Hitting max tokens is reported separately, usually as length, so it does not explain clean endings.",
+          "options": [
+            "The model generated its special end-of-sequence token, signalling the answer was complete",
+            "The API applies a default stop sequence that ends output at the first full stop",
+            "The responses reached max tokens, which the API also reports as a stop",
+            "The server noticed a pause in generation and closed the stream early"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "stop conditions and max tokens",
+          "prompt": "Your model's context window, the total tokens it can handle at once, is 128,000. A user pastes a document that makes the prompt 120,000 tokens, and your code requests max tokens of 16,000. The request fails with a context length error. Explain why and suggest one fix.",
+          "reference": "The prompt tokens plus the requested output tokens must fit within the context window, and 120,000 plus 16,000 exceeds 128,000. Fixes include lowering max tokens to fit the remaining space, or shortening the input by trimming, chunking or summarizing the document first.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "streaming responses",
+          "prompt": "The diagram shows when streamed tokens arrive at the client for one request. Gap A, before the first token, is much longer than the spacing between later tokens. Assuming no queueing, what mainly happens on the server during gap A?",
+          "reference": "Gap A is the time to first token, dominated by prefill: running the whole prompt through the model to get the first output token; later tokens each need only one cheaper decode step. The tempting idea that the full answer is generated first is wrong, because streaming sends each token as soon as the loop produces it.",
+          "options": [
+            "The prompt is tokenized and processed in a forward pass that produces the first token",
+            "The model generates the whole answer, which is then sent out in small chunks",
+            "The client buffers tokens until it has a full sentence to display at once",
+            "The network is slow to open, so the first token takes longer to travel"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 240\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"240\" fill=\"#FBFBFB\"/><defs><marker id=\"ar\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><line x1=\"40\" y1=\"160\" x2=\"610\" y2=\"160\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#ar)\"/><text x=\"585\" y=\"190\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">time</text><line x1=\"60\" y1=\"100\" x2=\"60\" y2=\"160\" stroke=\"#141414\" stroke-width=\"2\"/><rect x=\"20\" y=\"50\" width=\"120\" height=\"36\" rx=\"10\" fill=\"#F5D556\" stroke=\"#141414\"/><text x=\"80\" y=\"73\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">request sent</text><text x=\"60\" y=\"185\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">0 s</text><line x1=\"60\" y1=\"125\" x2=\"255\" y2=\"125\" stroke=\"#141414\" stroke-width=\"1.5\" marker-end=\"url(#ar)\"/><text x=\"158\" y=\"115\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">gap A</text><rect x=\"260\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"280\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"300\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"320\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"340\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"360\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"380\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"400\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"420\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"440\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"460\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"480\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"500\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"520\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"540\" y=\"130\" width=\"10\" height=\"30\" rx=\"2\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"265\" y=\"185\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">1.2 s</text><text x=\"545\" y=\"185\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">1.9 s</text><text x=\"400\" y=\"110\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">streamed tokens arriving</text></svg>",
+          "figure_alt": "A timeline starting with a request sent at 0 seconds, a long labelled gap A, then a series of evenly spaced blue token marks arriving from 1.2 to 1.9 seconds."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "streaming responses",
+          "prompt": "Your dashboards show GPUs busy generating long streamed answers for users who already closed the chat tab. Each such request runs until max tokens. Which change best stops this wasted compute?",
+          "reference": "The generation loop keeps running until a stop condition unless the server notices the client is gone and aborts the request, freeing the GPU for others. Turning off streaming is tempting but makes it worse: the server can no longer notice a closed stream, and the model still generates the full answer nobody reads.",
+          "options": [
+            "Detect client disconnects and cancel the request so the engine exits its generation loop",
+            "Shrink the streaming chunk size so each token reaches the client sooner",
+            "Turn off streaming so responses are sent only once they are fully complete",
+            "Add a stop sequence so the model tends to end its answers earlier"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.330Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.087Z"
       }
     },
     {
@@ -548,12 +680,144 @@
           "correct_index": 0,
           "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\"><defs><marker id=\"ay\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"640\" height=\"300\" fill=\"#FBFBFB\"/><line x1=\"90\" y1=\"240\" x2=\"600\" y2=\"240\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#ay)\"/><line x1=\"90\" y1=\"240\" x2=\"90\" y2=\"40\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#ay)\"/><text x=\"80\" y=\"205\" text-anchor=\"end\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">20 ms</text><text x=\"80\" y=\"85\" text-anchor=\"end\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">30 ms</text><line x1=\"86\" y1=\"200\" x2=\"94\" y2=\"200\" stroke=\"#141414\"/><line x1=\"86\" y1=\"80\" x2=\"94\" y2=\"80\" stroke=\"#141414\"/><polyline points=\"100,198 180,189 260,180 340,170 420,161 500,152 570,144\" fill=\"none\" stroke=\"#5889F7\" stroke-width=\"4\"/><text x=\"100\" y=\"262\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">0</text><text x=\"335\" y=\"262\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">4,000</text><text x=\"570\" y=\"262\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">8,000</text><text x=\"345\" y=\"288\" text-anchor=\"middle\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">tokens in sequence</text><text x=\"100\" y=\"32\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">decode step time</text></svg>",
           "figure_alt": "A line plot of decode step time against tokens in the sequence, rising gradually from about 20 ms near zero tokens to about 25 ms at 8,000 tokens."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "parallel prompt processing in prefill",
+          "prompt": "Each prompt token's meaning depends on the tokens before it, yet prefill processes all 1,000 prompt tokens in a single pass. How is that possible?",
+          "reference": "The dependency is only on earlier input tokens, and in the prompt those are all known in advance. A causal mask keeps each position from seeing later ones, so all positions are computed together. The tempting mistake is to think dependency forces sequential work; that only happens in decode, where the next input does not exist yet.",
+          "options": [
+            "All prompt tokens are already known, and a causal mask lets each position look only at earlier positions, so every position can be computed at once.",
+            "Prefill ignores token order and treats the prompt as a bag of words, and position information is added back later during decode.",
+            "Prefill fully processes only the last prompt token, and earlier tokens are skipped until decode actually needs them.",
+            "The engine guesses outputs for earlier tokens and corrects any mistakes afterward, much like speculative decoding does."
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "parallel prompt processing in prefill",
+          "prompt": "Prefill has just finished for a user's prompt. What has it produced that the decode phase will rely on?",
+          "reference": "Prefill computes and saves each prompt token's keys and values (the KV cache) and yields the distribution for the first output token. Decode reuses that cache instead of reprocessing the prompt. The draft-answer idea is wrong because output tokens only come into existence one decode step at a time.",
+          "options": [
+            "Stored keys and values (the KV cache) for every prompt token, plus the probabilities for the first output token.",
+            "A complete rough draft of the answer, which decode then refines one token at a time.",
+            "Only the internal representation of the final prompt token, so decode recomputes the rest of the prompt at each step.",
+            "A compressed summary of the prompt that replaces the original tokens to save GPU memory."
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "sequential token generation in decode",
+          "prompt": "Your answers average 250 tokens and always end naturally. A teammate raises the maximum output limit from 300 to 2,000 tokens for safety, worried it will slow every response. On a lightly loaded server, what happens to typical response time?",
+          "reference": "Decode produces one token per step and halts as soon as the end token is sampled, so the limit is only a cap and rarely reached here. The common misconception is that the engine precomputes or pads the whole output budget; it does not generate tokens that are never needed.",
+          "options": [
+            "It stays roughly the same, because decode runs one step per generated token and stops when the model emits its end token.",
+            "It rises about sixfold, because the engine runs all 2,000 steps and throws away the tokens after the answer ends.",
+            "It rises noticeably, because every decode step must process the full budget of empty output slots.",
+            "It drops, because a larger limit lets the engine use bigger batches and finish each step faster."
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "sequential token generation in decode",
+          "prompt": "A user sends a 3,000-token prompt and cancels after seeing 30 of an expected 600 output tokens. What work has the server already spent on this request, and what work does cancelling save?",
+          "reference": "The full prefill of the 3,000-token prompt and about 30 decode steps are already spent. Cancelling saves the remaining roughly 570 decode steps, because decode generates tokens one at a time and nothing beyond the current token has been computed yet.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "why prefill is compute-heavy",
+          "prompt": "On one GPU, a single 4,000-token prefill takes about 200 ms. Two such prompts arrive together and are prefilled as one batch. Roughly how long should the batched prefill take?",
+          "reference": "A long prefill already reuses each weight across thousands of tokens, so it is compute-bound and the time scales with total tokens. The near-free batching intuition is true for decode, which is limited by weight reads, but not for prefill. Attention is computed within each prompt, not across both.",
+          "options": [
+            "About 400 ms, because prefill is already limited by math and doubling the tokens roughly doubles the math.",
+            "About 200 ms, because the weights are read once and shared, so the second prompt comes nearly free.",
+            "About 800 ms, because attention cost grows with the square of the combined length of both prompts.",
+            "About 100 ms, because batching halves the cost of each prompt by keeping the GPU busier."
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "why decode is dominated by weight reads",
+          "prompt": "A beginner asks: after the first decode step, why doesn't the GPU keep an 8B model's weights in its small, very fast on-chip memory so later steps skip the slow reads from main GPU memory?",
+          "reference": "Fast on-chip memory (caches, shared memory and registers) totals at most around a hundred megabytes on current GPUs. That is tiny compared with billions of parameters (about 16 GB at 16-bit for 8B), so each step re-reads the weights from main GPU memory, and that read time dominates batch-1 decode. Weights do not change during inference; only the KV cache grows.",
+          "options": [
+            "On-chip memory holds at most around a hundred megabytes, far too little for gigabytes of weights, so they must stream from main memory every step.",
+            "It already does this, so later steps are fast, and the slow part of decode is really sampling the next token.",
+            "The weights are updated after every generated token, so they have to be reloaded fresh at each step.",
+            "The weights live in CPU memory during serving, and each step has to copy them over the PCIe link."
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "how prompt and output length shift the balance",
+          "prompt": "Your assistant has a time to first token of about 300 ms, then streams 400-token answers at about 25 ms per token. A teammate proposes halving the 2,000-token system prompt to make full responses much faster. Using \\( T_{\\text{total}} \\approx \\text{TTFT} + N_{\\text{out}} \\times \\text{TPOT} \\), predict the effect and suggest a better lever.",
+          "reference": "Total time is about 10.3 seconds, of which decode is about 10 seconds, so halving the prompt trims at most a fraction of the 300 ms time to first token, only a percent or two of the total. A better lever is fewer output tokens (more concise answers) or faster decode, such as a smaller or quantized model.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "how prompt and output length shift the balance",
+          "prompt": "The diagram shows prompt and output lengths for three workloads on the same model. You can upgrade to a GPU with much more compute but the same memory bandwidth. Which workload sees the largest fraction of its latency removed?",
+          "reference": "More compute speeds up prefill, which is compute-bound, but barely helps decode, which is limited by memory bandwidth. The classifier spends the biggest share of its time in prefill, so it gains most. Treating all tokens as equal ignores that prompt tokens and output tokens hit different bottlenecks.",
+          "options": [
+            "The classifier, with its long prompt and very few output tokens.",
+            "The chat workload, with its short prompt and much longer answer.",
+            "The rewrite workload, with equal prompt and output lengths.",
+            "All three improve by about the same fraction, since every token passes through the same model."
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 280\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"280\" fill=\"#FBFBFB\"/><text x=\"20\" y=\"32\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"18\" fill=\"#141414\">Tokens per request (bar length roughly to scale)</text><circle cx=\"30\" cy=\"58\" r=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"45\" y=\"63\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">Prompt tokens</text><circle cx=\"190\" cy=\"58\" r=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"205\" y=\"63\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">Output tokens</text><text x=\"20\" y=\"103\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Chat</text><text x=\"20\" y=\"121\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">300 in, 800 out</text><rect x=\"150\" y=\"92\" width=\"20\" height=\"32\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"170\" y=\"92\" width=\"54\" height=\"32\" rx=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"20\" y=\"163\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Classifier</text><text x=\"20\" y=\"181\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">6,000 in, 20 out</text><rect x=\"150\" y=\"152\" width=\"408\" height=\"32\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"558\" y=\"152\" width=\"16\" height=\"32\" rx=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"20\" y=\"223\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Rewrite</text><text x=\"20\" y=\"241\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">2,000 in, 2,000 out</text><rect x=\"150\" y=\"212\" width=\"136\" height=\"32\" rx=\"8\" fill=\"#5889F7\" stroke=\"#141414\"/><rect x=\"286\" y=\"212\" width=\"136\" height=\"32\" rx=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/></svg>",
+          "figure_alt": "Horizontal bars for three workloads named chat, classifier and rewrite, each split into a prompt-token segment and an output-token segment with their token counts labelled."
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.514Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 1,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.092Z"
       }
     },
     {

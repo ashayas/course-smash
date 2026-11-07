@@ -283,12 +283,144 @@
           "correct_index": 0,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "request and response fields",
+          "prompt": "The diagram shows a simplified response from a chat API. You want to record what each call cost. Which approach is most reliable?",
+          "reference": "The usage field reports the exact input and output tokens the provider counted and billed, so pricing those two numbers is accurate. Words and characters do not map exactly to tokens, and the output limit is only a ceiling, not what was actually generated.",
+          "options": [
+            "Multiply the input and output token counts in the usage field by their prices",
+            "Count the words in the content field and multiply by the output price",
+            "Estimate tokens from the character length of your request text",
+            "Use your output token limit setting as the output token count"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"300\" fill=\"#FBFBFB\"/><text x=\"40\" y=\"36\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"18\" fill=\"#141414\">Response body (simplified)</text><rect x=\"40\" y=\"54\" width=\"560\" height=\"220\" rx=\"12\" fill=\"#F5D556\" stroke=\"#141414\"/><text x=\"64\" y=\"88\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">id: msg_01A7</text><text x=\"64\" y=\"116\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">model: example-model</text><text x=\"64\" y=\"144\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">role: assistant</text><text x=\"64\" y=\"172\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">content: Here is your summary of the report...</text><text x=\"64\" y=\"200\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">stop_reason: end_turn</text><text x=\"64\" y=\"228\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">usage: input_tokens 1240</text><text x=\"64\" y=\"254\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">           output_tokens 310</text></svg>",
+          "figure_alt": "A yellow box listing the fields of a chat API response: id, model, role, content, stop reason and usage with input and output token counts."
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "request and response fields",
+          "prompt": "To continue a conversation, a teammate's code appends the entire raw response object (id, model, content, stop reason, usage) to the messages list of the next request. The API rejects the request as invalid. Explain what should be appended instead and why.",
+          "reference": "Append a single message with the assistant role whose content is the model's reply content, matching the same message shape as other entries. The id, model, stop reason and usage are metadata about the call, not part of the conversation, so they do not belong in the messages list.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "input versus output token billing",
+          "prompt": "Your system prompt (the standing instructions sent at the start of each request) is 3,000 tokens. A user has a 10-turn conversation, so your app sends 10 requests. Ignoring any prompt caching discount, how many input tokens does the system prompt alone account for?",
+          "reference": "The API is stateless, so the system prompt is sent again with every request and counted as input each time: 10 times 3,000 is about 30,000 tokens. The tempting mistake is assuming the provider remembers it after the first call, but nothing carries over between requests unless you resend it.",
+          "options": [
+            "About 3,000, since it is billed only on the first request",
+            "About 30,000, since it is sent and billed on every request",
+            "None, since system instructions are not billed as input",
+            "About 3,000, because the provider remembers it after turn one"
+          ],
+          "correct_index": 1,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "input versus output token billing",
+          "prompt": "After a prompt change asking the model to explain its reasoning before giving the final answer, your monthly bill jumps sharply, even though the prompts are only one sentence longer. Explain the most likely reason and how you would confirm it.",
+          "reference": "The model now writes much longer replies, so output tokens per call rose a lot, and output tokens are usually priced several times higher than input tokens. Confirm by comparing the output token counts in the responses' usage field before and after the change; input counts should be nearly unchanged.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "stop reasons",
+          "prompt": "The chart shows the share of responses by stop reason (the field saying why the model stopped writing) in the week before and the week after a prompt change. What is the most likely explanation and the right response?",
+          "reference": "A jump in responses stopped by the output token limit means replies are being cut off, and the timing points to the prompt making answers longer. Rate limits show up as error responses, not stop reasons, and the output limit caps only generated tokens, not the prompt.",
+          "options": [
+            "The new prompt makes replies longer, so many are now truncated; inspect them and shorten the request or raise the limit",
+            "The provider is rate limiting more, so the server cuts responses short under load; add retries with backoff",
+            "The longer prompt eats into the output limit, because input tokens count against it; trim the prompt to recover",
+            "Nothing needs fixing, because limit-stopped replies were still delivered successfully and contain full answers"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 400\"><rect x=\"0\" y=\"0\" width=\"640\" height=\"400\" fill=\"#FBFBFB\"/><text x=\"40\" y=\"32\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"18\" fill=\"#141414\">Share of responses by stop reason</text><rect x=\"40\" y=\"50\" width=\"18\" height=\"18\" rx=\"4\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"66\" y=\"64\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">Finished naturally</text><rect x=\"240\" y=\"50\" width=\"18\" height=\"18\" rx=\"4\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"266\" y=\"64\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">Hit output token limit</text><line x1=\"80\" y1=\"100\" x2=\"80\" y2=\"330\" stroke=\"#141414\"/><line x1=\"80\" y1=\"330\" x2=\"600\" y2=\"330\" stroke=\"#141414\"/><rect x=\"140\" y=\"117\" width=\"70\" height=\"213\" rx=\"8\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"158\" y=\"110\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">97%</text><rect x=\"220\" y=\"321\" width=\"70\" height=\"9\" rx=\"3\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"243\" y=\"314\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">3%</text><rect x=\"360\" y=\"154\" width=\"70\" height=\"176\" rx=\"8\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"378\" y=\"147\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">80%</text><rect x=\"440\" y=\"286\" width=\"70\" height=\"44\" rx=\"8\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"458\" y=\"279\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">20%</text><text x=\"140\" y=\"356\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">Week before change</text><text x=\"370\" y=\"356\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\">Week after change</text></svg>",
+          "figure_alt": "A bar chart comparing the percentage of responses that finished naturally versus hit the output token limit, for the week before and the week after a prompt change."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "stop reasons",
+          "prompt": "A reply listing setup steps ends neatly after step 4 with a full stop. Its stop reason says the output token limit was reached. A teammate says it reads as complete, so it is fine to show. What is the best judgement?",
+          "reference": "The stop reason, not how the text looks, tells you whether the model finished; hitting the limit means generation was stopped before the model chose to end, so steps may be missing. Judging by a tidy final sentence is the common mistake, since the cut can fall right after a sentence ends.",
+          "options": [
+            "Treat it as possibly incomplete, since the model was cut off and may have had more steps",
+            "Treat it as complete, since a reply ending in a full sentence was not cut off",
+            "Ignore the stop reason, since it refers to the input being too long, not the reply",
+            "Retry with identical settings, since truncation is random and will likely not recur"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "message roles and turns",
+          "prompt": "You are building a bot that joins a group chat where three people talk to it together. Roles are the labels on each message (system, user, assistant). How should you represent the three people's messages in the request?",
+          "reference": "All human input belongs in user-role messages, and naming the speaker in the text lets the model tell people apart. Assigning other humans the assistant role is the tempting mistake: the model treats assistant messages as its own past words, so it would think it said things it did not.",
+          "options": [
+            "Give each a user-role message, with the speaker's name written into the text",
+            "Give each person a different role, such as user, assistant and system",
+            "Mark the current speaker as user and the other two people as assistant",
+            "Send only the latest speaker's messages, since the user role means one person"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "stateless conversation history",
+          "prompt": "In your chat app, a conversation has six messages alternating user and assistant. The user edits the third message (their second message) and resubmits it, wanting to take the chat in a new direction. What should the next request contain?",
+          "reference": "Because the model keeps no memory between calls, the conversation is exactly what you send, so you rebuild it up to the edit and the discarded branch simply disappears. Sending only the edited message wrongly assumes the server remembers earlier turns, and keeping later replies would leave answers to a question that no longer exists.",
+          "options": [
+            "The first two messages plus the edited message; the model will know nothing of the dropped turns",
+            "Only the edited message, since the model already remembers the rest of the conversation",
+            "The full original six messages with the edited message appended at the end as a new turn",
+            "All six messages with the third replaced, keeping the later replies as useful context"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 1,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.317Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 1,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.292Z"
       }
     },
     {
@@ -548,12 +680,144 @@
           "correct_index": null,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "estimating token counts",
+          "prompt": "Your cost dashboard estimates input tokens by counting only the text of each new user message. In a multi-turn chat app that uses tools, the billed input tokens are several times higher than the estimate. What is the most likely reason?",
+          "reference": "The API is stateless, so each call sends the whole message list: the system prompt, prior user and assistant turns, and tool schemas. All of it is counted as input. The tempting mistake is to think only the newest message is sent, or that earlier replies are rebilled as output. They are rebilled, but as input.",
+          "options": [
+            "Every request resends the system prompt, earlier turns and tool definitions, and all of them count as input",
+            "The provider bills a fixed overhead per request that is unrelated to the content being sent",
+            "Input tokens are billed at a higher rate than the estimate assumed, so the counts only look larger",
+            "The model counts its own previous replies as output again each time they appear in history"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "estimating token counts",
+          "prompt": "Before sending a long contract, you need to know whether it fits your model's context window with a small safety margin. A token is the chunk of text a model reads, often part of a word. Which approach gives the most trustworthy count?",
+          "reference": "Each model family splits text in its own way, so only that model's tokenizer or counting tool gives exact numbers. Rules of thumb are fine for rough budgets but can be off for legal text, code or other languages. Tokenizers are not standardized, so borrowing one from another family can produce noticeably different counts.",
+          "options": [
+            "Count it with the tokenizer or token-counting tool the provider offers for that specific model",
+            "Count the words and multiply by about 1.3, the usual rule of thumb for English",
+            "Count the characters and divide by 4, since that ratio holds for most documents",
+            "Count it with a popular tokenizer from another model family, since tokenizers are standardized"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "context window versus max output tokens",
+          "prompt": "The diagram shows a request to a model with a 128,000-token context window. The prompt takes 125,000 tokens, and max output tokens is set to 8,000. What is the most output the model can produce on this request? Some APIs reject such a request outright instead.",
+          "reference": "The context window has to hold the input and the generated output together, so only 128,000 minus 125,000, or 3,000 tokens, remain. Max output tokens is only an upper limit you choose. It does not create extra room beyond the window, which is the misconception behind the 8,000 answer.",
+          "options": [
+            "At most 3,000 tokens, because input and output share the same window",
+            "Up to 8,000 tokens, because max output has its own separate budget",
+            "Up to 128,000 tokens, because the window is cleared for the response",
+            "Up to 11,000 tokens, the setting plus the space left in the window"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 240\"><defs><marker id=\"arr\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"8\" markerHeight=\"8\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"640\" height=\"240\" fill=\"#FBFBFB\"/><text x=\"40\" y=\"40\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Context window: 128,000 tokens</text><rect x=\"40\" y=\"56\" width=\"560\" height=\"56\" rx=\"10\" fill=\"#FBFBFB\" stroke=\"#141414\" stroke-width=\"2\"/><rect x=\"40\" y=\"56\" width=\"547\" height=\"56\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\" stroke-width=\"2\"/><text x=\"60\" y=\"90\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Input prompt: 125,000 tokens</text><text x=\"380\" y=\"156\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" fill=\"#141414\">Unused space in window</text><line x1=\"540\" y1=\"142\" x2=\"590\" y2=\"118\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#arr)\"/><rect x=\"40\" y=\"176\" width=\"320\" height=\"44\" rx=\"10\" fill=\"#F5D556\" stroke=\"#141414\" stroke-width=\"2\"/><text x=\"58\" y=\"204\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" fill=\"#141414\">Max output tokens setting: 8,000</text></svg>",
+          "figure_alt": "A horizontal bar for a 128,000-token context window, almost entirely filled by a 125,000-token input prompt with a thin unused gap at the end, plus a separate box showing a max output tokens setting of 8,000."
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "context window versus max output tokens",
+          "prompt": "You summarize meeting transcripts of very different lengths. Each summary should be about 1,500 tokens, and your system prompt is about 1,000 tokens. Explain how you would decide the largest transcript chunk to send in one request, and what you would do with transcripts that are longer.",
+          "reference": "The input and the output must fit in the window together. So the chunk limit is the context window minus the system prompt, minus the output you reserve (the 1,500-token summary plus some headroom, matching max output tokens), minus a safety margin for estimation error. Longer transcripts should be split into chunks that each fit, summarized separately, and then combined, for example by summarizing the summaries. A good answer reserves output space up front rather than filling the window with input.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "truncation and overflow errors",
+          "prompt": "A batch job summarizes reports with max output tokens set to 1,000. Inputs are about 20,000 tokens, and the model's window is 200,000. For the longest reports, responses succeed but end mid-sentence with a length finish reason. What is the best handling?",
+          "reference": "A length finish reason means the output limit you set was reached. The input is nowhere near the window, so the cure is a larger output allowance, smaller pieces of work, or a continuation request. Retrying the same request will hit the same limit again. Moving to a bigger context window misreads output truncation as input overflow.",
+          "options": [
+            "Raise max output tokens if still under the model's cap, or split the report or ask for a continuation",
+            "Retry the identical request with backoff, since truncation is usually a transient server problem",
+            "Switch to a model with a larger context window, since the input must have overflowed it",
+            "Accept the partial text as the final summary, since the request returned successfully"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "trimming conversation history",
+          "prompt": "Your chatbot keeps the system prompt plus the last 20 messages. This works for most chats, but some requests still fail with a context-length error, usually after users paste long error logs. What is the best fix?",
+          "reference": "Messages vary hugely in size, so a message count does not bound tokens. Trimming should count tokens and stop at a budget that leaves room for the output. Lowering the message count only makes overflow rarer, since one pasted log can still exceed the budget. Raising max output tokens shrinks the room left for input.",
+          "options": [
+            "Trim by measured token count against a budget, not by a fixed number of messages",
+            "Lower the limit to the last 10 messages so there is more room on average",
+            "Retry the failed request, dropping one more old message on each attempt",
+            "Raise max output tokens so the model has more space to work with"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "trimming conversation history",
+          "prompt": "In turn 3, a user pastes a 30,000-token log. The next 40 turns are about unrelated questions. Your trimmer keeps the system prompt and drops whole messages, oldest first, only when the budget is exceeded. Explain what is wasteful about this, and describe a better strategy.",
+          "reference": "The huge log is resent in full on every later request, which adds cost and latency and crowds out useful context, even though it is no longer relevant. When it finally gets dropped, everything around it may go too. A better strategy shrinks large old content specifically, for example by replacing the log with a short summary or a note that it was provided, while keeping the recent turns and key facts. A good answer names both the repeated cost and the targeted summarizing or truncation of oversized old messages.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "reasoning tokens in budgets",
+          "prompt": "Your FAQ bot runs on a reasoning model, which thinks in hidden tokens before answering, and those tokens are billed as output. For simple questions with short answers, responses are slow and costly. Which change best reduces both without breaking answers?",
+          "reference": "Reasoning tokens are generated and billed like output, so the lever is how much the model thinks: a lower effort or thinking budget, or a model that does not reason. Capping max output tokens near the visible answer length tends to cut off the response during reasoning, leaving empty or truncated answers. Streaming only changes how tokens are delivered, not how many are generated.",
+          "options": [
+            "Lower the reasoning effort setting, or send simple questions to a non-reasoning model",
+            "Cut max output tokens to about 100, the length of a typical visible answer",
+            "Shorten the system prompt, since input length drives most of the hidden thinking",
+            "Turn off streaming, so the hidden reasoning is skipped and only the answer is generated"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.420Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.216Z"
       }
     },
     {

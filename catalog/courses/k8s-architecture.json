@@ -283,12 +283,144 @@
           "correct_index": 0,
           "figure": null,
           "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "control plane versus worker nodes",
+          "prompt": "The diagram shows a kubeadm cluster with three control plane nodes. Each one runs an API server and an etcd member (etcd is the database holding all cluster state). Two control plane nodes lose power at the same moment. What do you expect?",
+          "reference": "etcd needs a majority (2 of 3) to agree before it accepts writes, so with one member left the API server cannot store changes, while kubelets keep the existing containers running. The tempting mistake is thinking one healthy API server is enough, but the API server is useless without a working etcd behind it.",
+          "options": [
+            "Running app pods keep serving, but changes such as new Deployments fail because etcd no longer has a majority of members",
+            "The surviving control plane node takes over fully, so the cluster works normally because one API server is still running",
+            "All app pods on the workers stop within seconds, because workers cannot run containers without a majority of control plane nodes",
+            "After a short election, the surviving etcd member becomes leader and the cluster accepts changes again as a one-member cluster"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 300\"><defs><marker id=\"a\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"640\" height=\"300\" fill=\"#FBFBFB\"/><rect x=\"30\" y=\"30\" width=\"170\" height=\"90\" rx=\"10\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"115\" y=\"58\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">cp1 (running)</text><text x=\"115\" y=\"82\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">kube-apiserver</text><text x=\"115\" y=\"104\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">etcd member</text><rect x=\"235\" y=\"30\" width=\"170\" height=\"90\" rx=\"10\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"320\" y=\"58\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">cp2 (no power)</text><text x=\"320\" y=\"82\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">kube-apiserver</text><text x=\"320\" y=\"104\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">etcd member</text><rect x=\"440\" y=\"30\" width=\"170\" height=\"90\" rx=\"10\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"525\" y=\"58\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">cp3 (no power)</text><text x=\"525\" y=\"82\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">kube-apiserver</text><text x=\"525\" y=\"104\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">etcd member</text><rect x=\"30\" y=\"200\" width=\"170\" height=\"70\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"115\" y=\"230\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">worker1</text><text x=\"115\" y=\"252\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">app pods</text><rect x=\"235\" y=\"200\" width=\"170\" height=\"70\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"320\" y=\"230\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">worker2</text><text x=\"320\" y=\"252\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">app pods</text><rect x=\"440\" y=\"200\" width=\"170\" height=\"70\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"525\" y=\"230\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">worker3</text><text x=\"525\" y=\"252\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">app pods</text><line x1=\"115\" y1=\"200\" x2=\"115\" y2=\"124\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/><line x1=\"320\" y1=\"200\" x2=\"320\" y2=\"124\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/><line x1=\"525\" y1=\"200\" x2=\"525\" y2=\"124\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/></svg>",
+          "figure_alt": "Three control plane boxes, each with an API server and etcd member, where cp1 is running and cp2 and cp3 have no power, above three worker boxes running app pods with arrows up to the control plane."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "component responsibilities",
+          "prompt": "You create a Deployment. Its pods appear but stay Pending forever. kubectl describe pod shows no node assigned and no events at all, not even a message saying no node fits. Nodes have plenty of free CPU and memory. Which component is most likely not working?",
+          "reference": "The pods exist, so the controller manager did its job; assigning a node is the scheduler's job, and a working scheduler would either bind the pod or post a FailedScheduling event. The common mistake is blaming the controller manager, which creates pods but never chooses their node.",
+          "options": [
+            "The kube-scheduler, because it is the component that picks a node for each new pod and records why when it cannot",
+            "The kube-controller-manager, because its controllers are the ones that create pods and then assign each pod to a node",
+            "The kubelet on each worker, because kubelets choose which pending pods to accept based on their own free resources",
+            "etcd, because a pod stays Pending whenever etcd is too slow to store the node assignment the API server sends it"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "managed control planes",
+          "prompt": "Your team uses a cloud provider's managed control plane and runs its own pool of worker virtual machines. Which task stays your team's responsibility rather than the provider's?",
+          "reference": "With a managed control plane the provider runs, backs up, scales and secures the API server and etcd, but the worker machines you bring are still yours to upgrade and patch. A common misconception is that etcd backups remain your job, when in a managed offering you cannot even reach etcd directly.",
+          "options": [
+            "Planning upgrades of the worker nodes so their kubelet versions stay compatible with the control plane",
+            "Taking regular backups of etcd so cluster state can be restored if the database is ever corrupted",
+            "Renewing the certificates the API server uses so that kubectl connections keep working over time",
+            "Adding more API server replicas when the number of requests from kubectl and controllers grows"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "managed control planes",
+          "prompt": "API requests on your managed cluster have become slow. On a self-managed kubeadm cluster you would log in to a control plane node and read the API server and etcd logs. What do you do instead on the managed cluster, and why?",
+          "reference": "You cannot log in to the control plane machines because the provider hides them, so you use whatever the provider exposes, such as enabling control plane logs or metrics in the cloud console, and look at your own side, like clients or controllers flooding the API. If the problem is inside the provider's control plane, you raise it with the provider's support. Key points: no direct access, use provider-exposed logs and metrics, check your own load, escalate to provider.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "static pods for control plane components",
+          "prompt": "On a kubeadm control plane node you want to stop the kube-scheduler for a few minutes to test what happens without it. The scheduler runs as a static pod, meaning the kubelet starts it from a manifest file on the node. How do you stop it?",
+          "reference": "The kubelet keeps a static pod running for as long as its manifest file is in the watched directory, so removing the file is what stops it. Deleting the pod through kubectl only removes the API copy, and the kubelet recreates it immediately because the file is still there.",
+          "options": [
+            "Move the scheduler's manifest file out of the kubelet's manifest directory, then move it back later to restart it",
+            "Run kubectl delete pod on the scheduler pod in kube-system, which stops it until you apply it again later",
+            "Scale the kube-scheduler Deployment in kube-system down to zero replicas, then scale it back up afterwards",
+            "Run kubectl cordon on the control plane node so the kubelet stops running the scheduler pod on that node"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "static pods for control plane components",
+          "prompt": "kubectl get pods -n kube-system lists a pod for kube-apiserver on your kubeadm control plane node. Since it is a static pod, explain what that listed pod object really is, and where you must go to change how the API server runs.",
+          "reference": "It is a mirror pod: a read-only copy the kubelet publishes to the API server so you can see the static pod with kubectl. The real definition is the manifest file in the kubelet's manifest directory on that node, so you change the API server by editing that file, after which the kubelet restarts it. Key points: mirror or read-only copy, created by kubelet, source of truth is the file on the node.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "node components overview",
+          "prompt": "On one worker the kubelet process crashes and stays down, but the container runtime (the software that actually runs containers, such as containerd) keeps running. What do you expect to see over the next few minutes?",
+          "reference": "Containers are run by the container runtime, so they keep going without the kubelet, but the kubelet is what sends the node's status to the API server, so the node is marked NotReady after a grace period. The tempting mistake is thinking the kubelet itself hosts the containers, so its crash would kill them.",
+          "options": [
+            "The existing containers keep serving traffic, and the node soon shows NotReady because it stops reporting in",
+            "Every container on the node stops at once, because containers cannot keep running once the kubelet is gone",
+            "The node keeps showing Ready, because the container runtime reports node health to the API server itself",
+            "The pods are moved to other nodes immediately, with no delay, as soon as the kubelet process exits"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "node components overview",
+          "prompt": "A new pod shows ImagePullBackOff, and the error mentions that the image registry refused the login. On the worker node, which component actually downloads the container image?",
+          "reference": "The kubelet tells the container runtime what to run, and the runtime pulls the image and starts the container, so registry login failures surface from the runtime's pull. The usual mistake is thinking the kubelet downloads images itself, but it delegates that work to the runtime.",
+          "options": [
+            "The container runtime, such as containerd, which pulls the image when the kubelet asks it to start the container",
+            "The kubelet, which downloads image layers itself and then hands the finished files over to the container runtime",
+            "The kube-scheduler, which pulls the image onto the chosen node before it finishes assigning the pod to that node",
+            "kube-proxy, which handles all outbound network connections from the node, including connections to registries"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.397Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.107Z"
       }
     },
     {
@@ -548,12 +680,144 @@
           "correct_index": 0,
           "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 280\"><rect width=\"640\" height=\"280\" fill=\"#FBFBFB\"/><defs><marker id=\"a\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"8\" markerHeight=\"8\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><g stroke=\"#141414\" stroke-width=\"1.5\"><rect x=\"20\" y=\"20\" width=\"150\" height=\"40\" rx=\"10\" fill=\"#5889F7\"/><rect x=\"20\" y=\"80\" width=\"150\" height=\"40\" rx=\"10\" fill=\"#5889F7\"/><rect x=\"20\" y=\"220\" width=\"150\" height=\"40\" rx=\"10\" fill=\"#5889F7\"/><rect x=\"250\" y=\"110\" width=\"150\" height=\"80\" rx=\"12\" fill=\"#F5D556\"/><rect x=\"480\" y=\"120\" width=\"130\" height=\"60\" rx=\"12\" fill=\"#469B5B\"/></g><g stroke=\"#141414\" stroke-width=\"2\"><line x1=\"250\" y1=\"125\" x2=\"174\" y2=\"44\" marker-end=\"url(#a)\"/><line x1=\"250\" y1=\"140\" x2=\"174\" y2=\"104\" marker-end=\"url(#a)\"/><line x1=\"250\" y1=\"175\" x2=\"174\" y2=\"238\" marker-end=\"url(#a)\"/><line x1=\"478\" y1=\"150\" x2=\"404\" y2=\"150\" marker-end=\"url(#a)\"/></g><g font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"15\" fill=\"#141414\" text-anchor=\"middle\"><text x=\"95\" y=\"45\">Client 1</text><text x=\"95\" y=\"105\">Client 2</text><text x=\"95\" y=\"170\">...</text><text x=\"95\" y=\"245\">Client 200</text><text x=\"325\" y=\"145\">API server</text><text x=\"325\" y=\"168\">watch cache</text><text x=\"545\" y=\"155\">etcd</text><text x=\"440\" y=\"140\" font-size=\"16\">?</text></g></svg>",
           "figure_alt": "A diagram of 200 client boxes receiving watch events from a single API server with a watch cache, which in turn receives data from etcd over a connection marked with a question mark."
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "api server as single entry point",
+          "prompt": "Your cluster runs three API server instances behind a load balancer. One instance crashes and stays down for an hour. What do users and controllers experience during that hour?",
+          "reference": "API servers are stateless front ends; the cluster state lives in etcd, so any healthy instance can serve any request. The tempting mistake is thinking each API server owns some of the data, but no object belongs to a particular instance.",
+          "options": [
+            "Requests keep working through the other two instances, because API servers hold no unique state and all read and write the same etcd",
+            "Objects that were created through the crashed instance become unavailable until it restarts and reloads them",
+            "Writes are refused cluster-wide, because every API server instance must agree before a change can be stored",
+            "Controllers stop working, because each controller is permanently tied to the API server instance it first connected to"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 2,
+          "concept": "api server as single entry point",
+          "prompt": "Your security team wants a complete record of who created, changed or deleted anything in the cluster, including changes made by controllers and the scheduler. Where would you collect this record, and why can you trust it to be complete?",
+          "reference": "Collect it at the API server, using its audit logging. It is complete because every component, human or controller, must make changes through the API server; nothing writes to etcd directly, so no change can bypass that log.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "request path: authn, authz, admission",
+          "prompt": "A logged-in user has no RBAC permission to create pods in a namespace. They try to create a pod that would also break a validating admission policy in that namespace. What response do they get?",
+          "reference": "Stages run in order: authentication, then authorization, then admission. The request stops at the first failure, so the RBAC denial (403) ends it before admission runs; 401 is only for failing to prove identity, which this user did not.",
+          "options": [
+            "403 Forbidden from authorization, and the admission policy is never evaluated",
+            "An admission rejection, because policies are checked before permissions so users see what to fix",
+            "Both errors combined, since the API server runs every check and reports all failures together",
+            "401 Unauthorized, because lacking a permission is treated the same as not being logged in"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 3,
+          "concept": "request path: authn, authz, admission",
+          "prompt": "A validating admission webhook is configured to reject requests if it cannot be reached (failure policy Fail). Its pods crash. Now every pod creation fails with a webhook error, yet kubectl get pods still works normally. Why do the reads still work?",
+          "reference": "Admission control applies to write requests such as create, update and delete, not to get, list or watch. The tempting wrong idea is that reads skip the API server path entirely; they still pass authentication and authorization, they just never reach admission.",
+          "options": [
+            "Admission only runs on requests that change objects, so reads go through authentication and authorization and skip webhooks",
+            "Reads are served from a kubelet cache on each node, so they never reach the API server at all",
+            "The API server automatically disables a webhook after it fails, but only for read requests at first",
+            "Reads bypass authentication and authorization too, so no part of the request path is involved"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 1,
+          "concept": "etcd as the source of truth",
+          "prompt": "etcd is often called the source of truth for the cluster. Which of these is actually stored in etcd?",
+          "reference": "etcd stores the API objects, such as pods, Deployments, Secrets and their status, which describe desired and observed state. Images live in registries and on node disks, and logs and metrics stay on nodes or in separate systems, a common confusion because kubectl can show them.",
+          "options": [
+            "Pod objects, including their spec and their reported status",
+            "The container images that pods run on each node",
+            "The log output that containers write while running",
+            "The CPU and memory usage samples collected from nodes"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "short",
+          "difficulty": 3,
+          "concept": "etcd as the source of truth",
+          "prompt": "Your etcd members were moved onto slow shared network disks. Now kubectl apply often takes several seconds, controllers fall behind, and even unrelated teams complain. Explain why the speed of etcd's disk affects the whole cluster.",
+          "reference": "Every change goes through the API server into etcd, and etcd only confirms a write after a majority of members have saved it durably to disk. A slow disk therefore delays every write in the cluster, so all users and controllers slow down together rather than just one workload.",
+          "options": null,
+          "correct_index": null,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "resource versions and optimistic concurrency",
+          "prompt": "Instead of resourceVersion checks, a teammate suggests letting a controller lock an object while it works on it, so no one else can change it in the meantime. What is the main drawback of locking compared with the current approach?",
+          "reference": "With optimistic concurrency no one waits: a stale write is simply rejected and the client rereads and retries, which is cheap because conflicts are rare. Locks risk being held indefinitely by a failed client, stalling every other component that needs the object.",
+          "options": [
+            "A client that crashes or hangs while holding a lock blocks everyone else, while conflicts with versions are rare and cheap to retry",
+            "Locks would make writes faster, but they cannot prevent two clients from overwriting each other's changes",
+            "Locks only work if etcd runs a single member, so the cluster could no longer run three etcd members",
+            "Locking would require clients to send the whole object, while resourceVersion checks let them send nothing"
+          ],
+          "correct_index": 0,
+          "figure": null,
+          "figure_alt": null
+        },
+        {
+          "tier": "reserve",
+          "kind": "mcq",
+          "difficulty": 2,
+          "concept": "watches instead of polling",
+          "prompt": "The diagram shows a controller starting up: it lists all pods, the list comes back at resourceVersion 500, a pod is then deleted, and afterwards the controller opens a watch from resourceVersion 500. Why does it pass the list's resourceVersion to the watch?",
+          "reference": "The resourceVersion marks the exact point in history the list reflects, so the watch resumes from there and nothing between list and watch is missed. Starting from the newest version instead would silently miss the deletion, leaving the controller with a stale view.",
+          "options": [
+            "So the watch delivers every change after the list, including the deletion that happened before the watch opened",
+            "So the watch only reports changes to pods that appeared in the list, ignoring newly created pods",
+            "So the API server can skip authorization for the watch, since the list was already authorized",
+            "So the watch reads straight from etcd at that version rather than going through the API server"
+          ],
+          "correct_index": 0,
+          "figure": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 240\"><defs><marker id=\"a\" markerWidth=\"10\" markerHeight=\"10\" refX=\"9\" refY=\"5\" orient=\"auto\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#141414\"/></marker></defs><rect x=\"0\" y=\"0\" width=\"640\" height=\"240\" fill=\"#FBFBFB\"/><text x=\"320\" y=\"30\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"16\" text-anchor=\"middle\" fill=\"#141414\">Controller startup timeline</text><line x1=\"40\" y1=\"130\" x2=\"600\" y2=\"130\" stroke=\"#141414\" stroke-width=\"2\" marker-end=\"url(#a)\"/><text x=\"600\" y=\"222\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"end\" fill=\"#141414\">time</text><rect x=\"50\" y=\"60\" width=\"150\" height=\"50\" rx=\"10\" fill=\"#5889F7\" stroke=\"#141414\"/><text x=\"125\" y=\"81\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">LIST pods</text><text x=\"125\" y=\"100\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">returns rv 500</text><line x1=\"125\" y1=\"110\" x2=\"125\" y2=\"130\" stroke=\"#141414\" stroke-width=\"2\"/><circle cx=\"125\" cy=\"130\" r=\"5\" fill=\"#141414\"/><rect x=\"245\" y=\"150\" width=\"150\" height=\"50\" rx=\"10\" fill=\"#E65F2B\" stroke=\"#141414\"/><text x=\"320\" y=\"171\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">pod web-2 deleted</text><text x=\"320\" y=\"190\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">stored as rv 501</text><line x1=\"320\" y1=\"130\" x2=\"320\" y2=\"150\" stroke=\"#141414\" stroke-width=\"2\"/><circle cx=\"320\" cy=\"130\" r=\"5\" fill=\"#141414\"/><rect x=\"440\" y=\"60\" width=\"150\" height=\"50\" rx=\"10\" fill=\"#469B5B\" stroke=\"#141414\"/><text x=\"515\" y=\"81\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">WATCH pods</text><text x=\"515\" y=\"100\" font-family=\"Inter Tight, Arial, sans-serif\" font-size=\"14\" text-anchor=\"middle\" fill=\"#141414\">from rv 500</text><line x1=\"515\" y1=\"110\" x2=\"515\" y2=\"130\" stroke=\"#141414\" stroke-width=\"2\"/><circle cx=\"515\" cy=\"130\" r=\"5\" fill=\"#141414\"/></svg>",
+          "figure_alt": "A left-to-right timeline showing a controller listing pods at resourceVersion 500, then a pod deletion stored at resourceVersion 501, then the controller opening a watch from resourceVersion 500."
         }
       ],
       "verified": {
         "fixed": 0,
         "dropped": 0,
         "at": "2026-11-07T06:48:19.483Z"
+      },
+      "expanded": {
+        "added": 8,
+        "fixed": 0,
+        "dropped": 0,
+        "at": "2026-11-07T07:37:52.222Z"
       }
     },
     {
