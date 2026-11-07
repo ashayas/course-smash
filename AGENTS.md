@@ -7,6 +7,10 @@
 - use secrets to assign the username and password that are in the .env USER_NAME and PW on the cloudflare worker itself so thats the login gate. it should be a login page where the PW is hidden from the user
 - the UI theme is the Course Smash city design kit in [DESIGN.md](DESIGN.md), so read that file before building any UI
 - use the JEV style clef model from cloudflare to determine if questions are right or wrong for each user based on what they want to learn
+- A mobile app is coming. It doesn't exist yet. When you add a feature, work out the best way to bring it to the mobile app too:
+  - Put the data and logic behind a JSON endpoint under `/api/`, not only in `public/app.js`, so a native client can reuse it.
+  - Keep the art in `public/city.js` as plain SVG built from data, so it can render on mobile.
+  - Add a short "Mobile" note to the PR or commit that says how the feature should work on a phone.
 
 ## What's already set up
 

@@ -148,7 +148,7 @@ export async function createCourse(env: Env, prompt: string, owner: string | nul
 
 /* The library */
 
-type CatalogCourse = { id: string; track: string; title: string; summary: string; prompt: string; level: string; tags: string; position: number };
+type CatalogCourse = { id: string; track: string; title: string; summary: string; prompt: string; level: string; tags: string; position: number; icon: string | null };
 
 export const TRACKS: Record<string, string> = {
   "ai-engineering": "AI engineering",
@@ -167,7 +167,7 @@ export async function listCatalog(env: Env) {
   ).all<CatalogCourse & { modules: number; questions: number }>();
   return {
     tracks: TRACKS,
-    courses: results.map((c) => ({ ...c, tags: JSON.parse(c.tags) as string[], track_title: TRACKS[c.track] ?? c.track })),
+    courses: results.map((c) => ({ ...c, tags: JSON.parse(c.tags) as string[], track_title: TRACKS[c.track] ?? c.track, icon: parseIcon(c.icon) })),
   };
 }
 
@@ -179,7 +179,7 @@ export async function catalogCourse(env: Env, id: string) {
      FROM catalog_modules m WHERE m.catalog_course_id = ? ORDER BY m.position`,
   ).bind(id).all<{ title: string; objective: string; concepts: string; questions: number }>();
   return {
-    ...course, tags: JSON.parse(course.tags) as string[], track_title: TRACKS[course.track] ?? course.track,
+    ...course, tags: JSON.parse(course.tags) as string[], track_title: TRACKS[course.track] ?? course.track, icon: parseIcon(course.icon),
     modules: results.map((m) => ({ ...m, concepts: JSON.parse(m.concepts) as string[] })),
   };
 }
@@ -213,12 +213,12 @@ async function buildOutline(env: Env, course: Course) {
 
 /** A library course starts from its stored outline, so planning costs no model call. */
 async function copyCatalogOutline(env: Env, course: Course) {
-  const source = await env.DB.prepare("SELECT * FROM catalog_courses WHERE id = ?").bind(course.catalog_id).first<{ title: string; summary: string }>();
+  const source = await env.DB.prepare("SELECT * FROM catalog_courses WHERE id = ?").bind(course.catalog_id).first<{ title: string; summary: string; icon: string | null }>();
   if (!source) throw new Error(`library course ${course.catalog_id} is gone`);
   const { results } = await env.DB.prepare("SELECT * FROM catalog_modules WHERE catalog_course_id = ? ORDER BY position")
     .bind(course.catalog_id).all<{ id: string; title: string; objective: string; concepts: string }>();
   const modules = results.map((m) => ({ title: m.title, objective: m.objective, concepts: JSON.parse(m.concepts) as string[], catalogId: m.id }));
-  await saveOutline(env, course, source.title, source.summary, modules, `Opened "${source.title}" from the library: ${modules.length} modules.`);
+  await saveOutline(env, course, source.title, source.summary, modules, `Opened "${source.title}" from the library: ${modules.length} modules.`, parseIcon(course.icon ?? source.icon));
 }
 
 type PlannedModule = { title: string; objective: string; concepts: string[]; catalogId: string | null };
@@ -729,6 +729,82 @@ export async function courseView(env: Env, id: string, owner: string | null) {
     mastery: masteryByConcept(answers),
     events: events.results,
     models: { writer: BUILDER_MODEL, grader: graderName(env) },
+  };
+}
+
+/** The learner picks a different building for their course. */
+export async function setCourseIcon(env: Env, id: string, icon: Icon, owner: string | null) {
+  const { meta } = await env.DB.prepare("UPDATE courses SET icon = ? WHERE id = ? AND owner IS ?").bind(JSON.stringify(icon), id, owner).run();
+  return meta.changes > 0;
+}
+
+const DAY = 86_400_000;
+
+/**
+ * How the learner is doing, overall and per course. `days` is answer activity for the last 30 days,
+ * oldest first, keyed by UTC day so every client draws the same chart.
+ */
+export async function learnerStats(env: Env, owner: string | null) {
+  const [courses, answers, modules] = await Promise.all([
+    env.DB.prepare("SELECT id, prompt, title, status, icon, catalog_id, created_at FROM courses WHERE owner IS ? ORDER BY created_at DESC LIMIT 100")
+      .bind(owner).all<{ id: string; prompt: string; title: string | null; status: string; icon: string | null; catalog_id: string | null; created_at: number }>(),
+    env.DB.prepare(
+      `SELECT a.course_id, a.concept, a.verdict, a.score, a.created_at, q.module_id FROM answers a
+       JOIN courses c ON c.id = a.course_id JOIN questions q ON q.id = a.question_id
+       WHERE c.owner IS ? ORDER BY a.created_at`,
+    ).bind(owner).all<{ course_id: string; concept: string; verdict: Answer["verdict"]; score: number; created_at: number; module_id: string }>(),
+    env.DB.prepare("SELECT m.id, m.course_id, m.title, m.status, m.position FROM modules m JOIN courses c ON c.id = m.course_id WHERE c.owner IS ? ORDER BY m.position")
+      .bind(owner).all<{ id: string; course_id: string; title: string; status: string; position: number }>(),
+  ]);
+  const tally = (list: { verdict: Answer["verdict"]; score: number }[]) => ({
+    answered: list.length,
+    correct: list.filter((a) => a.verdict === "correct").length,
+    partial: list.filter((a) => a.verdict === "partial").length,
+    incorrect: list.filter((a) => a.verdict === "incorrect").length,
+    average: list.length ? list.reduce((sum, a) => sum + a.score, 0) / list.length : null,
+  });
+  const all = answers.results;
+
+  const today = Math.floor(now() / DAY);
+  const days = Array.from({ length: 30 }, (_, i) => {
+    const day = today - 29 + i;
+    const list = all.filter((a) => Math.floor(a.created_at / DAY) === day);
+    return { date: new Date(day * DAY).toISOString().slice(0, 10), ...tally(list) };
+  });
+  const active = new Set(all.map((a) => Math.floor(a.created_at / DAY)));
+  let streak = 0;
+  // A streak still counts if today has no answers yet.
+  for (let day = active.has(today) ? today : today - 1; active.has(day); day--) streak++;
+
+  const perCourse = courses.results.map((c) => {
+    const own = all.filter((a) => a.course_id === c.id);
+    const mods = modules.results.filter((m) => m.course_id === c.id);
+    const mastery = masteryByConcept(own).sort((a, b) => b.mastery - a.mastery);
+    const recent = own.slice(-10);
+    return {
+      id: c.id, title: c.title, prompt: c.prompt, status: c.status, icon: parseIcon(c.icon), catalog_id: c.catalog_id,
+      created_at: c.created_at, last_answered_at: own.at(-1)?.created_at ?? null,
+      modules: mods.length, passed: mods.filter((m) => m.status === "passed").length,
+      ...tally(own),
+      recent_average: recent.length ? recent.reduce((sum, a) => sum + a.score, 0) / recent.length : null,
+      module_stats: mods.map((m) => ({ title: m.title, status: m.status, ...tally(own.filter((a) => a.module_id === m.id)) })),
+      // A concept lands in one list only: at or over 70% is a strength, under it needs work.
+      strongest: mastery.filter((m) => m.mastery >= 0.7).slice(0, 3),
+      weakest: mastery.filter((m) => m.mastery < 0.7).reverse().slice(0, 3),
+    };
+  });
+
+  return {
+    totals: {
+      courses: courses.results.length,
+      finished: courses.results.filter((c) => c.status === "complete").length,
+      modules_passed: modules.results.filter((m) => m.status === "passed").length,
+      ...tally(all),
+      active_days: active.size,
+      streak,
+    },
+    days,
+    courses: perCourse,
   };
 }
 

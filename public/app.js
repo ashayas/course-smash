@@ -1,5 +1,5 @@
 // Course Smash client. Everything the models write goes in through textContent, never innerHTML.
-import { buildingSvg, citySvg, finishedSvg, markSvg, progressOf, stackSvg } from "./city.js";
+import { ACCENTS, ARCHETYPES, MATERIALS, ROOFS, buildingSvg, citySvg, finishedSvg, markSvg, progressOf, specFor, stackSvg } from "./city.js";
 const app = document.getElementById("app");
 const live = document.getElementById("live");
 
@@ -363,7 +363,9 @@ function drawCourse(view, stage) {
       h("div", {},
       h("h1", {}, view.title || view.prompt),
       view.summary ? h("p", {}, view.summary) : null)),
-    h("button", { class: "link-button", onclick: () => removeCourse(view) }, "Delete course"));
+    h("div", { class: "head-actions" },
+      view.modules.length ? h("button", { class: "button button-quiet", onclick: () => pickBuilding(view) }, "Change building") : null,
+      h("button", { class: "link-button", onclick: () => removeCourse(view) }, "Delete course")));
   const main = view.status === "complete"
     ? finishedView(view)
     : h("section", { class: "panel stage", "aria-label": "Current question" }, stage);
@@ -483,13 +485,214 @@ function showResult(view, q, form, result, token) {
   next.focus();
 }
 
+
+/* Building picker: the learner restyles a course's building. Choices come from the fixed lists in city.js. */
+const NAMES = { controltower: "control tower", powerplant: "power plant", datacenter: "data centre", townhall: "town hall", windfarm: "wind farm" };
+const label = (word) => { const w = NAMES[word] ?? word; return w[0].toUpperCase() + w.slice(1); };
+
+function pickBuilding(view) {
+  const start = specFor(view);
+  let spec = { archetype: start.archetype, material: start.material, roof: start.roof, accent: start.accent };
+  const progress = progressOf({ status: view.status, modules: view.modules.length, passed: view.modules.filter((m) => m.status === "passed").length });
+  const course = (icon) => ({ id: view.id, title: view.title, icon });
+  const preview = h("div", { class: "picker-preview", "aria-hidden": "true" });
+  const groups = h("div", { class: "picker-groups" });
+  const error = h("p", { class: "error-text", role: "alert", hidden: true });
+  const save = h("button", { class: "button", type: "submit" }, "Save building");
+  const choice = (key, value, content, extra = "") => h("button", {
+    type: "button", class: `pick ${extra}${spec[key] === value ? " pick-on" : ""}`, "aria-pressed": String(spec[key] === value),
+    "aria-label": label(value), title: label(value), onclick: () => { spec = { ...spec, [key]: value }; draw(); },
+  }, content);
+  const group = (title, key, items) => h("fieldset", { class: "picker-group" }, h("legend", {}, title), h("div", { class: `picks picks-${key}` }, items));
+  const draw = () => {
+    preview.replaceChildren(art(buildingSvg(course(spec), progress)));
+    groups.replaceChildren(
+      group("Building", "archetype", ARCHETYPES.map((a) => choice("archetype", a, [art(buildingSvg(course({ ...spec, archetype: a, roof: "none" }), { floors: 4, lit: 2 })), h("span", {}, label(a))], "pick-art"))),
+      group("Material", "material", MATERIALS.map((m) => choice("material", m, [art(buildingSvg(course({ archetype: "tower", material: m, roof: "none", accent: spec.accent }), { floors: 3, lit: 0 })), h("span", {}, label(m))], "pick-art pick-small"))),
+      group("Roof", "roof", ROOFS.map((r) => choice("roof", r, label(r), "pick-chip"))),
+      group("Trim colour", "accent", ACCENTS.map((c) => choice("accent", c, h("span", { class: `swatch t-${c}` }), "pick-swatch"))),
+    );
+  };
+  const shuffle = () => {
+    const any = (list) => list[Math.floor(Math.random() * list.length)];
+    spec = { archetype: any(ARCHETYPES), material: any(MATERIALS), roof: any(ROOFS), accent: any(ACCENTS) };
+    draw();
+  };
+  const dialog = h("dialog", { class: "picker", "aria-labelledby": "picker-title" });
+  const close = () => { dialog.close(); dialog.remove(); };
+  const form = h("form", {
+    onsubmit: async (event) => {
+      event.preventDefault();
+      save.disabled = true;
+      error.hidden = true;
+      try {
+        const { icon } = await api(`/api/courses/${view.id}/icon`, { method: "PUT", body: JSON.stringify({ icon: spec }) });
+        view.icon = icon;
+        close();
+        const building = app.querySelector(".course-building");
+        if (building) building.replaceChildren(art(buildingSvg(view, progress)));
+        live.textContent = "Building saved.";
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        save.disabled = false;
+      }
+    },
+  },
+    h("div", { class: "picker-head" },
+      h("div", {}, h("h2", { id: "picker-title" }, "Change building"), h("p", { class: "muted" }, view.title || view.prompt)),
+      h("button", { class: "link-button", type: "button", onclick: close }, "Close")),
+    h("div", { class: "picker-body" },
+      h("div", { class: "picker-side" }, preview, h("button", { class: "button button-ink", type: "button", onclick: shuffle }, "Surprise me")),
+      groups),
+    error,
+    h("div", { class: "actions picker-actions" }, save, h("button", { class: "button button-ink", type: "button", onclick: close }, "Cancel")));
+  dialog.append(form);
+  dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(); });
+  dialog.addEventListener("click", (event) => { if (event.target === dialog) close(); });
+  draw();
+  document.body.append(dialog);
+  dialog.showModal();
+}
+
+/* Stats */
+const pct = (v) => (v == null ? "–" : `${Math.round(v * 100)}%`);
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+const chartMax = (days) => { const m = Math.max(4, ...days.map((d) => d.answered)); return m % 2 ? m + 1 : m; };
+
+/** Answers per day for 30 days, stacked by verdict. Built from numbers only. */
+function activitySvg(days) {
+  const W = 900, H = 172, top = 12, base = 170, gap = 2;
+  const max = chartMax(days);
+  const step = W / days.length, bw = Math.max(6, step - 8);
+  const y = (v) => ((base - top) * v) / max;
+  const fills = { correct: "var(--bio-green)", partial: "var(--bio-yellow)", incorrect: "var(--bio-orange)" };
+  const grid = [0.5, 1].map((t) => `<line x1="0" x2="${W}" y1="${(base - y(Math.round(max * t))).toFixed(1)}" y2="${(base - y(Math.round(max * t))).toFixed(1)}" class="grid-line"/>`).join("");
+  let bars = "";
+  days.forEach((d, i) => {
+    const x = i * step + (step - bw) / 2;
+    let z = base;
+    const parts = ["correct", "partial", "incorrect"].filter((k) => d[k] > 0);
+    parts.forEach((k, j) => {
+      const hgt = Math.max(2, y(d[k]) - (j < parts.length - 1 ? gap : 0));
+      const isTop = j === parts.length - 1;
+      bars += isTop
+        ? `<path d="M${x.toFixed(1)},${z}V${(z - hgt + 4).toFixed(1)}Q${x.toFixed(1)},${(z - hgt).toFixed(1)} ${(x + 4).toFixed(1)},${(z - hgt).toFixed(1)}H${(x + bw - 4).toFixed(1)}Q${(x + bw).toFixed(1)},${(z - hgt).toFixed(1)} ${(x + bw).toFixed(1)},${(z - hgt + 4).toFixed(1)}V${z}Z" fill="${fills[k]}"/>`
+        : `<rect x="${x.toFixed(1)}" y="${(z - hgt).toFixed(1)}" width="${bw.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${fills[k]}"/>`;
+      z -= hgt + gap;
+    });
+    if (!parts.length) bars += `<rect x="${x.toFixed(1)}" y="${base - 2}" width="${bw.toFixed(1)}" height="2" class="empty-bar"/>`;
+    bars += `<rect x="${(i * step).toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${H}" class="hit" data-day="${i}"/>`;
+  });
+  // Labels are HTML (see activityChart), so they keep their shape when the bars stretch to fit.
+  return `<svg viewBox="0 0 ${W} ${H}" class="activity" preserveAspectRatio="none">${grid}<line x1="0" x2="${W}" y1="${base}" y2="${base}" class="base-line"/>${bars}</svg>`;
+}
+function shortDate(iso) {
+  if (!iso) return "";
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+function verdictBar(c) {
+  const bar = h("div", { class: "verdict-bar", role: "img", "aria-label": `${c.correct} right, ${c.partial} partly right, ${c.incorrect} wrong` });
+  for (const [k, cls] of [["correct", "t-green"], ["partial", "t-yellow"], ["incorrect", "t-orange"]]) {
+    if (!c[k]) continue;
+    const seg = h("span", { class: cls });
+    seg.style.flexGrow = String(c[k]);
+    bar.append(seg);
+  }
+  if (!c.answered) bar.append(h("span", { class: "verdict-empty" }));
+  return bar;
+}
+
+function statCourse(c) {
+  const progress = progressOf(c);
+  const trend = c.recent_average != null && c.average != null && c.answered >= 12 ? c.recent_average - c.average : null;
+  const trendText = trend == null ? null : Math.abs(trend) < 0.05 ? "Holding steady" : trend > 0 ? `Up ${Math.round(trend * 100)} points lately` : `Down ${Math.round(-trend * 100)} points lately`;
+  const status = c.status === "complete" ? "Finished" : c.modules ? `${c.passed} of ${c.modules} modules done` : "Being planned";
+  const concepts = (title, list) => list.length ? h("div", { class: "concepts" }, h("h4", {}, title),
+    h("ul", {}, list.map((m) => h("li", {}, h("span", {}, m.concept), h("span", { class: "muted" }, pct(m.mastery)))))) : null;
+  return h("article", { class: "card stat-course" },
+    h("a", { class: "stat-course-head", href: `#/course/${c.id}` },
+      h("div", { class: "stat-art", "aria-hidden": "true" }, art(buildingSvg(c, progress))),
+      h("div", {}, h("h3", {}, c.title || c.prompt), h("p", { class: "muted" }, status))),
+    h("div", { class: "stat-numbers" },
+      h("div", {}, h("strong", {}, pct(c.average)), h("span", {}, "average score")),
+      h("div", {}, h("strong", {}, String(c.answered)), h("span", {}, "answered")),
+      h("div", {}, h("strong", {}, c.answered ? pct(c.correct / c.answered) : "–"), h("span", {}, "fully right"))),
+    verdictBar(c),
+    trendText ? h("p", { class: "small muted" }, trendText) : null,
+    c.module_stats.length ? h("div", { class: "module-stats" }, c.module_stats.map((m) => {
+      const fill = h("div", { class: `meter-fill ${m.average == null ? "" : m.average >= 0.7 ? "t-green" : m.average >= 0.4 ? "t-yellow" : "t-orange"}` });
+      fill.style.width = `${m.average == null ? 0 : Math.max(3, Math.round(m.average * 100))}%`;
+      return h("div", { class: `meter module-meter ${m.status}` },
+        h("div", { class: "meter-label" }, h("span", {}, m.title), h("span", { class: "muted" }, m.answered ? `${pct(m.average)} · ${m.answered}` : m.status === "locked" ? "Up next" : "Not started")),
+        h("div", { class: "meter-track" }, fill));
+    })) : null,
+    h("div", { class: "concept-cols" }, concepts("Strongest", c.strongest), concepts("Needs work", c.weakest)));
+}
+
+async function renderStats() {
+  const token = ++renderToken;
+  app.replaceChildren(h("div", { class: "panel stage" }, workingView("Counting your answers")));
+  let data;
+  try {
+    data = await api("/api/stats");
+  } catch (e) {
+    if (token === renderToken) app.replaceChildren(h("p", { class: "error-text", role: "alert" }, e.message));
+    return;
+  }
+  if (token !== renderToken) return;
+  const t = data.totals;
+  const tile = (value, title, note) => h("div", { class: "card stat-tile" }, h("strong", {}, value), h("span", {}, title), note ? h("span", { class: "muted small" }, note) : null);
+  const max = chartMax(data.days);
+  const yLabel = (v) => { const el = h("span", { class: "y-label" }, String(v)); el.style.top = `${(12 + (158 * (max - v)) / max) / 172 * 100}%`; return el; };
+  const chart = h("div", { class: "activity-wrap" }, art(activitySvg(data.days)), yLabel(max), yLabel(max / 2));
+  const tip = h("div", { class: "chart-tip", hidden: true, role: "status" });
+  chart.append(tip);
+  for (const hit of chart.querySelectorAll(".hit")) {
+    const d = data.days[Number(hit.dataset.day)];
+    const show = () => {
+      tip.replaceChildren(h("strong", {}, shortDate(d.date)), h("span", {}, d.answered ? `${plural(d.answered, "answer")} · ${d.correct} right, ${d.partial} partly, ${d.incorrect} wrong` : "No answers"));
+      tip.hidden = false;
+      const box = chart.getBoundingClientRect(), r = hit.getBoundingClientRect();
+      tip.style.left = `${Math.min(Math.max(r.left - box.left + r.width / 2, 90), box.width - 90)}px`;
+    };
+    hit.addEventListener("pointerenter", show);
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; });
+  }
+  const answered = data.courses.filter((c) => c.answered);
+  const ranked = [...data.courses].sort((a, b) => (b.last_answered_at ?? b.created_at) - (a.last_answered_at ?? a.created_at));
+  app.replaceChildren(
+    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Your stats"), h("p", {}, "How you're doing on every course. Scores count partly right answers as half."))),
+    h("section", { class: "stat-tiles" },
+      tile(String(t.answered), "questions answered", t.active_days ? `over ${plural(t.active_days, "day")}` : null),
+      tile(pct(t.average), "average score", t.answered ? `${t.correct} right, ${t.partial} partly, ${t.incorrect} wrong` : null),
+      tile(`${t.modules_passed}`, "modules passed", `${t.finished} of ${plural(t.courses, "course")} finished`),
+      tile(String(t.streak), t.streak === 1 ? "day streak" : "day streak", t.streak ? "Answer today to keep it going" : "Answer a question to start one")),
+    h("section", { class: "panel stat-activity" },
+      h("div", { class: "track-head" }, h("h2", {}, "Last 30 days"),
+        h("div", { class: "legend", "aria-hidden": "true" }, [["t-green", "Right"], ["t-yellow", "Partly"], ["t-orange", "Wrong"]].map(([cls, text]) => h("span", {}, h("i", { class: `swatch ${cls}` }), text)))),
+      chart,
+      h("div", { class: "chart-axis", "aria-hidden": "true" }, h("span", {}, shortDate(data.days[0]?.date)), h("span", {}, "Today")),
+      h("table", { class: "visually-hidden" }, h("caption", {}, "Answers per day"),
+        h("tr", {}, h("th", {}, "Day"), h("th", {}, "Right"), h("th", {}, "Partly"), h("th", {}, "Wrong")),
+        data.days.filter((d) => d.answered).map((d) => h("tr", {}, h("td", {}, d.date), h("td", {}, String(d.correct)), h("td", {}, String(d.partial)), h("td", {}, String(d.incorrect)))))),
+    h("section", { class: "section stat-section" },
+      h("div", { class: "section-head" }, h("h2", {}, "By course"), h("p", { class: "muted" }, answered.length ? "Most recently studied first. Open a course to keep going." : "Answer a few questions and your scores show up here.")),
+      data.courses.length ? h("div", { class: "grid stat-grid" }, ranked.map(statCourse)) : h("p", { class: "card empty" }, "No courses yet. ", h("a", { href: "#/" }, "Start one."))),
+  );
+}
+
 /* Routing */
 function route() {
   const [path, query = ""] = location.hash.split("?");
   const course = path.match(/^#\/course\/([\w-]+)$/);
   const library = path.match(/^#\/library(?:\/([\w-]+))?$/);
   window.scrollTo(0, 0);
-  if (course) renderCourse(course[1]);
+  for (const link of document.querySelectorAll(".nav a")) link.toggleAttribute("aria-current", link.getAttribute("href") === path || (path === "" && link.getAttribute("href") === "#/"));
+  if (path === "#/stats") renderStats();
+  else if (course) renderCourse(course[1]);
   else if (library?.[1]) renderLibraryCourse(library[1]);
   else if (library) renderLibrary(new URLSearchParams(query));
   else renderHome();

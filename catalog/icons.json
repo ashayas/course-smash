@@ -1,0 +1,644 @@
+{
+"agent-architecture": {
+"archetype": "tower",
+"material": "lilac",
+"roof": "antenna",
+"accent": "purple"
+},
+"agent-auth": {
+"archetype": "controltower",
+"material": "lilac",
+"roof": "none",
+"accent": "purple"
+},
+"ai-security": {
+"archetype": "fortress",
+"material": "lilac",
+"roof": "flag",
+"accent": "purple"
+},
+"api-auth-basics": {
+"archetype": "townhall",
+"material": "sandstone",
+"roof": "none",
+"accent": "teal"
+},
+"applied-cryptography": {
+"archetype": "vault",
+"material": "charcoal",
+"roof": "none",
+"accent": "teal"
+},
+"attention-optimizations": {
+"archetype": "observatory",
+"material": "white",
+"roof": "none",
+"accent": "purple"
+},
+"authorization-models": {
+"archetype": "capitol",
+"material": "sandstone",
+"roof": "none",
+"accent": "blue"
+},
+"autoscaling": {
+"archetype": "apartments",
+"material": "glass",
+"roof": "solar",
+"accent": "green"
+},
+"batch-jobs": {
+"archetype": "warehouse",
+"material": "brick",
+"roof": "none",
+"accent": "orange"
+},
+"batching": {
+"archetype": "warehouse",
+"material": "terracotta",
+"roof": "none",
+"accent": "yellow"
+},
+"capacity-planning": {
+"archetype": "setback",
+"material": "slate",
+"roof": "helipad",
+"accent": "orange"
+},
+"cloud-security": {
+"archetype": "tower",
+"material": "white",
+"roof": "helipad",
+"accent": "blue"
+},
+"cluster-upgrades-ops": {
+"archetype": "workshop",
+"material": "concrete",
+"roof": "none",
+"accent": "yellow"
+},
+"cni-network-policy": {
+"archetype": "datacenter",
+"material": "slate",
+"roof": "dish",
+"accent": "teal"
+},
+"coding-agents": {
+"archetype": "workshop",
+"material": "glass",
+"roof": "none",
+"accent": "blue"
+},
+"config-secrets": {
+"archetype": "vault",
+"material": "sandstone",
+"roof": "none",
+"accent": "purple"
+},
+"context-engineering": {
+"archetype": "library",
+"material": "sandstone",
+"roof": "garden",
+"accent": "purple"
+},
+"control-systems": {
+"archetype": "controltower",
+"material": "sage",
+"roof": "none",
+"accent": "green"
+},
+"deployments-rollouts": {
+"archetype": "station",
+"material": "terracotta",
+"roof": "none",
+"accent": "blue"
+},
+"detection-engineering": {
+"archetype": "observatory",
+"material": "charcoal",
+"roof": "none",
+"accent": "red"
+},
+"disaggregated-serving": {
+"archetype": "apartments",
+"material": "glass",
+"roof": "antenna",
+"accent": "teal"
+},
+"distillation-small-models": {
+"archetype": "lab",
+"material": "white",
+"roof": "none",
+"accent": "green"
+},
+"edge-inference": {
+"archetype": "lighthouse",
+"material": "sandstone",
+"roof": "beacon",
+"accent": "orange"
+},
+"electronics-basics": {
+"archetype": "powerplant",
+"material": "brick",
+"roof": "none",
+"accent": "yellow"
+},
+"embedding-reranker-serving": {
+"archetype": "library",
+"material": "slate",
+"roof": "crown",
+"accent": "blue"
+},
+"embeddings-vector-search": {
+"archetype": "observatory",
+"material": "glass",
+"roof": "none",
+"accent": "teal"
+},
+"embodied-ai": {
+"archetype": "tower",
+"material": "sage",
+"roof": "garden",
+"accent": "green"
+},
+"etcd-control-plane": {
+"archetype": "controltower",
+"material": "glass",
+"roof": "none",
+"accent": "orange"
+},
+"ethical-hacking-basics": {
+"archetype": "workshop",
+"material": "charcoal",
+"roof": "none",
+"accent": "red"
+},
+"eval-statistics": {
+"archetype": "setback",
+"material": "sandstone",
+"roof": "helipad",
+"accent": "orange"
+},
+"fine-tuning-basics": {
+"archetype": "lab",
+"material": "teal",
+"roof": "none",
+"accent": "pink"
+},
+"gitops": {
+"archetype": "library",
+"material": "white",
+"roof": "flag",
+"accent": "orange"
+},
+"gpu-fundamentals": {
+"archetype": "powerplant",
+"material": "concrete",
+"roof": "none",
+"accent": "orange"
+},
+"gpu-interconnects": {
+"archetype": "datacenter",
+"material": "charcoal",
+"roof": "antenna",
+"accent": "green"
+},
+"gpu-workloads": {
+"archetype": "powerplant",
+"material": "charcoal",
+"roof": "none",
+"accent": "yellow"
+},
+"helm-kustomize": {
+"archetype": "port",
+"material": "concrete",
+"roof": "none",
+"accent": "blue"
+},
+"incident-response": {
+"archetype": "controltower",
+"material": "terracotta",
+"roof": "none",
+"accent": "red"
+},
+"inference-basics": {
+"archetype": "tower",
+"material": "glass",
+"roof": "antenna",
+"accent": "yellow"
+},
+"inference-benchmarking": {
+"archetype": "stadium",
+"material": "concrete",
+"roof": "none",
+"accent": "red"
+},
+"inference-reliability": {
+"archetype": "fortress",
+"material": "sandstone",
+"roof": "flag",
+"accent": "green"
+},
+"ingress-gateway-api": {
+"archetype": "capitol",
+"material": "sandstone",
+"roof": "none",
+"accent": "red"
+},
+"jwt-and-tokens": {
+"archetype": "vault",
+"material": "terracotta",
+"roof": "none",
+"accent": "orange"
+},
+"k8s-architecture": {
+"archetype": "setback",
+"material": "glass",
+"roof": "antenna",
+"accent": "purple"
+},
+"k8s-debugging": {
+"archetype": "lab",
+"material": "sage",
+"roof": "none",
+"accent": "red"
+},
+"k8s-observability": {
+"archetype": "lighthouse",
+"material": "white",
+"roof": "beacon",
+"accent": "red"
+},
+"kernel-optimization": {
+"archetype": "factory",
+"material": "charcoal",
+"roof": "solar",
+"accent": "red"
+},
+"kv-cache": {
+"archetype": "vault",
+"material": "concrete",
+"roof": "none",
+"accent": "yellow"
+},
+"llm-api-fundamentals": {
+"archetype": "townhall",
+"material": "brick",
+"roof": "none",
+"accent": "blue"
+},
+"llm-app-architecture": {
+"archetype": "capitol",
+"material": "white",
+"roof": "none",
+"accent": "purple"
+},
+"llm-cost-engineering": {
+"archetype": "vault",
+"material": "sandstone",
+"roof": "none",
+"accent": "green"
+},
+"llm-evals": {
+"archetype": "stadium",
+"material": "white",
+"roof": "none",
+"accent": "purple"
+},
+"llm-observability": {
+"archetype": "lighthouse",
+"material": "slate",
+"roof": "beacon",
+"accent": "yellow"
+},
+"llm-product-ux": {
+"archetype": "apartments",
+"material": "lilac",
+"roof": "garden",
+"accent": "pink"
+},
+"llm-security": {
+"archetype": "fortress",
+"material": "charcoal",
+"roof": "flag",
+"accent": "red"
+},
+"long-context-inference": {
+"archetype": "station",
+"material": "sandstone",
+"roof": "none",
+"accent": "teal"
+},
+"lora-peft": {
+"archetype": "greenhouse",
+"material": "sage",
+"roof": "none",
+"accent": "green"
+},
+"mcp-integration": {
+"archetype": "port",
+"material": "slate",
+"roof": "none",
+"accent": "purple"
+},
+"microcontrollers": {
+"archetype": "datacenter",
+"material": "sage",
+"roof": "antenna",
+"accent": "yellow"
+},
+"model-compilation": {
+"archetype": "workshop",
+"material": "brick",
+"roof": "none",
+"accent": "purple"
+},
+"model-parallelism": {
+"archetype": "windfarm",
+"material": "white",
+"roof": "none",
+"accent": "blue"
+},
+"model-serving-k8s": {
+"archetype": "factory",
+"material": "brick",
+"roof": "solar",
+"accent": "purple"
+},
+"moe-serving": {
+"archetype": "pagoda",
+"material": "terracotta",
+"roof": "none",
+"accent": "red"
+},
+"multimodal-apps": {
+"archetype": "rotunda",
+"material": "glass",
+"roof": "dish",
+"accent": "orange"
+},
+"multitenancy": {
+"archetype": "apartments",
+"material": "terracotta",
+"roof": "garden",
+"accent": "pink"
+},
+"network-security": {
+"archetype": "datacenter",
+"material": "charcoal",
+"roof": "dish",
+"accent": "red"
+},
+"oauth2-fundamentals": {
+"archetype": "setback",
+"material": "white",
+"roof": "flag",
+"accent": "blue"
+},
+"openid-connect": {
+"archetype": "library",
+"material": "glass",
+"roof": "crown",
+"accent": "teal"
+},
+"operators-crds": {
+"archetype": "workshop",
+"material": "slate",
+"roof": "none",
+"accent": "green"
+},
+"pcb-design-basics": {
+"archetype": "factory",
+"material": "sage",
+"roof": "solar",
+"accent": "green"
+},
+"pods-containers": {
+"archetype": "port",
+"material": "terracotta",
+"roof": "none",
+"accent": "orange"
+},
+"power-and-batteries": {
+"archetype": "windfarm",
+"material": "concrete",
+"roof": "none",
+"accent": "yellow"
+},
+"preference-tuning": {
+"archetype": "pagoda",
+"material": "sage",
+"roof": "none",
+"accent": "pink"
+},
+"prefix-caching": {
+"archetype": "warehouse",
+"material": "sage",
+"roof": "none",
+"accent": "purple"
+},
+"prompt-engineering": {
+"archetype": "townhall",
+"material": "terracotta",
+"roof": "none",
+"accent": "yellow"
+},
+"quantization": {
+"archetype": "setback",
+"material": "teal",
+"roof": "crown",
+"accent": "pink"
+},
+"rag-fundamentals": {
+"archetype": "library",
+"material": "brick",
+"roof": "flag",
+"accent": "yellow"
+},
+"rbac-security": {
+"archetype": "fortress",
+"material": "slate",
+"roof": "flag",
+"accent": "blue"
+},
+"resources-qos": {
+"archetype": "setback",
+"material": "sandstone",
+"roof": "helipad",
+"accent": "green"
+},
+"retrieval-quality": {
+"archetype": "warehouse",
+"material": "lilac",
+"roof": "none",
+"accent": "blue"
+},
+"robot-kinematics": {
+"archetype": "workshop",
+"material": "sage",
+"roof": "none",
+"accent": "yellow"
+},
+"robot-mechanics": {
+"archetype": "workshop",
+"material": "sandstone",
+"roof": "none",
+"accent": "orange"
+},
+"robot-perception": {
+"archetype": "observatory",
+"material": "terracotta",
+"roof": "none",
+"accent": "green"
+},
+"roofline-analysis": {
+"archetype": "observatory",
+"material": "slate",
+"roof": "none",
+"accent": "yellow"
+},
+"ros2-basics": {
+"archetype": "lab",
+"material": "concrete",
+"roof": "none",
+"accent": "blue"
+},
+"routing-load-balancing": {
+"archetype": "station",
+"material": "glass",
+"roof": "none",
+"accent": "orange"
+},
+"saas-connectors": {
+"archetype": "station",
+"material": "brick",
+"roof": "none",
+"accent": "green"
+},
+"saml-enterprise-sso": {
+"archetype": "capitol",
+"material": "slate",
+"roof": "none",
+"accent": "yellow"
+},
+"sampling-decoding": {
+"archetype": "rotunda",
+"material": "lilac",
+"roof": "spire",
+"accent": "pink"
+},
+"scheduling": {
+"archetype": "controltower",
+"material": "white",
+"roof": "none",
+"accent": "teal"
+},
+"scim-provisioning": {
+"archetype": "apartments",
+"material": "white",
+"roof": "solar",
+"accent": "blue"
+},
+"security-fundamentals": {
+"archetype": "fortress",
+"material": "sandstone",
+"roof": "flag",
+"accent": "orange"
+},
+"sensors-and-motors": {
+"archetype": "windfarm",
+"material": "sage",
+"roof": "none",
+"accent": "orange"
+},
+"service-mesh": {
+"archetype": "rotunda",
+"material": "teal",
+"roof": "antenna",
+"accent": "blue"
+},
+"services-networking": {
+"archetype": "datacenter",
+"material": "concrete",
+"roof": "dish",
+"accent": "blue"
+},
+"serving-frameworks": {
+"archetype": "tower",
+"material": "slate",
+"roof": "billboard",
+"accent": "orange"
+},
+"software-supply-chain": {
+"archetype": "port",
+"material": "brick",
+"roof": "none",
+"accent": "red"
+},
+"speculative-decoding": {
+"archetype": "stadium",
+"material": "sage",
+"roof": "none",
+"accent": "blue"
+},
+"storage-volumes": {
+"archetype": "warehouse",
+"material": "slate",
+"roof": "none",
+"accent": "teal"
+},
+"structured-outputs": {
+"archetype": "setback",
+"material": "glass",
+"roof": "crown",
+"accent": "blue"
+},
+"supply-chain-policy": {
+"archetype": "port",
+"material": "charcoal",
+"roof": "none",
+"accent": "yellow"
+},
+"synthetic-data": {
+"archetype": "lab",
+"material": "lilac",
+"roof": "none",
+"accent": "purple"
+},
+"tokenization": {
+"archetype": "factory",
+"material": "terracotta",
+"roof": "solar",
+"accent": "teal"
+},
+"tool-use-agents": {
+"archetype": "workshop",
+"material": "terracotta",
+"roof": "none",
+"accent": "orange"
+},
+"transformer-internals": {
+"archetype": "tower",
+"material": "teal",
+"roof": "spire",
+"accent": "green"
+},
+"web-app-security": {
+"archetype": "setback",
+"material": "charcoal",
+"roof": "antenna",
+"accent": "red"
+},
+"webhooks-delivery": {
+"archetype": "lighthouse",
+"material": "terracotta",
+"roof": "beacon",
+"accent": "blue"
+},
+"workload-identity": {
+"archetype": "tower",
+"material": "charcoal",
+"roof": "antenna",
+"accent": "teal"
+}
+}

@@ -1,9 +1,10 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, deleteCourse, listCatalog, listCourses, startCatalogCourse } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, setCourseIcon, startCatalogCourse } from "./agent";
 import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionUser } from "./auth";
+import { IconSchema } from "./icon";
 import { createMcpServer } from "./mcp";
 
-const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js"]);
+const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png"]);
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -63,6 +64,8 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     return json({ id: await createCourse(env, prompt, owner) }, 201);
   }
 
+  if (path === "/api/stats" && method === "GET") return json(await learnerStats(env, owner));
+
   if (path === "/api/catalog" && method === "GET") return json(await listCatalog(env));
   const library = path.match(/^\/api\/catalog\/([\w-]+)(\/start)?$/);
   if (library) {
@@ -77,6 +80,13 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
       const id = await startCatalogCourse(env, library[1]!, goal, owner);
       return id ? json({ id }, 201) : json({ error: "That course isn't in the library." }, 404);
     }
+  }
+
+  const iconPath = path.match(/^\/api\/courses\/([\w-]+)\/icon$/);
+  if (iconPath && method === "PUT") {
+    const parsed = IconSchema.safeParse(((await request.json().catch(() => null)) as { icon?: unknown } | null)?.icon);
+    if (!parsed.success) return json({ error: "Pick a building from the list." }, 400);
+    return (await setCourseIcon(env, iconPath[1]!, parsed.data, owner)) ? json({ icon: parsed.data }) : json({ error: "Course not found." }, 404);
   }
 
   const course = path.match(/^\/api\/courses\/([\w-]+)(\/advance)?$/);

@@ -52,6 +52,11 @@ Each material has three tones: top, left (lit) face, right (shaded) face. They l
 | teal | `#9AD9D2` | `#4FA39D` | `#2F736F` |
 | concrete | `#C9CCD1` | `#9EA3AB` | `#70757E` |
 | white | `#FFFFFF` | `#E2E4E8` | `#B5BAC3` |
+| slate | `#8E97A6` | `#6B7484` | `#4B5260` |
+| terracotta | `#EFA57F` | `#D0744C` | `#9C5232` |
+| sage | `#B9D3A5` | `#86AB70` | `#5D7F4D` |
+| lilac | `#D9C6F5` | `#A98BE0` | `#7A5FB3` |
+| charcoal | `#5A5F69` | `#40444C` | `#2B2E34` |
 
 Unlit windows are `#27303F`, and lit windows are `--bio-yellow`. Water is `#1F4F8F` with `#2F68B0` ripples.
 
@@ -84,8 +89,8 @@ Use sentence case everywhere, with no serif, monospace or italic type.
 All art is SVG built in `public/city.js` from numbers and the palette. Model text never goes into it.
 
 - **Projection:** 2:1 pixel-art isometric. x runs down-right, y runs down-left, z is up.
-- **Building types:** tower, setback, rotunda, capitol, factory, datacenter, port, greenhouse and townhall.
-- **Roof add-ons:** garden, helipad, antenna, dish, water tank and solar.
+- **Building types:** tower, setback, rotunda, capitol, factory, datacenter, port, greenhouse, townhall, lighthouse, observatory, fortress, vault, powerplant, warehouse, station, controltower, workshop, library, stadium, windfarm, lab, pagoda and apartments.
+- **Roof add-ons:** garden, helipad, antenna, dish, water tank, solar, spire, flag, beacon, billboard, crown and turbine.
 - **Lots:** each building stands on a 6 × 6 paved plaza.
 - **The hero city:** a 3 × 3 block island on a water slab, with a pier and a ferry. Your newest courses take the front lots, the next free lot is a building site, and the back row is a skyline.
 - **Course cards:** the building sits in an ink inset, cropped tightly to what was drawn.

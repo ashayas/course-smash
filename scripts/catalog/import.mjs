@@ -12,6 +12,8 @@ import { join } from "node:path";
 const ROOT = new URL("../../", import.meta.url).pathname;
 const COURSES = join(ROOT, "catalog/courses");
 const TOPICS = JSON.parse(readFileSync(join(ROOT, "scripts/catalog/topics.json"), "utf8"));
+// Each library course's building on the city map. A course missing here gets one from its topic.
+const ICONS = JSON.parse(readFileSync(join(ROOT, "catalog/icons.json"), "utf8"));
 const target = process.argv[2];
 if (!["--remote", "--local", "--sqlite"].includes(target)) {
   console.error("Usage: node scripts/catalog/import.mjs --remote | --local | --sqlite <path>");
@@ -37,7 +39,7 @@ for (const [track, list] of Object.entries(TOPICS)) {
     courses++;
     statements.push(upsert("catalog_courses", {
       id: slug, track, title: course.outline.title, summary: course.outline.summary, prompt: course.outline.prompt,
-      level, tags: JSON.stringify(course.outline.tags), position, created_at: now,
+      level, tags: JSON.stringify(course.outline.tags), position, created_at: now, icon: ICONS[slug] ? JSON.stringify(ICONS[slug]) : null,
     }));
     statements.push(`DELETE FROM catalog_modules WHERE catalog_course_id = ${quote(slug)} AND position >= ${course.modules.length};`);
     course.modules.forEach((m, i) => {

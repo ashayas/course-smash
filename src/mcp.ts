@@ -1,7 +1,7 @@
 // The same agent, exposed over MCP so any MCP client (opencode, for one) can drive it.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, listCatalog, listCourses, startCatalogCourse } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, learnerStats, listCatalog, listCourses, startCatalogCourse } from "./agent";
 
 const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });
 const failure = (message: string) => ({ content: [{ type: "text" as const, text: message }], isError: true });
@@ -52,6 +52,11 @@ export function createMcpServer(env: Env, owner: string | null): McpServer {
   );
 
   server.registerTool("list_courses", { description: "List all courses with their progress." }, async () => text(await listCourses(env, owner)));
+  server.registerTool(
+    "get_stats",
+    { description: "How the learner is doing: totals, a 30-day activity history, and per-course accuracy, module scores and strongest and weakest concepts." },
+    async () => text(await learnerStats(env, owner)),
+  );
 
   server.registerTool(
     "get_course",
