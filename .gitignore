@@ -11,3 +11,20 @@ catalog/.state/
 # Library courses are private and stay local; they deploy from disk. A few samples are public.
 catalog/courses/*.json
 !catalog/courses/llm-api-fundamentals k8s-architecture inference-basics.json
+
+# iOS app. The Xcode project is generated from ios/project.yml with xcodegen.
+ios/build/
+ios/*.xcodeproj/
+ios/**/xcuserdata/
+ios/Config/Signing.local.xcconfig
+ios/fastlane/report.xml
+ios/fastlane/README.md
+ios/fastlane/test_output/
+*.ipa
+*.xcarchive
+*.dSYM.zip
+
+# Scratch files written by local agent tools
+.agent-grid/
+.boards/
+.drawings/

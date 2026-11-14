@@ -1,10 +1,11 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, setCourseIcon, startCatalogCourse } from "./agent";
-import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionUser } from "./auth";
+import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionToken, sessionUser } from "./auth";
 import { IconSchema } from "./icon";
 import { createMcpServer } from "./mcp";
+import { appConfig, filterCatalog, withInsights } from "./views";
 
-const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png"]);
+const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png", "/privacy", "/support"]);
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -33,6 +34,21 @@ async function handleLogin(request: Request, env: Env): Promise<Response> {
   const username = await authenticate(String(form.get("username") ?? "").trim(), String(form.get("password") ?? ""), env);
   if (!username) return redirect("/login?error=wrong");
   return redirect("/", await sessionCookie(request, username, env));
+}
+
+/** Login for native apps: JSON in, a session token out. The token goes back as `Authorization: Bearer <token>`. */
+async function handleApiLogin(request: Request, env: Env): Promise<Response> {
+  const { success } = await env.LOGIN_LIMIT.limit({ key: clientKey(request) });
+  if (!success) return json({ error: "Too many tries. Wait a minute and try again." }, 429);
+  const body = (await request.json().catch(() => null)) as { username?: unknown; password?: unknown } | null;
+  const username = await authenticate(
+    typeof body?.username === "string" ? body.username.trim() : "",
+    typeof body?.password === "string" ? body.password : "",
+    env,
+  );
+  if (!username) return json({ error: "That username or password isn't right." }, 401);
+  const { token, expires } = await sessionToken(username, env);
+  return json({ token, username, expires_at: expires });
 }
 
 async function handleMcp(request: Request, env: Env): Promise<Response> {
@@ -64,9 +80,13 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     return json({ id: await createCourse(env, prompt, owner) }, 201);
   }
 
-  if (path === "/api/stats" && method === "GET") return json(await learnerStats(env, owner));
+  if (path === "/api/app" && method === "GET") return json(appConfig());
+  if (path === "/api/stats" && method === "GET") return json(withInsights(await learnerStats(env, owner)));
 
-  if (path === "/api/catalog" && method === "GET") return json(await listCatalog(env));
+  if (path === "/api/catalog" && method === "GET") {
+    const { searchParams } = new URL(request.url);
+    return json(filterCatalog(await listCatalog(env), (searchParams.get("q") ?? "").slice(0, 200), searchParams.get("track") ?? ""));
+  }
   const library = path.match(/^\/api\/catalog\/([\w-]+)(\/start)?$/);
   if (library) {
     if (!library[2] && method === "GET") {
@@ -130,6 +150,7 @@ export default {
     try {
       if (pathname === "/mcp") return await handleMcp(request, env);
       if (pathname === "/login" && request.method === "POST") return await handleLogin(request, env);
+      if (pathname === "/api/login" && request.method === "POST") return await handleApiLogin(request, env);
       if (pathname === "/logout" && request.method === "POST") return redirect("/login", clearedSessionCookie(request));
       if (PUBLIC_PATHS.has(pathname)) {
         if (pathname === "/login" && (await sessionUser(request, env))) return redirect("/");

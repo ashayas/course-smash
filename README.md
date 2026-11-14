@@ -127,6 +127,17 @@ Run the same command again to change a password. That also signs the person out 
 
 `/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(username:password)` for any account. Tools: `create_course`, `list_library`, `start_library_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
 
+## iOS app
+
+There is a native iPhone app in [`ios/`](ios/README.md). It is a SwiftUI port of the web app that uses the same `/api/` endpoints, and it draws the city by running `public/city.js`, so both show the same buildings. It logs in with `POST /api/login`, which returns a session token for `Authorization: Bearer`.
+
+```sh
+brew install xcodegen
+cd ios && xcodegen && open CourseSmash.xcodeproj
+```
+
+Signing, App Store metadata and how to submit are in [`ios/README.md`](ios/README.md). The Worker build never includes that folder, and `npm run check:isolation` checks it.
+
 ## Build the library
 
 The topics live in `scripts/catalog/topics.json`. The generator sends Message Batches to Claude Opus 5.5, at half the normal price: an outline per course, a question bank per module, then a review of every bank that fixes or drops questions with a wrong key. Two more stages grow live modules: each expansion adds 8 follow-up questions that don't repeat the existing ones, and only those 8 are reviewed before they join the bank. Results go to `catalog/courses/`, and a rerun only does what's missing.

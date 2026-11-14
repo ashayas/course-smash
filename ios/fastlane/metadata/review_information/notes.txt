@@ -1,0 +1,12 @@
+Course Smash needs a login. The app has no sign-up: accounts are created by the server's operator, so there is no account creation or in-app purchase to review.
+
+Use the demo account in the sign-in fields of this submission.
+
+What to try:
+1. Log in.
+2. Open "Library", pick any course and tap "Start this course". Answer a few questions.
+3. On the course screen tap "Change building" to restyle the course's building.
+4. Open "Stats" to see answers per day and scores.
+5. On "Courses", type what you want to learn and tap "Build my course". Planning takes up to a minute.
+
+Short answers are graded by an AI model on the server. Multiple choice answers are graded by an answer key.

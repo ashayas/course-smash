@@ -1,0 +1,12 @@
+// Signing for the Course Smash iOS app.
+//
+// DEVELOPMENT_TEAM is a placeholder. Set it to your 10-character Apple Developer Team ID
+// (developer.apple.com/account, under Membership details), either here or in
+// Config/Signing.local.xcconfig, which is ignored by git:
+//
+//     DEVELOPMENT_TEAM = ABCDE12345
+//
+// Simulator builds work without it. Device builds, archives and App Store uploads need it.
+DEVELOPMENT_TEAM =
+
+#include? "Signing.local.xcconfig"

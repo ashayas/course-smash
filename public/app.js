@@ -1,5 +1,5 @@
 // Course Smash client. Everything the models write goes in through textContent, never innerHTML.
-import { ACCENTS, ARCHETYPES, MATERIALS, ROOFS, buildingSvg, citySvg, finishedSvg, markSvg, progressOf, specFor, stackSvg } from "./city.js";
+import { buildingSvg, citySvg, finishedSvg, markSvg, progressOf, specFor, stackSvg } from "./city.js";
 const app = document.getElementById("app");
 const live = document.getElementById("live");
 
@@ -84,17 +84,18 @@ function focusFirst(el) {
   el.focus({ preventScroll: true });
 }
 
+// Starter ideas and the building picker's choices come from the server, so the iOS app shows the same ones.
+let appConfig = null;
+const loadConfig = async () => (appConfig ??= await api("/api/app"));
+
 /* Home */
-const IDEAS = [
-  "TCP well enough to debug slow APIs",
-  "Enough statistics to read an A/B test",
-  "How CRISPR works, for a non-biologist",
-];
 
 async function renderHome() {
   const token = ++renderToken;
   const prompt = h("textarea", { id: "prompt", maxlength: "2000", required: true, placeholder: "I want to understand... so that I can..." });
   const error = h("p", { class: "error-text", role: "alert", hidden: true });
+  const chips = h("div", { class: "chips" });
+  loadConfig().then(({ ideas }) => chips.replaceChildren(...ideas.map((idea) => h("button", { class: "chip", type: "button", onclick: () => { prompt.value = `I want to learn ${idea}.`; prompt.focus(); } }, idea)))).catch(() => {});
   const submit = h("button", { class: "button", type: "submit" }, "Build my course");
   const form = h("form", {
     class: "composer",
@@ -116,7 +117,7 @@ async function renderHome() {
   },
     h("label", { for: "prompt", class: "visually-hidden" }, "What do you want to learn?"),
     prompt,
-    h("div", { class: "chips" }, IDEAS.map((idea) => h("button", { class: "chip", type: "button", onclick: () => { prompt.value = `I want to learn ${idea}.`; prompt.focus(); } }, idea))),
+    chips,
     error,
     h("div", { class: "composer-row" }, submit),
   );
@@ -364,7 +365,7 @@ function drawCourse(view, stage) {
       h("h1", {}, view.title || view.prompt),
       view.summary ? h("p", {}, view.summary) : null)),
     h("div", { class: "head-actions" },
-      view.modules.length ? h("button", { class: "button button-quiet", onclick: () => pickBuilding(view) }, "Change building") : null,
+      view.modules.length ? h("button", { class: "button button-quiet", onclick: () => loadConfig().then(() => pickBuilding(view)).catch(() => {}) }, "Change building") : null,
       h("button", { class: "link-button", onclick: () => removeCourse(view) }, "Delete course")));
   const main = view.status === "complete"
     ? finishedView(view)
@@ -496,10 +497,10 @@ function sourceLink(url) {
 }
 
 /* Building picker: the learner restyles a course's building. Choices come from the fixed lists in city.js. */
-const NAMES = { controltower: "control tower", powerplant: "power plant", datacenter: "data centre", townhall: "town hall", windfarm: "wind farm" };
-const label = (word) => { const w = NAMES[word] ?? word; return w[0].toUpperCase() + w.slice(1); };
 
 function pickBuilding(view) {
+  // The choices and their names come from /api/app, so the iOS app offers the same ones.
+  const { archetypes, materials, roofs, accents } = appConfig.buildings;
   const start = specFor(view);
   let spec = { archetype: start.archetype, material: start.material, roof: start.roof, accent: start.accent };
   const progress = progressOf({ status: view.status, modules: view.modules.length, passed: view.modules.filter((m) => m.status === "passed").length });
@@ -508,23 +509,23 @@ function pickBuilding(view) {
   const groups = h("div", { class: "picker-groups" });
   const error = h("p", { class: "error-text", role: "alert", hidden: true });
   const save = h("button", { class: "button", type: "submit" }, "Save building");
-  const choice = (key, value, content, extra = "") => h("button", {
-    type: "button", class: `pick ${extra}${spec[key] === value ? " pick-on" : ""}`, "aria-pressed": String(spec[key] === value),
-    "aria-label": label(value), title: label(value), onclick: () => { spec = { ...spec, [key]: value }; draw(); },
+  const choice = (key, { id, label }, content, extra = "") => h("button", {
+    type: "button", class: `pick ${extra}${spec[key] === id ? " pick-on" : ""}`, "aria-pressed": String(spec[key] === id),
+    "aria-label": label, title: label, onclick: () => { spec = { ...spec, [key]: id }; draw(); },
   }, content);
   const group = (title, key, items) => h("fieldset", { class: "picker-group" }, h("legend", {}, title), h("div", { class: `picks picks-${key}` }, items));
   const draw = () => {
     preview.replaceChildren(art(buildingSvg(course(spec), progress)));
     groups.replaceChildren(
-      group("Building", "archetype", ARCHETYPES.map((a) => choice("archetype", a, [art(buildingSvg(course({ ...spec, archetype: a, roof: "none" }), { floors: 4, lit: 2 })), h("span", {}, label(a))], "pick-art"))),
-      group("Material", "material", MATERIALS.map((m) => choice("material", m, [art(buildingSvg(course({ archetype: "tower", material: m, roof: "none", accent: spec.accent }), { floors: 3, lit: 0 })), h("span", {}, label(m))], "pick-art pick-small"))),
-      group("Roof", "roof", ROOFS.map((r) => choice("roof", r, label(r), "pick-chip"))),
-      group("Trim colour", "accent", ACCENTS.map((c) => choice("accent", c, h("span", { class: `swatch t-${c}` }), "pick-swatch"))),
+      group("Building", "archetype", archetypes.map((a) => choice("archetype", a, [art(buildingSvg(course({ ...spec, archetype: a.id, roof: "none" }), { floors: 4, lit: 2 })), h("span", {}, a.label)], "pick-art"))),
+      group("Material", "material", materials.map((m) => choice("material", m, [art(buildingSvg(course({ archetype: "tower", material: m.id, roof: "none", accent: spec.accent }), { floors: 3, lit: 0 })), h("span", {}, m.label)], "pick-art pick-small"))),
+      group("Roof", "roof", roofs.map((r) => choice("roof", r, r.label, "pick-chip"))),
+      group("Trim colour", "accent", accents.map((c) => choice("accent", c, h("span", { class: `swatch t-${c.id}` }), "pick-swatch"))),
     );
   };
   const shuffle = () => {
-    const any = (list) => list[Math.floor(Math.random() * list.length)];
-    spec = { archetype: any(ARCHETYPES), material: any(MATERIALS), roof: any(ROOFS), accent: any(ACCENTS) };
+    const any = (list) => list[Math.floor(Math.random() * list.length)].id;
+    spec = { archetype: any(archetypes), material: any(materials), roof: any(roofs), accent: any(accents) };
     draw();
   };
   const dialog = h("dialog", { class: "picker", "aria-labelledby": "picker-title" });
@@ -568,12 +569,9 @@ function pickBuilding(view) {
 const pct = (v) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-const chartMax = (days) => { const m = Math.max(4, ...days.map((d) => d.answered)); return m % 2 ? m + 1 : m; };
-
-/** Answers per day for 30 days, stacked by verdict. Built from numbers only. */
-function activitySvg(days) {
+/** Answers per day for 30 days, stacked by verdict. Built from numbers only. `max` is the top of the scale, from /api/stats. */
+function activitySvg(days, max) {
   const W = 900, H = 172, top = 12, base = 170, gap = 2;
-  const max = chartMax(days);
   const step = W / days.length, bw = Math.max(6, step - 8);
   const y = (v) => ((base - top) * v) / max;
   const fills = { correct: "var(--bio-green)", partial: "var(--bio-yellow)", incorrect: "var(--bio-orange)" };
@@ -616,8 +614,6 @@ function verdictBar(c) {
 
 function statCourse(c) {
   const progress = progressOf(c);
-  const trend = c.recent_average != null && c.average != null && c.answered >= 12 ? c.recent_average - c.average : null;
-  const trendText = trend == null ? null : Math.abs(trend) < 0.05 ? "Holding steady" : trend > 0 ? `Up ${Math.round(trend * 100)} points lately` : `Down ${Math.round(-trend * 100)} points lately`;
   const status = c.status === "complete" ? "Finished" : c.modules ? `${c.passed} of ${c.modules} modules done` : "Being planned";
   const concepts = (title, list) => list.length ? h("div", { class: "concepts" }, h("h4", {}, title),
     h("ul", {}, list.map((m) => h("li", {}, h("span", {}, m.concept), h("span", { class: "muted" }, pct(m.mastery)))))) : null;
@@ -630,7 +626,7 @@ function statCourse(c) {
       h("div", {}, h("strong", {}, String(c.answered)), h("span", {}, "answered")),
       h("div", {}, h("strong", {}, c.answered ? pct(c.correct / c.answered) : "–"), h("span", {}, "fully right"))),
     verdictBar(c),
-    trendText ? h("p", { class: "small muted" }, trendText) : null,
+    c.trend_label ? h("p", { class: "small muted" }, c.trend_label) : null,
     c.module_stats.length ? h("div", { class: "module-stats" }, c.module_stats.map((m) => {
       const fill = h("div", { class: `meter-fill ${m.average == null ? "" : m.average >= 0.7 ? "t-green" : m.average >= 0.4 ? "t-yellow" : "t-orange"}` });
       fill.style.width = `${m.average == null ? 0 : Math.max(3, Math.round(m.average * 100))}%`;
@@ -654,9 +650,9 @@ async function renderStats() {
   if (token !== renderToken) return;
   const t = data.totals;
   const tile = (value, title, note) => h("div", { class: "card stat-tile" }, h("strong", {}, value), h("span", {}, title), note ? h("span", { class: "muted small" }, note) : null);
-  const max = chartMax(data.days);
+  const max = data.chart_max;
   const yLabel = (v) => { const el = h("span", { class: "y-label" }, String(v)); el.style.top = `${(12 + (158 * (max - v)) / max) / 172 * 100}%`; return el; };
-  const chart = h("div", { class: "activity-wrap" }, art(activitySvg(data.days)), yLabel(max), yLabel(max / 2));
+  const chart = h("div", { class: "activity-wrap" }, art(activitySvg(data.days, max)), yLabel(max), yLabel(max / 2));
   const tip = h("div", { class: "chart-tip", hidden: true, role: "status" });
   chart.append(tip);
   for (const hit of chart.querySelectorAll(".hit")) {
@@ -671,7 +667,6 @@ async function renderStats() {
     hit.addEventListener("pointerleave", () => { tip.hidden = true; });
   }
   const answered = data.courses.filter((c) => c.answered);
-  const ranked = [...data.courses].sort((a, b) => (b.last_answered_at ?? b.created_at) - (a.last_answered_at ?? a.created_at));
   app.replaceChildren(
     h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Your stats"), h("p", {}, "How you're doing on every course. Scores count partly right answers as half."))),
     h("section", { class: "stat-tiles" },
@@ -689,7 +684,7 @@ async function renderStats() {
         data.days.filter((d) => d.answered).map((d) => h("tr", {}, h("td", {}, d.date), h("td", {}, String(d.correct)), h("td", {}, String(d.partial)), h("td", {}, String(d.incorrect)))))),
     h("section", { class: "section stat-section" },
       h("div", { class: "section-head" }, h("h2", {}, "By course"), h("p", { class: "muted" }, answered.length ? "Most recently studied first. Open a course to keep going." : "Answer a few questions and your scores show up here.")),
-      data.courses.length ? h("div", { class: "grid stat-grid" }, ranked.map(statCourse)) : h("p", { class: "card empty" }, "No courses yet. ", h("a", { href: "#/" }, "Start one."))),
+      data.courses.length ? h("div", { class: "grid stat-grid" }, data.courses.map(statCourse)) : h("p", { class: "card empty" }, "No courses yet. ", h("a", { href: "#/" }, "Start one."))),
   );
 }
 
