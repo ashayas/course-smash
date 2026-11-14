@@ -53,6 +53,11 @@ function h(tag, props = {}, ...children) {
   return el;
 }
 
+/** replaceChildren that, like h(), flattens arrays and skips null and false. The native method would print them as text. */
+function mount(el, ...children) {
+  el.replaceChildren(...children.flat().filter((c) => c != null && c !== false));
+}
+
 // Illustrations come from city.js: static markup built from numbers and palette colours only.
 function art(markup) {
   const wrap = document.createElement("div");
@@ -249,13 +254,13 @@ async function renderLibrary(params) {
     const sectioned = groupBy === "topic" && !topic;
     grid.hidden = sectioned;
     grid.replaceChildren(...(sectioned ? [] : shown.map(groupBy === "topic" ? card : (c) => libraryCard(c))));
-    sections.replaceChildren(...(sectioned ? data.topics.map((t) => {
+    mount(sections, sectioned ? data.topics.map((t) => {
       const list = inTopic(t);
       return list.length ? h("div", { class: "track" },
         h("div", { class: "track-head" }, h("div", {}, h("h3", {}, t.name), h("p", { class: "muted" }, t.summary)),
           h("button", { class: "link-button", type: "button", onclick: () => { topic = t.id; draw(); } }, `Path of ${list.length}`)),
         h("div", { class: "grid" }, list.map(card))) : null;
-    }) : []));
+    }) : []);
     const about = groupBy === "topic" && topic ? data.topics.find((t) => t.id === topic)?.summary : "";
     count.textContent = `${shown.length} course${shown.length === 1 ? "" : "s"}${about ? `. ${about}` : ""}`;
     modes.replaceChildren(
@@ -317,7 +322,7 @@ async function renderLibraryCourse(id) {
       }
     },
   }, h("label", { for: "goal", class: "visually-hidden" }, "What you want out of this course"), goal, error, h("div", { class: "composer-row" }, submit));
-  app.replaceChildren(
+  mount(app,
     h("header", { class: "course-head" },
       h("div", {}, h("p", { class: "eyebrow" }, [course.track_title, course.topic, course.level].filter(Boolean).join(" · ")), h("h1", {}, course.title), h("p", {}, course.summary)),
       h("a", { class: "link-button", href: `#/library?track=${course.track}` }, "Back to the library")),
@@ -328,7 +333,7 @@ async function renderLibraryCourse(id) {
           h("span", { class: "dot", "aria-hidden": "true" }),
           h("div", {}, h("strong", {}, m.title), h("span", {}, m.concepts.join(" · "))))),
       ), slips)),
-    ...path,
+    path,
     similar,
   );
 }
@@ -346,7 +351,7 @@ async function loadSimilar(id, section, token, skip = new Set()) {
     const courses = all.filter((c) => !skip.has(c.id));
     if (token !== renderToken || (!pending && !courses.length)) return;
     section.hidden = false;
-    section.replaceChildren(
+    mount(section,
       h("div", { class: "section-head" },
         h("h2", {}, "Similar courses"),
         h("p", { class: "muted" }, pending
@@ -364,7 +369,7 @@ async function loadSlips(id, card, token) {
     const { concepts, questions } = await api(`/api/catalog/${id}/misses`);
     if (token !== renderToken || !concepts.length) return;
     card.hidden = false;
-    card.replaceChildren(
+    mount(card,
       h("h2", {}, "Where learners slip"),
       h("p", { class: "muted slip-lead" }, "Missed most often. Follow-ups pick questions close to the ones you get wrong."),
       concepts.map((c) => {
