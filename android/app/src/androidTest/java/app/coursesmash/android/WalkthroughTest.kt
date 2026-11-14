@@ -59,6 +59,16 @@ class WalkthroughTest {
 
     @Test
     fun walkthrough() {
+        try {
+            walk()
+        } catch (failure: Throwable) {
+            // Keep a picture of where it stopped.
+            runCatching { shot("failure") }
+            throw failure
+        }
+    }
+
+    private fun walk() {
         val user = arguments.getString("csUser")
         val password = arguments.getString("csPw")
         assumeTrue("Pass csUser and csPw to run the walkthrough.", user != null && password != null)
@@ -135,13 +145,14 @@ class WalkthroughTest {
         val total = text("library-count")
         rule.onNodeWithText("Cybersecurity").performClick()
         rule.waitUntil(20_000) { text("library-count") != total }
-        Thread.sleep(1000)
+        settle("library-count")
         shot("library-track")
         rule.onNodeWithText("All tracks").performClick()
+        rule.waitUntil(20_000) { text("library-count") == total }
         rule.onNodeWithTag("library-search").performTextInput(arguments.getString("csLibraryCourse") ?: "Kubernetes architecture")
         rule.waitUntil(20_000) { text("library-count") != total }
         Espresso.closeSoftKeyboard()
-        Thread.sleep(1000)
+        settle("library-count")
         shot("library-search")
 
         // A library course: what it covers, then start it.
@@ -284,6 +295,17 @@ class WalkthroughTest {
         return config.getOrNull(SemanticsProperties.EditableText)?.text ?: config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
     }
 
+    /** Waits until an element's text has stopped changing, so a search that is still on its way is not mistaken for the result. */
+    private fun settle(tag: String) {
+        var last = text(tag)
+        var since = System.currentTimeMillis()
+        rule.waitUntil(20_000) {
+            val now = text(tag)
+            if (now != last) { last = now; since = System.currentTimeMillis() }
+            System.currentTimeMillis() - since > 1500
+        }
+    }
+
     private fun deleteOpenCourse() {
         // The course page scrolls to its question, so the delete link at the top may be off screen. tap() scrolls back to it.
         waitForAny(listOf("delete-course", "check-answer", "keep-going", "try-again", "finished"), 60)
@@ -295,7 +317,7 @@ class WalkthroughTest {
     }
 
     private fun shot(name: String) {
-        rule.waitForIdle()
+        runCatching { rule.waitForIdle() }
         counter += 1
         val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
         File(shots, "%02d-%s.png".format(counter, name)).outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
