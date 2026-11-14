@@ -127,16 +127,18 @@ Run the same command again to change a password. That also signs the person out 
 
 `/mcp` serves MCP over Streamable HTTP, with `Authorization: Basic base64(username:password)` for any account. Tools: `create_course`, `list_library`, `start_library_course`, `list_courses`, `get_course`, `answer_question`, `advance_course`.
 
-## iOS app
+## iOS and Android apps
 
-There is a native iPhone app in [`ios/`](ios/README.md). It is a SwiftUI port of the web app that uses the same `/api/` endpoints, and it draws the city by running `public/city.js`, so both show the same buildings. It logs in with `POST /api/login`, which returns a session token for `Authorization: Bearer`.
+There are two native apps: an iPhone app in [`ios/`](ios/README.md) (SwiftUI) and an Android app in [`android/`](android/README.md) (Kotlin and Jetpack Compose). Each is a port of the web app that uses the same `/api/` endpoints, and each draws the city by running `public/city.js`, so all three show the same buildings. They log in with `POST /api/login`, which returns a session token for `Authorization: Bearer`.
 
 ```sh
 brew install xcodegen
-cd ios && xcodegen && open CourseSmash.xcodeproj
+cd ios && xcodegen && open CourseSmash.xcodeproj     # iOS
+
+cd android && ./gradlew :app:installDebug            # Android, onto a running emulator or device
 ```
 
-Signing, App Store metadata and how to submit are in [`ios/README.md`](ios/README.md). The Worker build never includes that folder, and `npm run check:isolation` checks it.
+Signing, store listings and how to submit are in each folder's README. The Worker build never includes either folder, and `npm run check:isolation` checks it.
 
 ## Build the library
 

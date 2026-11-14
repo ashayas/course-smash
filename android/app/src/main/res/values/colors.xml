@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The page colour from DESIGN.md, also behind the launcher icon and the splash screen. -->
+    <color name="ink">#141414</color>
+</resources>

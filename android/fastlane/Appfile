@@ -1,0 +1,5 @@
+# Google Play settings for fastlane. Nothing secret goes here.
+# PLAY_JSON_KEY is the path to a service account key with access to the app in Play Console.
+# The key file itself stays outside the repository.
+package_name "app.coursesmash.android"
+json_key_file ENV["PLAY_JSON_KEY"] if ENV["PLAY_JSON_KEY"]

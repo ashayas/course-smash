@@ -1,0 +1,1 @@
+The first release of Course Smash for Android: plan a course from a sentence, answer questions that adapt to you, browse the library, restyle your buildings and follow your stats.
