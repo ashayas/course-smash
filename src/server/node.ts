@@ -1,5 +1,6 @@
 // Runs the same Worker on plain Node, for Docker or any other host.
-// It supplies the three Cloudflare primitives the app uses: D1, Assets and the rate limiter.
+// It supplies the three Cloudflare primitives the app needs: D1, Assets and the rate limiter. Vectorize and
+// Queues are optional: without them, similarity search scans D1 and embedding runs in this process.
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { type IncomingMessage, type ServerResponse, createServer } from "node:http";
 import { extname, join, resolve } from "node:path";
@@ -107,6 +108,11 @@ async function respond(req: IncomingMessage, res: ServerResponse) {
     res.end("Something went wrong.");
   }
 }
+
+// Same schedule as the cron in wrangler.jsonc. There is no queue here, so banks are embedded in this process.
+const sweep = () => worker.scheduled?.({ cron: "*/10 * * * *", scheduledTime: Date.now(), noRetry() {} } as ScheduledController, env, ctx);
+setTimeout(sweep, 5_000);
+setInterval(sweep, 10 * 60_000).unref();
 
 const port = Number(process.env.PORT ?? 8787);
 const server = createServer((req, res) => void respond(req, res));

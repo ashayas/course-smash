@@ -1,6 +1,7 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, setCourseIcon, startCatalogCourse } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, catalogMisses, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, listTopics, setCourseIcon, similarCatalogCourses, startCatalogCourse } from "./agent";
 import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionToken, sessionUser } from "./auth";
+import { type EmbedMessage, consume, sweep } from "./embeddings";
 import { IconSchema } from "./icon";
 import { createMcpServer } from "./mcp";
 import { appConfig, filterCatalog, withInsights } from "./views";
@@ -87,6 +88,12 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     const { searchParams } = new URL(request.url);
     return json(filterCatalog(await listCatalog(env), (searchParams.get("q") ?? "").slice(0, 200), searchParams.get("track") ?? ""));
   }
+  if (path === "/api/topics" && method === "GET") return json({ topics: await listTopics(env) });
+  const related = path.match(/^\/api\/catalog\/([\w-]+)\/(similar|misses)$/);
+  if (related && method === "GET") {
+    const view = related[2] === "similar" ? await similarCatalogCourses(env, related[1]!) : await catalogMisses(env, related[1]!);
+    return view ? json(view) : json({ error: "That course isn't in the library." }, 404);
+  }
   const library = path.match(/^\/api\/catalog\/([\w-]+)(\/start)?$/);
   if (library) {
     if (!library[2] && method === "GET") {
@@ -167,5 +174,14 @@ export default {
       console.error(JSON.stringify({ message: "unhandled error", pathname, error: String(error) }));
       return json({ error: "Something went wrong." }, 500);
     }
+  },
+
+  // Embedding work: the cron sweep queues stale banks and rebuilds topics, and the queue consumer embeds them.
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(sweep(env).catch((error) => console.error(JSON.stringify({ message: "embedding sweep failed", error: String(error) }))));
+  },
+
+  async queue(batch, env) {
+    await consume(batch as MessageBatch<EmbedMessage>, env);
   },
 } satisfies ExportedHandler<Env>;

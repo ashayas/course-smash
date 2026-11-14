@@ -39,7 +39,9 @@ for (const [track, list] of Object.entries(TOPICS)) {
     courses++;
     statements.push(upsert("catalog_courses", {
       id: slug, track, title: course.outline.title, summary: course.outline.summary, prompt: course.outline.prompt,
-      level, tags: JSON.stringify(course.outline.tags), position, created_at: now, visibility: "public", owner: null, icon: ICONS[slug] ? JSON.stringify(ICONS[slug]) : null,
+      level, tags: JSON.stringify(course.outline.tags), position, created_at: now, visibility: "public", owner: null,
+      // Tells the embedding sweep to check this bank; only questions whose text changed are re-embedded.
+      bank_changed_at: now, icon: ICONS[slug] ? JSON.stringify(ICONS[slug]) : null,
     }));
     // Questions the agent wrote during courses (source 'generated') are kept; only stale reviewed ones go.
     statements.push(`DELETE FROM catalog_modules WHERE catalog_course_id = ${quote(slug)} AND position >= ${course.modules.length};`);

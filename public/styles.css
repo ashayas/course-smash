@@ -198,6 +198,10 @@ textarea { min-height: 128px; resize: vertical; line-height: 1.35; }
 
 /* Library */
 .track { margin-bottom: 64px; }
+.course-card .after { margin-top: 8px; color: var(--bio-paper); }
+.track-head p { font-size: 16px; margin-top: 6px; }
+.slip-lead { font-size: 16px; margin-bottom: 14px; }
+.library-tools .chips + .chips { margin-top: 0; }
 .track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 20px; }
 .track-head h3 { font-size: 35px; letter-spacing: -.03em; font-weight: 600; }
 .library-tools { display: grid; gap: 14px; margin-bottom: 44px; padding: clamp(18px, 3vw, 32px); }

@@ -17,6 +17,14 @@
       "database_id": "188fecf3-d95b-4255-8d54-748361cda02a"
     }
   ],
+  // Semantic search over the library and question banks. See src/embeddings.ts and migrations/0008_embeddings.sql.
+  "vectorize": [{ "binding": "VECTORS", "index_name": "coursesmash-embeddings" }],
+  "queues": {
+    "producers": [{ "binding": "EMBED_QUEUE", "queue": "coursesmash-embed" }],
+    "consumers": [{ "queue": "coursesmash-embed", "max_batch_size": 5, "max_batch_timeout": 5, "max_retries": 5 }]
+  },
+  // Picks up banks that changed without a queue message (the library import) and rebuilds topics.
+  "triggers": { "crons": ["*/10 * * * *"] },
   "vars": { "CLOUDFLARE_ACCOUNT_ID": "85b2a1e7f8abb1a82e8366a4929ea360" },
   // Set with `wrangler secret put`. CLOUDFLARE_API_KEY is the inference token from .env.
   "secrets": { "required": ["USER_NAME", "PW", "CLOUDFLARE_API_KEY"] }
