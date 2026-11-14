@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+  The app needs no entitlements today. The session token goes in the app's default keychain group.
+  When Sign in with Apple is added, turn on the capability and add:
+    <key>com.apple.developer.applesignin</key><array><string>Default</string></array>
+-->
+<dict/>
+</plist>

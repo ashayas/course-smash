@@ -1,0 +1,27 @@
+Say what you want to learn. Course Smash builds a course of questions, reads how you answer, and changes what comes next.
+
+Every course goes up as a building in your city, one floor per module. Pass a module and its floor lights up.
+
+HOW IT WORKS
+• Describe what you want to understand and why, in a sentence. An AI agent plans a short course around it.
+• Answer multiple choice and short answer questions. Short answers are graded on what you mean, not on matching words.
+• Get direct feedback on each answer, with the idea to remember.
+• Miss something and the next questions come back to it. Know it already and the course moves on.
+
+YOUR CITY
+• Each course is its own isometric building: a lighthouse for observability, a fortress for security, a greenhouse for biology.
+• Floors are modules. Windows light up as you pass them.
+• Change any building's shape, material, roof and trim colour.
+
+THE LIBRARY
+• Ready-made courses on AI engineering, Kubernetes, inference, identity, cybersecurity, robotics and AI policy.
+• Each module has a bank of questions behind it, so follow-ups target what you missed.
+• Tell a library course what you want out of it, and it sets how well you need to know each module.
+
+YOUR STATS
+• Answers per day for the last 30 days, your streak and your average score.
+• For each course: the modules you passed, what you are strongest on and what needs work.
+
+Course Smash needs an account on a Course Smash server. The app has no sign-up screen: accounts are set up by whoever runs the server you use.
+
+No ads, no tracking and no in-app purchases.
