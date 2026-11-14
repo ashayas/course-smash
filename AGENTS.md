@@ -59,7 +59,7 @@ If `USER_NAME` or `PW` changes, update `.env`, the Worker secrets, and the `Auth
 
 Run these with the project's Wrangler through `npx`:
 
-- Deploy: `npm run deploy` (existing secrets are kept)
+- Deploy: merge to `main`. Workers Builds runs `npm run deploy` (see README, "Deploy on git push"). Run `npm run deploy` yourself only when Builds isn't connected yet or for a hotfix; existing secrets are kept
 - Query D1: `npx wrangler d1 execute coursesmash-db --remote --command "SELECT 1"`, or `--local` for the local copy
 - Update a secret: `npx wrangler secret put PW`, then enter the value at the prompt. This deploys immediately.
 - Check the connection: `opencode mcp list`

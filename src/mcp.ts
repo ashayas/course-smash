@@ -1,7 +1,7 @@
 // The same agent, exposed over MCP so any MCP client (opencode, for one) can drive it.
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, learnerStats, listCatalog, listCourses, startCatalogCourse } from "./agent";
+import { AnswerError, advance, answerQuestion, catalogCourse, courseView, createCourse, learnerStats, listCatalog, listCourses, similarCatalogCourses, startCatalogCourse } from "./agent";
 
 const text = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }] });
 const failure = (message: string) => ({ content: [{ type: "text" as const, text: message }], isError: true });
@@ -26,10 +26,23 @@ export function createMcpServer(env: Env, owner: string | null): McpServer {
 
   server.registerTool(
     "list_library",
-    { description: "List the ready-made library courses (AI engineering, Kubernetes, inference engineering, identity and integrations, cybersecurity, robotics and hardware, AI policy) with their tracks, levels and question counts." },
+    { description: "List the ready-made library courses (AI engineering, Kubernetes, inference engineering, identity and integrations, cybersecurity, robotics and hardware, AI policy) with their tracks, semantic topics, levels and question counts." },
     async () => {
       const { courses } = await listCatalog(env);
-      return text(courses.map(({ id, track_title, title, summary, level, modules, questions }) => ({ id, track: track_title, title, summary, level, modules, questions })));
+      return text(courses.map(({ id, track_title, title, summary, level, modules, questions, topic }) => ({ id, track: track_title, topic, title, summary, level, modules, questions })));
+    },
+  );
+
+  server.registerTool(
+    "similar_library_courses",
+    {
+      description: "Library courses closest in meaning to a library course, closest first, with a similarity from 0 to 1. Empty with pending: true while the course is still being embedded.",
+      inputSchema: { library_id: z.string().describe("An id from list_library") },
+    },
+    async ({ library_id }) => {
+      const view = await similarCatalogCourses(env, library_id);
+      if (!view) return failure("That course isn't in the library. Call list_library.");
+      return text({ pending: view.pending, courses: view.courses.map(({ id, title, summary, topic, track_title, similarity }) => ({ id, title, summary, topic, track: track_title, similarity })) });
     },
   );
 

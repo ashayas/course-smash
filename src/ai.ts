@@ -138,3 +138,25 @@ async function decideWithChat(env: Env, state: unknown, entries: [string, { inst
     Object.entries(decisions).map(([id, d]) => [id, { choice: d.choice, probabilities: { [d.choice]: d.probability }, confidence: d.probability }]),
   );
 }
+
+export const EMBED_MODEL = "@cf/baai/bge-base-en-v1.5";
+export const EMBED_DIMENSIONS = 768;
+
+/** Embeddings come from Workers AI only, so they need the inference token even when chat runs elsewhere. */
+export const canEmbed = (env: Env) => Boolean(env.CLOUDFLARE_API_KEY && env.CLOUDFLARE_ACCOUNT_ID);
+
+/** One unit-length vector per text, in order. bge reads at most 512 tokens, so long texts are cut. */
+export async function embed(env: Env, texts: string[]): Promise<Float32Array[]> {
+  if (!texts.length) return [];
+  const result = await runCloudflare(env, EMBED_MODEL, { text: texts.map((t) => t.slice(0, 2000)) }, 30_000);
+  const rows = result.data as number[][] | undefined;
+  if (!Array.isArray(rows) || rows.length !== texts.length) throw new Error(`${EMBED_MODEL} returned ${rows?.length ?? 0} vectors for ${texts.length} texts`);
+  return rows.map((row) => {
+    const vector = Float32Array.from(row);
+    let norm = 0;
+    for (const x of vector) norm += x * x;
+    norm = Math.sqrt(norm) || 1;
+    for (let i = 0; i < vector.length; i++) vector[i]! /= norm;
+    return vector;
+  });
+}

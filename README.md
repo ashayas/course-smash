@@ -47,6 +47,18 @@ Every question the agent writes is saved to the bank as `generated`. Reviewed qu
 
 Questions can include diagrams and formulas. Diagrams are SVG, cleaned against an allowlist on the server and shown through `<img>`, where SVG can't run scripts. Formulas are LaTeX between `\(` and `\)`, rendered to MathML by a local copy of KaTeX. Dollar signs stay literal, because prices come up a lot.
 
+### Topics, learning paths and similar courses
+
+Every library course and bank question is embedded with Workers AI (`@cf/baai/bge-base-en-v1.5`) in the background (`src/embeddings.ts`):
+
+- Adding to a bank (a new course, a saved question, a library import) queues it on `coursesmash-embed`. A cron sweep every 10 minutes catches anything missed. Only text that changed is re-embedded.
+- Vectors live in D1 (`course_embeddings`, `question_embeddings`) and in the Vectorize index `coursesmash-embeddings`, which answers nearest-neighbour queries across the library.
+- When the library changes size, the courses are clustered into topics (k-means, about 8 courses per topic) and a model names each topic and works out which courses build on which (`course_prerequisites`). The library can be browsed by topic, with each topic's courses in study order.
+- A library course page shows what to take first, what it leads to, similar courses, and the subtopics learners miss most.
+- Follow-up rounds pick the unused bank questions closest in meaning to the ones you missed. When new questions are written, the closest reviewed questions from elsewhere in the library are given to the writer as examples of angles to take.
+
+APIs: `GET /api/topics`, `GET /api/catalog` (each course has `topic` and `requires`, each topic a `course_ids` path), `GET /api/catalog/:id` (`prerequisites`, `leads_to`), `GET /api/catalog/:id/similar` and `GET /api/catalog/:id/misses`. On Node or Docker there's no Vectorize or queue: similarity scans D1 and embedding runs in-process.
+
 The library is generated with Claude by `scripts/catalog/generate.mjs` and loaded with `scripts/catalog/import.mjs`. See [Build the library](#build-the-library).
 
 ## Screenshots
@@ -104,9 +116,26 @@ npm run dev
 
 1. In `wrangler.jsonc`, set `account_id`, `vars.CLOUDFLARE_ACCOUNT_ID`, the `routes` domain and the D1 `database_id` to your own. Create the database with `npx wrangler d1 create coursesmash-db`.
 2. Set the secrets: `npx wrangler secret put USER_NAME`, then the same for `PW` and `CLOUDFLARE_API_KEY`.
-3. Run `npm run deploy`, which applies D1 migrations and then deploys.
+3. Create the embedding resources:
+   ```sh
+   npx wrangler vectorize create coursesmash-embeddings --dimensions=768 --metric=cosine
+   for p in kind visibility course; do npx wrangler vectorize create-metadata-index coursesmash-embeddings --property-name=$p --type=string; done
+   npx wrangler queues create coursesmash-embed
+   ```
+4. Run `npm run deploy`, which applies D1 migrations and then deploys.
 
-To deploy on every git push, connect the repo in Workers Builds and use `npm run deploy` as the deploy command. The build's API token needs D1 edit access, since the command runs migrations.
+### Deploy on git push (Workers Builds)
+
+Connect the repo in the dashboard: Workers & Pages → `coursesmash` → Settings → Builds → Connect, then pick the GitHub repo. Use these settings:
+
+| Setting | Value |
+|---|---|
+| Production branch | `main` |
+| Build command | `npm ci` |
+| Deploy command | `npm run deploy` (applies D1 migrations, then deploys) |
+| Non-production branch deploy command | `npx wrangler versions upload` (a preview URL per branch, with no migrations) |
+
+The build's API token needs D1 edit access, since the deploy command runs migrations. After that, merging to `main` deploys, and every other branch gets a preview version.
 
 ## Accounts
 

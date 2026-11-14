@@ -182,12 +182,14 @@ function courseCard(course) {
 let libraryCache = null;
 const loadLibrary = async () => (libraryCache ??= await api("/api/catalog"));
 
-function libraryCard(course) {
+/** `after`: titles of the library courses this one builds on, shown when the card sits in a learning path. */
+function libraryCard(course, after = []) {
   return h("a", { class: "card course-card", href: `#/library/${course.id}` },
     h("div", { class: "art" }, art(buildingSvg(course, { floors: course.modules, lit: 0, ambient: 0.18 }))),
     h("p", { class: "eyebrow" }, `${course.track_title} · ${course.level}`),
     h("h3", {}, course.title),
-    h("p", {}, `${course.modules} modules · ${course.questions} questions`));
+    h("p", {}, `${course.modules} modules · ${course.questions} questions`),
+    after.length ? h("p", { class: "after" }, `After ${after.join(", ")}`) : null);
 }
 
 async function loadLibraryTeaser(section, token) {
@@ -204,7 +206,7 @@ async function loadLibraryTeaser(section, token) {
         const inTrack = courses.filter((c) => c.track === key);
         return h("div", { class: "track" },
           h("div", { class: "track-head" }, h("h3", {}, title), h("a", { class: "link-button", href: `#/library?track=${key}` }, `All ${inTrack.length}`)),
-          h("div", { class: "grid" }, inTrack.slice(0, 3).map(libraryCard)));
+          h("div", { class: "grid" }, inTrack.slice(0, 3).map((c) => libraryCard(c))));
       }),
     );
   } catch {
@@ -223,25 +225,53 @@ async function renderLibrary(params) {
     return;
   }
   if (token !== renderToken) return;
+  // Tracks are how the library was written; topics are clusters by meaning, across tracks (see /api/topics).
   let track = params.get("track") || "";
+  let topic = Number(params.get("topic")) || 0;
+  let groupBy = data.topics.length && !params.get("track") ? "topic" : "track";
+  const byId = new Map(data.courses.map((c) => [c.id, c]));
+  const card = (c) => libraryCard(c, c.requires.map((id) => byId.get(id)?.title).filter(Boolean));
+  const sections = h("div", {});
   const search = h("input", { type: "search", class: "search", placeholder: "Search by topic, like KV cache or HPA", "aria-label": "Search the library" });
   const grid = h("div", { class: "grid" });
   const count = h("p", { class: "muted", role: "status" });
   const chips = h("div", { class: "chips" });
+  const modes = h("div", { class: "chips", role: "group", "aria-label": "Group the library" });
+  const chip = (label, on, onclick) => h("button", { class: `chip${on ? " chip-on" : ""}`, type: "button", "aria-pressed": String(on), onclick }, label);
   const draw = () => {
     const words = search.value.toLowerCase().split(/\s+/).filter(Boolean);
-    const shown = data.courses.filter((c) => (!track || c.track === track) &&
-      words.every((w) => `${c.title} ${c.summary} ${c.tags.join(" ")} ${c.level}`.toLowerCase().includes(w)));
-    grid.replaceChildren(...shown.map(libraryCard));
-    count.textContent = `${shown.length} course${shown.length === 1 ? "" : "s"}`;
-    chips.replaceChildren(...[["", "All tracks"], ...Object.entries(data.tracks)].map(([key, title]) =>
-      h("button", { class: `chip${key === track ? " chip-on" : ""}`, type: "button", "aria-pressed": String(key === track), onclick: () => { track = key; draw(); } }, title)));
+    const matches = (c) => words.every((w) => `${c.title} ${c.summary} ${c.tags.join(" ")} ${c.level} ${c.topic ?? ""}`.toLowerCase().includes(w));
+    // By topic, courses come in study order, so each one follows the courses it builds on.
+    const inTopic = (t) => t.course_ids.map((id) => byId.get(id)).filter((c) => c && matches(c));
+    const shown = groupBy === "track"
+      ? data.courses.filter((c) => (!track || c.track === track) && matches(c))
+      : topic ? inTopic(data.topics.find((t) => t.id === topic) ?? { course_ids: [] }) : data.topics.flatMap(inTopic);
+    const sectioned = groupBy === "topic" && !topic;
+    grid.hidden = sectioned;
+    grid.replaceChildren(...(sectioned ? [] : shown.map(groupBy === "topic" ? card : (c) => libraryCard(c))));
+    sections.replaceChildren(...(sectioned ? data.topics.map((t) => {
+      const list = inTopic(t);
+      return list.length ? h("div", { class: "track" },
+        h("div", { class: "track-head" }, h("div", {}, h("h3", {}, t.name), h("p", { class: "muted" }, t.summary)),
+          h("button", { class: "link-button", type: "button", onclick: () => { topic = t.id; draw(); } }, `Path of ${list.length}`)),
+        h("div", { class: "grid" }, list.map(card))) : null;
+    }) : []));
+    const about = groupBy === "topic" && topic ? data.topics.find((t) => t.id === topic)?.summary : "";
+    count.textContent = `${shown.length} course${shown.length === 1 ? "" : "s"}${about ? `. ${about}` : ""}`;
+    modes.replaceChildren(
+      chip("By track", groupBy === "track", () => { groupBy = "track"; draw(); }),
+      chip("By topic", groupBy === "topic", () => { groupBy = "topic"; draw(); }));
+    modes.hidden = !data.topics.length;
+    chips.replaceChildren(...(groupBy === "track"
+      ? [["", "All tracks"], ...Object.entries(data.tracks)].map(([key, title]) => chip(title, key === track, () => { track = key; draw(); }))
+      : [chip("All topics", !topic, () => { topic = 0; draw(); }),
+        ...data.topics.map((t) => chip(`${t.name} · ${t.courses}`, t.id === topic, () => { topic = t.id; draw(); }))]));
   };
   search.addEventListener("input", draw);
   app.replaceChildren(
     h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
-    h("section", { class: "panel library-tools" }, search, chips, count),
-    h("section", { class: "section" }, grid),
+    h("section", { class: "panel library-tools" }, search, modes, chips, count),
+    h("section", { class: "section" }, grid, sections),
   );
   draw();
 }
@@ -257,6 +287,15 @@ async function renderLibraryCourse(id) {
     return;
   }
   if (token !== renderToken) return;
+  const path = [
+    course.prerequisites.length ? pathSection("Take these first", "This course builds on them. Skip any you already know.", course.prerequisites) : null,
+    course.leads_to.length ? pathSection("Leads to", "Courses that build on this one.", course.leads_to) : null,
+  ];
+  const onPath = new Set([...course.prerequisites, ...course.leads_to].map((c) => c.id));
+  const similar = h("section", { class: "section", hidden: true, "aria-live": "polite" });
+  const slips = h("section", { class: "card", hidden: true });
+  loadSimilar(id, similar, token, onPath);
+  loadSlips(id, slips, token);
   const goal = h("textarea", { id: "goal", maxlength: "1000", placeholder: "Optional: what you want out of it, like \"I'm on call for our GPU cluster\". It sets how well you need to know each module." });
   const error = h("p", { class: "error-text", role: "alert", hidden: true });
   const submit = h("button", { class: "button", type: "submit" }, "Start this course");
@@ -280,15 +319,66 @@ async function renderLibraryCourse(id) {
   }, h("label", { for: "goal", class: "visually-hidden" }, "What you want out of this course"), goal, error, h("div", { class: "composer-row" }, submit));
   app.replaceChildren(
     h("header", { class: "course-head" },
-      h("div", {}, h("p", { class: "eyebrow" }, `${course.track_title} · ${course.level}`), h("h1", {}, course.title), h("p", {}, course.summary)),
+      h("div", {}, h("p", { class: "eyebrow" }, [course.track_title, course.topic, course.level].filter(Boolean).join(" · ")), h("h1", {}, course.title), h("p", {}, course.summary)),
       h("a", { class: "link-button", href: `#/library?track=${course.track}` }, "Back to the library")),
     h("div", { class: "course-layout" },
       h("section", { class: "panel stage" }, h("h2", {}, "Make it yours"), form),
       h("aside", { class: "side" }, h("section", { class: "card" }, h("h2", {}, "Modules"),
         course.modules.map((m) => h("div", { class: "module locked" },
           h("span", { class: "dot", "aria-hidden": "true" }),
-          h("div", {}, h("strong", {}, m.title), h("span", {}, m.concepts.join(" · ")))))))),
+          h("div", {}, h("strong", {}, m.title), h("span", {}, m.concepts.join(" · "))))),
+      ), slips)),
+    ...path,
+    similar,
   );
+}
+
+function pathSection(title, lead, courses) {
+  return h("section", { class: "section" },
+    h("div", { class: "section-head" }, h("h2", {}, title), h("p", { class: "muted" }, lead)),
+    h("div", { class: "grid" }, courses.map((c) => libraryCard(c))));
+}
+
+/** Library courses closest in meaning to this one, from /api/catalog/:id/similar. */
+async function loadSimilar(id, section, token, skip = new Set()) {
+  try {
+    const { pending, courses: all } = await api(`/api/catalog/${id}/similar`);
+    const courses = all.filter((c) => !skip.has(c.id));
+    if (token !== renderToken || (!pending && !courses.length)) return;
+    section.hidden = false;
+    section.replaceChildren(
+      h("div", { class: "section-head" },
+        h("h2", {}, "Similar courses"),
+        h("p", { class: "muted" }, pending
+          ? "Still reading this course. Courses that cover similar ground will show here in a few minutes."
+          : "Courses that cover similar ground, closest first, from any track.")),
+      courses.length ? h("div", { class: "grid" }, courses.map((c) => libraryCard(c))) : null);
+  } catch {
+    // Similar courses are optional.
+  }
+}
+
+/** The subtopics and questions learners miss most in this course, from /api/catalog/:id/misses. */
+async function loadSlips(id, card, token) {
+  try {
+    const { concepts, questions } = await api(`/api/catalog/${id}/misses`);
+    if (token !== renderToken || !concepts.length) return;
+    card.hidden = false;
+    card.replaceChildren(
+      h("h2", {}, "Where learners slip"),
+      h("p", { class: "muted slip-lead" }, "Missed most often. Follow-ups pick questions close to the ones you get wrong."),
+      concepts.map((c) => {
+        const percent = Math.round(c.miss_rate * 100);
+        const fill = h("div", { class: "meter-fill t-orange" });
+        fill.style.width = `${Math.max(percent, 3)}%`;
+        return h("div", { class: "meter" },
+          h("div", { class: "meter-label" }, h("span", {}, c.concept), h("span", { class: "muted" }, `${percent}% missed`)),
+          h("div", { class: "meter-track" }, fill));
+      }),
+      questions.length ? h("p", { class: "muted slip-lead" }, `Hardest question: “${questions[0].prompt}”`) : null);
+  } catch {
+    // Optional, like similar courses.
+  }
 }
 
 /* Course */
