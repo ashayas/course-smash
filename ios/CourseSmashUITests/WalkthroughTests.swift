@@ -152,7 +152,7 @@ final class WalkthroughTests: XCTestCase {
                 scrollTo(app.buttons["check-answer"])
                 app.buttons["check-answer"].tap()
                 // Short answers are graded by a model. If it is unavailable the app says so and keeps the answer.
-                let graded = waitForAny([app.staticTexts["verdict"], app.staticTexts["answer-error"]], timeout: 120) == app.staticTexts["verdict"]
+                let graded = waitForAny([app.staticTexts["verdict"], app.staticTexts["answer-error"]], timeout: 120) == 0
                 if graded { scrollTo(app.staticTexts["verdict"]) } else { scrollTo(app.buttons["check-answer"]) }
                 shot(graded ? "verdict-short-answer" : "short-answer-not-graded")
                 sawShort = true
@@ -209,7 +209,7 @@ final class WalkthroughTests: XCTestCase {
         shot("course-planning")
         let planned = waitForAny([app.staticTexts["question"], app.buttons["try-again"]], timeout: 240)
         XCTAssertNotNil(planned, "Planning neither finished nor failed")
-        shot(planned == app.staticTexts["question"] ? "planned-course-question" : "course-planner-unavailable")
+        shot(planned == 0 ? "planned-course-question" : "course-planner-unavailable")
         deleteOpenCourse()
 
         // Log out.
@@ -304,10 +304,11 @@ final class WalkthroughTests: XCTestCase {
         return false
     }
 
-    private func waitForAny(_ elements: [XCUIElement], timeout: TimeInterval) -> XCUIElement? {
+    /// The position of the first element to show up, or nil if none did. Two queries for the same element are not equal, so this returns the position.
+    private func waitForAny(_ elements: [XCUIElement], timeout: TimeInterval) -> Int? {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            if let found = elements.first(where: { $0.exists }) { return found }
+            if let found = elements.firstIndex(where: { $0.exists }) { return found }
             usleep(300_000)
         }
         return nil
