@@ -1,0 +1,59 @@
+# fastlane lanes for the Course Smash iOS app. Run them from ios/: `fastlane ios <lane>`.
+# See ios/README.md for the one-time setup (team ID, App Store Connect record, API key).
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    # The Xcode project is generated from project.yml.
+    sh("cd .. && xcodegen generate --quiet")
+  end
+
+  # An App Store Connect API key avoids two-factor prompts. All three variables must be set to use it.
+  def connect_key
+    return nil unless ENV["ASC_KEY_ID"] && ENV["ASC_ISSUER_ID"] && ENV["ASC_KEY_PATH"]
+    app_store_connect_api_key(key_id: ENV["ASC_KEY_ID"], issuer_id: ENV["ASC_ISSUER_ID"], key_filepath: ENV["ASC_KEY_PATH"])
+  end
+
+  def team
+    ENV["DEVELOPMENT_TEAM"] || UI.user_error!("Set DEVELOPMENT_TEAM to your Apple Developer Team ID. See ios/README.md.")
+  end
+
+  desc "Build the app for the simulator, as a check that it compiles"
+  lane :build do
+    xcodebuild(project: "CourseSmash.xcodeproj", scheme: "CourseSmash", configuration: "Debug",
+               xcargs: "-destination 'generic/platform=iOS Simulator' -derivedDataPath build build")
+  end
+
+  desc "Archive a signed App Store build into build/CourseSmash.ipa"
+  lane :archive do
+    build_app(
+      project: "CourseSmash.xcodeproj", scheme: "CourseSmash", configuration: "Release",
+      export_method: "app-store-connect", output_directory: "build", output_name: "CourseSmash.ipa",
+      xcargs: "DEVELOPMENT_TEAM=#{team} -allowProvisioningUpdates",
+      export_options: { teamID: team, signingStyle: "automatic" }
+    )
+  end
+
+  desc "Upload a build to TestFlight"
+  lane :beta do
+    archive
+    upload_to_testflight(api_key: connect_key, ipa: "build/CourseSmash.ipa", skip_waiting_for_build_processing: true)
+  end
+
+  desc "Upload the name, description, keywords, URLs and screenshots in fastlane/metadata and fastlane/screenshots"
+  lane :metadata do
+    upload_to_app_store(
+      api_key: connect_key, skip_binary_upload: true, force: true,
+      overwrite_screenshots: true, submit_for_review: false, precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Upload a build with its metadata and screenshots. Submitting for review stays a manual step in App Store Connect"
+  lane :release do
+    archive
+    upload_to_app_store(
+      api_key: connect_key, ipa: "build/CourseSmash.ipa", force: true,
+      overwrite_screenshots: true, submit_for_review: false, precheck_include_in_app_purchases: false
+    )
+  end
+end

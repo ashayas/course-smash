@@ -1,5 +1,6 @@
 // Login gate. The admin account lives in the USER_NAME and PW secrets; other accounts live in D1.
-// The web app uses a signed session cookie, and MCP clients use Basic auth.
+// The web app uses a signed session cookie, native apps send the same signed value as a Bearer token,
+// and MCP clients use Basic auth.
 const SESSION_COOKIE = "cs_session";
 const SESSION_SECONDS = 14 * 24 * 3600;
 const PBKDF2_ITERATIONS = 100_000; // the most Workers allows
@@ -96,21 +97,36 @@ async function sessionPayload(username: string, expires: string, env: Env): Prom
 // Self-hosted setups can be plain http, where a Secure cookie would never be sent back.
 const flags = (request: Request) => `Path=/; HttpOnly;${new URL(request.url).protocol === "https:" ? " Secure;" : ""} SameSite=Lax`;
 
+/** A signed session value. The cookie and the Bearer token for native apps are the same thing. */
+export async function sessionToken(username: string, env: Env): Promise<{ token: string; expires: number }> {
+  const expires = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
+  const payload = (await sessionPayload(username, String(expires), env))!;
+  return { token: `${toBase64(encode(username))}.${expires}.${await sign(payload, env)}`, expires };
+}
+
 export async function sessionCookie(request: Request, username: string, env: Env): Promise<string> {
-  const expires = String(Math.floor(Date.now() / 1000) + SESSION_SECONDS);
-  const payload = (await sessionPayload(username, expires, env))!;
-  const value = `${toBase64(encode(username))}.${expires}.${await sign(payload, env)}`;
-  return `${SESSION_COOKIE}=${encodeURIComponent(value)}; ${flags(request)}; Max-Age=${SESSION_SECONDS}`;
+  const { token } = await sessionToken(username, env);
+  return `${SESSION_COOKIE}=${encodeURIComponent(token)}; ${flags(request)}; Max-Age=${SESSION_SECONDS}`;
 }
 
 export const clearedSessionCookie = (request: Request) => `${SESSION_COOKIE}=; ${flags(request)}; Max-Age=0`;
 
-/** Returns the signed-in username, or null. */
+/** Returns the signed-in username, or null. Reads `Authorization: Bearer <token>` first, then the session cookie. */
 export async function sessionUser(request: Request, env: Env): Promise<string | null> {
-  const cookies = request.headers.get("Cookie") ?? "";
-  const raw = cookies.split(/;\s*/).find((c) => c.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1);
-  if (!raw) return null;
-  const [name, expires, mac] = decodeURIComponent(raw).split(".");
+  const header = request.headers.get("Authorization") ?? "";
+  let value: string | undefined;
+  if (header.startsWith("Bearer ")) value = header.slice(7).trim();
+  else {
+    const cookies = request.headers.get("Cookie") ?? "";
+    const raw = cookies.split(/;\s*/).find((c) => c.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1);
+    try {
+      value = raw && decodeURIComponent(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (!value) return null;
+  const [name, expires, mac] = value.split(".");
   if (!name || !expires || !mac || Number(expires) < Date.now() / 1000) return null;
   let username: string;
   try {

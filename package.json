@@ -9,7 +9,8 @@
     "deploy": "npm run db:migrate:remote && wrangler deploy",
     "build:server": "esbuild src/server/node.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.mjs",
     "start:server": "node dist/server.mjs",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "check:isolation": "node scripts/check-isolation.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
