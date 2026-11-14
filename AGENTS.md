@@ -21,6 +21,7 @@
   - Check that it builds and that the walkthrough passes in the simulator (commands below).
   - Add a short "Mobile" note to the PR or commit that says how the feature works on a phone.
 - Keep the Worker build apart from `ios/`. Nothing in `src/` or `public/` may import or link to files under `ios/`, and no build setting may watch it. The app reads `public/city.js`, and that is the only link. Run `npm run check:isolation` after changing `wrangler.jsonc`, the tsconfig files or the build scripts.
+- When the repo is connected to Workers Builds (deploy on push), exclude `ios/*` under Build watch paths, so a push that only touches the app does not rebuild or redeploy the Worker. That setting is in the dashboard (Workers & Pages, `coursesmash`, Settings, Build, Build watch paths), not in `wrangler.jsonc`. Leave the include path as `*`.
 
 ## What's already set up
 
