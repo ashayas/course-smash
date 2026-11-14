@@ -95,13 +95,15 @@ final class WalkthroughTests: XCTestCase {
         let total = app.staticTexts["library-count"].label
         app.buttons["Cybersecurity"].tap()
         waitForChange(of: app.staticTexts["library-count"], from: total)
+        settle(app.staticTexts["library-count"])
         shot("library-track")
         app.buttons["All tracks"].tap()
+        waitFor(app.staticTexts["library-count"], toRead: total)
         app.textFields["library-search"].tap()
         app.textFields["library-search"].typeText(environment["CS_LIBRARY_COURSE"] ?? "Kubernetes architecture")
         waitForChange(of: app.staticTexts["library-count"], from: total)
         dismissKeyboard()
-        sleep(1)
+        settle(app.staticTexts["library-count"])
         shot("library-search")
 
         // A library course: what it covers, then start it.
@@ -293,6 +295,28 @@ final class WalkthroughTests: XCTestCase {
             usleep(200_000)
         }
         XCTFail("\(element) still reads \(old)")
+    }
+
+    private func waitFor(_ element: XCUIElement, toRead text: String, timeout: TimeInterval = 20) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if element.exists, element.label == text { return }
+            usleep(200_000)
+        }
+        XCTFail("\(element) never read \(text)")
+    }
+
+    /// Waits until an element's text has stopped changing, so a search that is still on its way is not mistaken for the result.
+    private func settle(_ element: XCUIElement, timeout: TimeInterval = 20) {
+        let deadline = Date().addingTimeInterval(timeout)
+        var last = element.label
+        var since = Date()
+        while Date() < deadline {
+            let now = element.label
+            if now != last { last = now; since = Date() }
+            if Date().timeIntervalSince(since) > 1.5 { return }
+            usleep(200_000)
+        }
     }
 
     private func waitForGone(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
