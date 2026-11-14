@@ -545,5 +545,17 @@
       "advanced",
       "Embodied AI: vision-language-action models, imitation learning from teleoperation data, sim-to-real transfer and robot foundation models"
     ]
+  ],
+  "policy": [
+    [
+      "canada-ai-policy",
+      "advanced",
+      "Canadian AI policy: federal and provincial law, the Directive on Automated Decision-Making, AIDA, privacy law, voluntary codes, funding and international agreements. Written by hand from primary sources."
+    ],
+    [
+      "eu-ai-act",
+      "advanced",
+      "The EU AI Act (Regulation (EU) 2024/1689): scope, prohibited practices, high-risk systems, provider and deployer duties, general-purpose AI models, conformity assessment, governance, penalties and cross-border impact. Written from primary sources."
+    ]
   ]
 }

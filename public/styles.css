@@ -317,3 +317,4 @@ input[type=search] { width: 100%; background: var(--bio-ink); border: 0; border-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+.source a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }

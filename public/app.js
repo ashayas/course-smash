@@ -238,7 +238,7 @@ async function renderLibrary(params) {
   };
   search.addEventListener("input", draw);
   app.replaceChildren(
-    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, security, identity and robotics. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
+    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
     h("section", { class: "panel library-tools" }, search, chips, count),
     h("section", { class: "section" }, grid),
   );
@@ -478,6 +478,7 @@ function showResult(view, q, form, result, token) {
     h("h3", {}, title),
     h("p", {}, rich(result.feedback)),
     result.verdict !== "correct" && !q.options ? h("p", { class: "reference" }, rich(result.reference)) : null,
+    sourceLink(result.source_url),
     sure,
     next);
   form.replaceChildren(...parts, block);
@@ -485,6 +486,14 @@ function showResult(view, q, form, result, token) {
   next.focus();
 }
 
+
+/** Where the answer comes from, when the question has a source. Only https links are shown. */
+function sourceLink(url) {
+  if (typeof url !== "string" || !/^https:\/\//.test(url)) return null;
+  let host = url;
+  try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { return null; }
+  return h("p", { class: "small source" }, "Source: ", h("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, host));
+}
 
 /* Building picker: the learner restyles a course's building. Choices come from the fixed lists in city.js. */
 const NAMES = { controltower: "control tower", powerplant: "power plant", datacenter: "data centre", townhall: "town hall", windfarm: "wind farm" };

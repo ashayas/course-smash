@@ -1,0 +1,23 @@
+{
+  "slug": "canada-ai-policy",
+  "title": "Canadian AI Policy Essentials",
+  "summary": "You will be able to explain how AI is governed in Canada today: the federal and provincial laws and directives that apply, the bills that stalled, the institutions and funding behind Canada's AI ecosystem, and how Canada works with other countries on AI governance.",
+  "prompt": "AI policy for Canada",
+  "level": "advanced",
+  "tags": ["canada", "ai policy", "aida", "pipeda", "privacy", "directive on automated decision-making", "regulation", "governance"],
+  "note": "Modules 0 to 4 keep their exact titles and concepts, because Sofia's copy of the course already uses them. Modules 5 to 11 are new.",
+  "modules": [
+    { "position": 0, "title": "Mapping the AI Landscape", "objective": "Identify the key AI technologies, sectors, and societal impacts that define Canada’s AI environment.", "concepts": ["ai ecosystems", "emerging applications", "ethical challenges", "data sovereignty"] },
+    { "position": 1, "title": "Canada’s Policy Foundations", "objective": "Explain the principal federal and provincial policies that currently guide AI development and use in Canada.", "concepts": ["digital charter", "directive on automated decision systems", "pipeda", "national ai strategy"] },
+    { "position": 2, "title": "Regulatory Tools and Governance", "objective": "Explore the regulatory mechanisms Canada employs to ensure accountable and trustworthy AI.", "concepts": ["impact assessments", "algorithmic audits", "standards bodies", "enforcement regimes"] },
+    { "position": 3, "title": "Engaging Stakeholders", "objective": "Recognize how government, industry, academia, and the public collaborate to shape AI policy.", "concepts": ["multi‑stakeholder forums", "public consultations", "innovation clusters", "indigenous perspectives"] },
+    { "position": 4, "title": "Future Directions & Global Alignment", "objective": "Anticipate emerging policy trends and Canada’s role in international AI governance frameworks.", "concepts": ["ai act alignment", "international standards", "emerging risks", "adaptive policy"] },
+    { "position": 5, "title": "The Artificial Intelligence and Data Act", "objective": "Explain what AIDA (Part 3 of Bill C-27) proposed, how it would have worked, and what happened to it.", "concepts": ["high-impact systems", "obligations and penalties", "ai and data commissioner", "legislative fate"] },
+    { "position": 6, "title": "Privacy Law Meets AI", "objective": "Apply Canada's federal and provincial privacy law to AI systems that collect and use personal information.", "concepts": ["pipeda principles", "consent and meaningful purpose", "quebec law 25", "automated decision transparency"] },
+    { "position": 7, "title": "AI in the Federal Public Service", "objective": "Describe the rules that govern how federal institutions build, buy and use AI.", "concepts": ["directive scope", "algorithmic impact assessment levels", "generative ai guidance", "federal ai strategy"] },
+    { "position": 8, "title": "Voluntary Codes and AI Safety", "objective": "Explain Canada's non-binding commitments for advanced AI and the institutions that study AI safety.", "concepts": ["voluntary code of conduct", "canadian ai safety institute", "frontier model risks", "soft law versus hard law"] },
+    { "position": 9, "title": "Provinces and Sector Regulators", "objective": "Identify how provinces and sector regulators shape AI use even without a federal AI law.", "concepts": ["ontario public sector rules", "ai in hiring disclosures", "financial model risk", "health and medical devices"] },
+    { "position": 10, "title": "Funding, Compute and the AI Economy", "objective": "Describe how Canada funds AI research, talent and compute, and who runs that work.", "concepts": ["pan-canadian ai strategy", "national ai institutes", "sovereign compute", "commercialization"] },
+    { "position": 11, "title": "Canada in Global AI Governance", "objective": "Explain the international agreements and forums Canada takes part in, and how they connect to domestic policy.", "concepts": ["oecd ai principles", "g7 hiroshima process", "council of europe convention", "global partnership on ai"] }
+  ]
+}

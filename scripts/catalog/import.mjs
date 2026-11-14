@@ -39,21 +39,23 @@ for (const [track, list] of Object.entries(TOPICS)) {
     courses++;
     statements.push(upsert("catalog_courses", {
       id: slug, track, title: course.outline.title, summary: course.outline.summary, prompt: course.outline.prompt,
-      level, tags: JSON.stringify(course.outline.tags), position, created_at: now, icon: ICONS[slug] ? JSON.stringify(ICONS[slug]) : null,
+      level, tags: JSON.stringify(course.outline.tags), position, created_at: now, visibility: "public", owner: null, icon: ICONS[slug] ? JSON.stringify(ICONS[slug]) : null,
     }));
+    // Questions the agent wrote during courses (source 'generated') are kept; only stale reviewed ones go.
     statements.push(`DELETE FROM catalog_modules WHERE catalog_course_id = ${quote(slug)} AND position >= ${course.modules.length};`);
     course.modules.forEach((m, i) => {
       const moduleId = `${slug}--m${i}`;
       statements.push(upsert("catalog_modules", {
         id: moduleId, catalog_course_id: slug, position: i, title: m.title, objective: m.objective, concepts: JSON.stringify(m.concepts),
       }));
-      statements.push(`DELETE FROM catalog_questions WHERE catalog_module_id = ${quote(moduleId)} AND position >= ${m.bank.length};`);
+      statements.push(`DELETE FROM catalog_questions WHERE catalog_module_id = ${quote(moduleId)} AND source = 'library' AND position >= ${m.bank.length};`);
       m.bank.forEach((q, j) => {
         questions++;
         statements.push(upsert("catalog_questions", {
           id: `${moduleId}--q${j}`, catalog_module_id: moduleId, position: j, tier: q.tier, kind: q.kind, prompt: q.prompt,
           options: q.options ? JSON.stringify(q.options) : null, correct_index: q.kind === "mcq" ? q.correct_index : null,
-          reference: q.reference, concept: q.concept, difficulty: q.difficulty, figure: q.figure, figure_alt: q.figure_alt,
+          reference: q.reference, concept: q.concept, difficulty: q.difficulty, figure: q.figure ?? null, figure_alt: q.figure_alt ?? null,
+          source: "library", source_url: q.source_url ?? null,
         }));
       });
     });

@@ -26,7 +26,7 @@ export function createMcpServer(env: Env, owner: string | null): McpServer {
 
   server.registerTool(
     "list_library",
-    { description: "List the ready-made library courses (AI engineering, Kubernetes, inference engineering, identity and integrations, cybersecurity, robotics and hardware) with their tracks, levels and question counts." },
+    { description: "List the ready-made library courses (AI engineering, Kubernetes, inference engineering, identity and integrations, cybersecurity, robotics and hardware, AI policy) with their tracks, levels and question counts." },
     async () => {
       const { courses } = await listCatalog(env);
       return text(courses.map(({ id, track_title, title, summary, level, modules, questions }) => ({ id, track: track_title, title, summary, level, modules, questions })));
