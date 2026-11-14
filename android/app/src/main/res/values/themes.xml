@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark only, as DESIGN.md says. Before Android 12 the window background is the splash: the mark on ink. -->
+    <style name="Theme.CourseSmash" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash</item>
+        <item name="android:statusBarColor">@color/ink</item>
+        <item name="android:navigationBarColor">@color/ink</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorBackground">@color/ink</item>
+    </style>
+</resources>
