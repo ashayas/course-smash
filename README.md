@@ -30,7 +30,20 @@ After each round, a module with every subtopic at or above its bar passes straig
 
 ### The library
 
-Besides courses written on demand, there's a library of ready-made short courses on AI engineering, Kubernetes, inference engineering, identity and integrations (OAuth, OIDC, SCIM, connectors), cybersecurity, and robotics and hardware for beginners. Each module comes with a bank of about 16 reviewed questions: the core set is the first round, and the follow-ups come from the reserve questions on whatever you missed. When the bank runs out, the writing model takes over. Starting a library course asks what you want out of it, so the bars fit you.
+Besides courses written on demand, there's a library of ready-made short courses on AI engineering, Kubernetes, inference engineering, identity and integrations (OAuth, OIDC, SCIM, connectors), cybersecurity, robotics and hardware for beginners, and AI policy. Each module comes with a bank of 16 to 30 reviewed questions. Starting a library course asks what you want out of it, so the bars fit you.
+
+### Bank first, write when needed
+
+Every course has a question bank. Library courses share theirs; a course you plan yourself gets a private one. Each round decides where its questions come from:
+
+| Round | Source |
+|---|---|
+| First round | The bank's reviewed core set. |
+| Follow-up, with enough unused bank questions on your weak subtopics | Clef compares your wrong answers with the bank questions on offer. If they'd expose and fix the confusion, they're used; if your answers show a misconception they don't touch, new ones are written. |
+| Follow-up, after a round of bank follow-ups that still left you below the bar | New questions aimed at your answers, since more of the same isn't working. |
+| Follow-up, with too few bank questions left | New questions. |
+
+Every question the agent writes is saved to the bank as `generated`. Reviewed questions are always drawn before generated ones. Multiple choice is graded by the answer key stored with the question, never by a model, and a question can carry a `source_url` that's shown after you answer.
 
 Questions can include diagrams and formulas. Diagrams are SVG, cleaned against an allowlist on the server and shown through `<img>`, where SVG can't run scripts. Formulas are LaTeX between `\(` and `\)`, rendered to MathML by a local copy of KaTeX. Dollar signs stay literal, because prices come up a lot.
 
@@ -124,6 +137,8 @@ node --experimental-strip-types scripts/catalog/generate.mjs run --cap 150
 node --experimental-strip-types scripts/catalog/generate.mjs status
 node scripts/catalog/import.mjs --remote   # or --local, or --sqlite <path> for Docker
 ```
+
+Courses can also be written by hand (or by agents) from primary sources. Put a `plan.json` and one `modules/m<position>.json` per module in a folder, check each module with `node scripts/catalog/check-draft.mjs <module.json>`, then run `node scripts/catalog/merge-drafts.mjs <folder> <track>` to write the course file and import it as usual. `scripts/catalog/briefs/canada-ai-policy.md` is the brief used for the AI policy course.
 
 Every response's token usage is logged to `catalog/.state/ledger.jsonl`. Before a batch is sent, its worst case (every request using all of its `max_tokens`) is added to the spend so far, and requests are dropped until that fits under `--cap`. Only modules that passed review are imported.
 

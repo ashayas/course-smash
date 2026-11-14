@@ -1,0 +1,58 @@
+{
+  "slug": "eu-ai-act",
+  "title": "The EU AI Act Essentials",
+  "summary": "You will be able to apply Regulation (EU) 2024/1689 across real policy and compliance scenarios: territorial and actor scope, Article 5 prohibited practices, Annex I and Annex III high-risk classification, provider and deployer obligations, Fundamental Rights Impact Assessments, General-Purpose AI and systemic risk rules, conformity assessment, governance and administrative fines.",
+  "prompt": "The EU AI Act (Regulation (EU) 2024/1689) for AI policy and compliance professionals",
+  "level": "advanced",
+  "tags": ["eu ai act", "regulation 2024/1689", "ai policy", "high-risk ai", "gpai", "article 5", "fria", "conformity assessment", "european ai office", "governance"],
+  "modules": [
+    {
+      "position": 0,
+      "title": "Scope, Actors and Phased Timeline",
+      "objective": "Determine when Regulation (EU) 2024/1689 applies across AI systems, value-chain actors, extraterritorial outputs, statutory exclusions, and phased application dates under Articles 2, 3, 4, 111 and 113.",
+      "concepts": ["ai system definition", "extraterritorial reach and actors", "statutory exclusions", "phased application and legacy rules"]
+    },
+    {
+      "position": 1,
+      "title": "Prohibited AI Practices (Article 5)",
+      "objective": "Identify the eight prohibited AI practices under Article 5 and apply their narrow statutory exceptions, judicial authorization rules, and harm thresholds.",
+      "concepts": ["subliminal manipulation and vulnerability exploitation", "social scoring and criminal risk profiling", "facial scraping emotion recognition and biometric categorisation", "real-time remote biometric identification"]
+    },
+    {
+      "position": 2,
+      "title": "High-Risk AI Classification (Article 6, Annex I and Annex III)",
+      "objective": "Classify high-risk AI systems under Annex I product safety legislation and Annex III standalone domains, including the Article 6(3) non-materiality filter and profiling override.",
+      "concepts": ["annex i safety components", "annex iii standalone high-risk domains", "article 6(3) derogation and profiling rule", "eu database registration for derogations"]
+    },
+    {
+      "position": 3,
+      "title": "Provider Obligations for High-Risk Systems (Articles 8 to 22)",
+      "objective": "Apply the lifecycle technical, data governance, documentation, logging, human oversight, robustness, and quality management obligations imposed on providers of high-risk AI systems.",
+      "concepts": ["risk management and data governance", "technical documentation and automatic logging", "transparency instructions and human oversight", "accuracy robustness cybersecurity and qms"]
+    },
+    {
+      "position": 4,
+      "title": "Deployers, Value-Chain Shifts and Fundamental Rights Impact Assessments",
+      "objective": "Distinguish deployer operational obligations under Article 26, Fundamental Rights Impact Assessments under Article 27, and when downstream actors become high-risk providers under Article 25.",
+      "concepts": ["deployer operational obligations", "fundamental rights impact assessment", "article 25 provider reclassification", "importers distributors and authorised representatives"]
+    },
+    {
+      "position": 5,
+      "title": "Transparency Rules and General-Purpose AI Models (Articles 50 to 56)",
+      "objective": "Apply Article 50 user-facing transparency duties and the Chapter V regime for general-purpose AI models, including systemic-risk designation at 10^25 FLOPs, open-source exemptions, and codes of practice.",
+      "concepts": ["article 50 interaction and synthetic media disclosure", "gpai baseline provider duties and copyright policy", "systemic risk threshold and article 55 obligations", "open-source gpai exemptions and limits"]
+    },
+    {
+      "position": 6,
+      "title": "Conformity Assessment, Standards, Sandboxes and Incident Reporting",
+      "objective": "Navigate harmonized standards, internal versus third-party conformity assessment, CE marking, regulatory sandboxes, real-world testing safeguards, and serious-incident reporting timelines.",
+      "concepts": ["harmonized standards and article 43 conformity assessment", "ce marking declaration of conformity and eu database", "post-market monitoring and article 73 incident deadlines", "regulatory sandboxes and real-world testing"]
+    },
+    {
+      "position": 7,
+      "title": "Governance, Enforcement, Penalties and Cross-Border Impact",
+      "objective": "Explain the enforcement architecture across the AI Office, EAIB, and national authorities, calculate administrative fine caps under Articles 99 to 101, and assess compliance impacts for Canadian organizations.",
+      "concepts": ["ai office eaib and scientific panel", "national competent authorities and market surveillance", "article 99 to 101 fine tiers and sme caps", "canadian cross-border compliance and adequacy interplay"]
+    }
+  ]
+}

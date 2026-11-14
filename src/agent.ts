@@ -30,7 +30,7 @@ const barFor = (module: Pick<Module, "importance" | "mastery_target" | "max_foll
 type Course = {
   id: string; prompt: string; title: string | null; summary: string | null;
   status: "building" | "active" | "complete"; lease_until: number; last_error: string | null; created_at: number;
-  catalog_id: string | null; icon: string | null;
+  catalog_id: string | null; icon: string | null; owner: string | null;
 };
 type Module = {
   id: string; course_id: string; position: number; title: string; objective: string;
@@ -40,12 +40,12 @@ type Module = {
 type Question = {
   id: string; course_id: string; module_id: string; round: number; position: number; kind: "mcq" | "short";
   prompt: string; options: string | null; correct_index: number | null; reference: string; concept: string; why: string | null;
-  figure: string | null; figure_alt: string | null; bank_id: string | null;
+  figure: string | null; figure_alt: string | null; bank_id: string | null; source_url: string | null;
 };
 type BankQuestion = {
   id: string; catalog_module_id: string; position: number; tier: "core" | "reserve"; kind: "mcq" | "short"; prompt: string;
   options: string | null; correct_index: number | null; reference: string; concept: string; difficulty: number;
-  figure: string | null; figure_alt: string | null;
+  figure: string | null; figure_alt: string | null; source: "library" | "generated"; source_url: string | null;
 };
 type Answer = {
   id: string; question_id: string; course_id: string; concept: string; response: string;
@@ -157,13 +157,14 @@ export const TRACKS: Record<string, string> = {
   identity: "Identity and integrations",
   security: "Cybersecurity",
   robotics: "Robotics and hardware",
+  policy: "AI policy",
 };
 
 export async function listCatalog(env: Env) {
   const { results } = await env.DB.prepare(
     `SELECT c.*, (SELECT COUNT(*) FROM catalog_modules m WHERE m.catalog_course_id = c.id) AS modules,
        (SELECT COUNT(*) FROM catalog_questions q JOIN catalog_modules m ON m.id = q.catalog_module_id WHERE m.catalog_course_id = c.id) AS questions
-     FROM catalog_courses c ORDER BY c.track, c.position`,
+     FROM catalog_courses c WHERE c.visibility = 'public' ORDER BY c.track, c.position`,
   ).all<CatalogCourse & { modules: number; questions: number }>();
   return {
     tracks: TRACKS,
@@ -172,7 +173,7 @@ export async function listCatalog(env: Env) {
 }
 
 export async function catalogCourse(env: Env, id: string) {
-  const course = await env.DB.prepare("SELECT * FROM catalog_courses WHERE id = ?").bind(id).first<CatalogCourse>();
+  const course = await env.DB.prepare("SELECT * FROM catalog_courses WHERE id = ? AND visibility = 'public'").bind(id).first<CatalogCourse>();
   if (!course) return null;
   const { results } = await env.DB.prepare(
     `SELECT m.title, m.objective, m.concepts, (SELECT COUNT(*) FROM catalog_questions q WHERE q.catalog_module_id = m.id) AS questions
@@ -186,7 +187,7 @@ export async function catalogCourse(env: Env, id: string) {
 
 /** Start the learner's own copy. `goal` is what they want out of it; it steers grading and the bar for each module. */
 export async function startCatalogCourse(env: Env, catalogId: string, goal: string, owner: string | null) {
-  const source = await env.DB.prepare("SELECT title, prompt FROM catalog_courses WHERE id = ?").bind(catalogId).first<{ title: string; prompt: string }>();
+  const source = await env.DB.prepare("SELECT title, prompt FROM catalog_courses WHERE id = ? AND visibility = 'public'").bind(catalogId).first<{ title: string; prompt: string }>();
   if (!source) return null;
   const prompt = goal.trim() ? `${source.title}: ${goal.trim()}` : source.prompt;
   return createCourse(env, prompt.slice(0, 2000), owner, catalogId);
@@ -221,9 +222,26 @@ async function copyCatalogOutline(env: Env, course: Course) {
   await saveOutline(env, course, source.title, source.summary, modules, `Opened "${source.title}" from the library: ${modules.length} modules.`, parseIcon(course.icon ?? source.icon));
 }
 
+/** The private bank behind a course the learner planned themselves. */
+const privateBankId = (courseId: string) => `p-${courseId}`;
+
 type PlannedModule = { title: string; objective: string; concepts: string[]; catalogId: string | null };
 
-async function saveOutline(env: Env, course: Course, title: string, summary: string, modules: PlannedModule[], message: string, icon: Icon | null = null) {
+async function saveOutline(env: Env, course: Course, title: string, summary: string, planned: PlannedModule[], message: string, icon: Icon | null = null) {
+  // A course the learner planned gets its own private bank, so the questions written for it are kept and reused.
+  const privateBank = privateBankId(course.id);
+  const modules = planned.map((m, i) => ({ ...m, catalogId: m.catalogId ?? `${privateBank}--m${i}` }));
+  const bankStatements = planned.some((m) => !m.catalogId)
+    ? [
+        env.DB.prepare(
+          "INSERT INTO catalog_courses (id, track, title, summary, prompt, level, tags, position, created_at, visibility, owner) VALUES (?, 'personal', ?, ?, ?, 'intermediate', '[]', 0, ?, 'private', ?) ON CONFLICT (id) DO NOTHING",
+        ).bind(privateBank, title, summary, course.prompt, now(), course.owner),
+        ...modules.map((m, i) =>
+          env.DB.prepare("INSERT INTO catalog_modules (id, catalog_course_id, position, title, objective, concepts) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING")
+            .bind(m.catalogId, privateBank, i, m.title, m.objective, JSON.stringify(m.concepts.map(concept))),
+        ),
+      ]
+    : [];
   const importance = await rateImportance(env, course.prompt, title, modules);
   const statements = modules.map((m, i) => {
     const bar = BARS[importance[i] ?? DEFAULT_IMPORTANCE];
@@ -236,6 +254,7 @@ async function saveOutline(env: Env, course: Course, title: string, summary: str
   });
   const core = modules.filter((_, i) => importance[i] === "core").map((m) => m.title);
   await env.DB.batch([
+    ...bankStatements,
     env.DB.prepare("UPDATE courses SET title = ?, summary = ?, icon = ?, status = 'active' WHERE id = ?").bind(title, summary, icon ? JSON.stringify(icon) : null, course.id),
     ...statements,
     log(env, course.id, message),
@@ -271,7 +290,9 @@ async function rateImportance(env: Env, goal: string, title: string, modules: Pl
 }
 
 const INSERT_QUESTION =
-  "INSERT INTO questions (id, course_id, module_id, round, position, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, bank_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  "INSERT INTO questions (id, course_id, module_id, round, position, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, bank_id, source_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+const INSERT_BANK_QUESTION =
+  "INSERT INTO catalog_questions (id, catalog_module_id, position, tier, kind, prompt, options, correct_index, reference, concept, difficulty, figure, figure_alt, source) VALUES (?, ?, ?, 'reserve', ?, ?, ?, ?, ?, ?, 2, ?, ?, 'generated')";
 
 /** Models favour certain answer positions, so place the options ourselves. */
 function placeOptions(options: string[], correctIndex: number) {
@@ -288,8 +309,113 @@ const roundShape = (module: Module, round: number) => {
   return { total, short: 2 };
 };
 
+/**
+ * Every round comes from the module's bank when the bank has the right questions, and is written fresh
+ * when it doesn't. Fresh questions go into the bank too, so the next learner (or the next round) can reuse them.
+ */
 async function writeRound(env: Env, course: Course, module: Module, round: number, focus: string[]) {
-  if (module.catalog_module_id && (await drawFromBank(env, course, module, round, focus))) return;
+  if (module.catalog_module_id) {
+    const plan = await planFromBank(env, course, module, round, focus);
+    if (plan.picked) return saveBankRound(env, course, module, round, plan.picked);
+    if (plan.message) await log(env, course.id, plan.message).run();
+  }
+  await writeFreshRound(env, course, module, round, focus);
+}
+
+type BankPlan = { picked: BankQuestion[] | null; message: string | null };
+
+/**
+ * Decide whether bank questions suit this round. Round 1 is the bank's reviewed core set. For follow-ups:
+ * - too few unused questions on the weak subtopics: write new ones;
+ * - the learner already had bank follow-ups on these subtopics and is still below the bar: write new ones
+ *   aimed at their mistakes, since more of the same isn't working;
+ * - otherwise Clef compares the learner's wrong answers with the candidate questions and decides
+ *   whether those candidates address the confusion. If Clef is unavailable, the bank is used.
+ */
+async function planFromBank(env: Env, course: Course, module: Module, round: number, focus: string[]): Promise<BankPlan> {
+  const [{ results: bank }, moduleQuestions, answers] = await Promise.all([
+    env.DB.prepare("SELECT * FROM catalog_questions WHERE catalog_module_id = ? ORDER BY position").bind(module.catalog_module_id).all<BankQuestion>(),
+    env.DB.prepare("SELECT * FROM questions WHERE module_id = ? ORDER BY round, position").bind(module.id).all<Question>().then((r) => r.results),
+    getAnswers(env, course.id),
+  ]);
+  const taken = new Set(moduleQuestions.map((q) => q.bank_id).filter(Boolean));
+  const unused = bank.filter((q) => !taken.has(q.id));
+
+  if (round === 1) {
+    const core = unused.filter((q) => q.tier === "core");
+    return { picked: core.length >= 3 ? core : null, message: null };
+  }
+
+  const weak = focus.map(concept);
+  const weakSet = new Set(weak);
+  const onWeak = unused.filter((q) => weakSet.has(concept(q.concept)));
+  const pool = onWeak.length >= 2 ? onWeak : weakSet.size ? [] : unused;
+  if (pool.length < 2) return { picked: null, message: null };
+  const picked = spread(pool, FOLLOW_UP_SIZE, weak);
+
+  const byQuestion = new Map(answers.map((a) => [a.question_id, a]));
+  const previous = moduleQuestions.filter((q) => q.round === round - 1);
+  // Only reviewed bank questions count: a round the agent wrote is saved to the bank too, but it wasn't "more of the bank".
+  const reviewed = new Set(bank.filter((q) => q.source !== "generated").map((q) => q.id));
+  const previousFromBank = round > 2 && previous.length > 0 && previous.every((q) => q.bank_id && reviewed.has(q.bank_id));
+  const stillMissing = previous.filter((q) => weakSet.has(q.concept) && byQuestion.get(q.id)?.verdict !== "correct");
+  if (previousFromBank && stillMissing.length) {
+    return { picked: null, message: `Bank follow-ups on ${[...new Set(stillMissing.map((q) => q.concept))].join(", ")} didn't land, so I'm writing new ones aimed at your answers.` };
+  }
+
+  const misses = moduleQuestions
+    .map((q) => ({ q, a: byQuestion.get(q.id) }))
+    .filter(({ a }) => a && a.verdict !== "correct")
+    .slice(-6)
+    .map(({ q, a }) => ({ concept: q.concept, question: q.prompt, learner_answer: a!.response, verdict: a!.verdict, error_type: a!.error_type }));
+  try {
+    const { source } = await decide(
+      env,
+      {
+        learner_goal: course.prompt,
+        module: { title: module.title, objective: module.objective },
+        weak_subtopics: weak,
+        learner_misses: misses,
+        candidate_questions: picked.map((q) => ({ concept: q.concept, difficulty: q.difficulty, question: q.prompt })),
+      },
+      {
+        source: {
+          instructions:
+            "This learner is getting follow-up questions on the weak subtopics of a module. Should we use the candidate questions from the course's question bank, or write new ones aimed at this learner? " +
+            "Look at what their wrong answers reveal and whether the candidates would expose and correct that.",
+          criteria: {
+            bank: "The candidates test the weak subtopics from an angle that would reveal or correct the misunderstanding shown in the misses, at a fitting difficulty, and suit the learner's goal.",
+            write: "The misses show a specific misconception the candidates don't touch, or the candidates are near-repeats of what they missed, or they don't fit the learner's goal.",
+          },
+        },
+      },
+    );
+    if (source.choice === "write") {
+      return { picked: null, message: `The bank's follow-ups don't target what tripped you up, so I'm writing new ones. ${graderName(env)} was ${Math.round(chosenProbability(source) * 100)}% sure.` };
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ message: "clef source choice failed", error: String(error) }));
+  }
+  return { picked, message: null };
+}
+
+async function saveBankRound(env: Env, course: Course, module: Module, round: number, picked: BankQuestion[]) {
+  const statements = picked.map((q, i) => {
+    const placed = q.kind === "mcq" && q.options ? placeOptions(JSON.parse(q.options), q.correct_index!) : null;
+    const why = round > 1 ? `You were shaky on ${q.concept}, so here it is from another angle.` : null;
+    return env.DB.prepare(INSERT_QUESTION).bind(
+      crypto.randomUUID(), course.id, module.id, round, i, q.kind, q.prompt,
+      placed && JSON.stringify(placed.options), placed?.correctIndex ?? null, q.reference, concept(q.concept), why,
+      q.figure, q.figure_alt, q.id, q.source_url,
+    );
+  });
+  const message = round === 1
+    ? `Started "${module.title}" with ${picked.length} questions, one or more on each subtopic.`
+    : `Picked ${picked.length} follow-ups for "${module.title}" from the bank, on ${[...new Set(picked.map((q) => q.concept))].join(", ")}.`;
+  await env.DB.batch([...statements, log(env, course.id, message)]);
+}
+
+async function writeFreshRound(env: Env, course: Course, module: Module, round: number, focus: string[]) {
   const [allQuestions, answers] = await Promise.all([getQuestions(env, course.id), getAnswers(env, course.id)]);
   const mastery = masteryByConcept(answers);
   const answerByQuestion = new Map(answers.map((a) => [a.question_id, a]));
@@ -298,6 +424,10 @@ async function writeRound(env: Env, course: Course, module: Module, round: numbe
     .filter(({ a }) => a && a.verdict !== "correct")
     .slice(-8)
     .map(({ q, a }) => ({ concept: q.concept, question: q.prompt, learner_answer: a!.response, verdict: a!.verdict, error_type: a!.error_type }));
+  // Don't repeat anything in the bank either, so saved questions stay distinct.
+  const banked = module.catalog_module_id
+    ? (await env.DB.prepare("SELECT prompt FROM catalog_questions WHERE catalog_module_id = ?").bind(module.catalog_module_id).all<{ prompt: string }>()).results.map((q) => q.prompt)
+    : [];
 
   const wanted = roundShape(module, round);
   const parsed = await writeJson(env, {
@@ -319,7 +449,7 @@ async function writeRound(env: Env, course: Course, module: Module, round: numbe
       round,
       focus,
       learner_state: { mastery, misses },
-      already_asked: allQuestions.map((q) => q.prompt),
+      already_asked: [...new Set([...allQuestions.map((q) => q.prompt), ...banked])].slice(-80),
     }),
     schema: RoundSchema,
     maxTokens: 8000,
@@ -333,68 +463,83 @@ async function writeRound(env: Env, course: Course, module: Module, round: numbe
   if (questions.length < wanted.total || !mcqs.length || mcqs.length === questions.length || !validMcq) {
     throw new Error("The model returned a malformed question set. Try again.");
   }
+  // A wrong answer key would teach a wrong fact, so Clef answers each multiple-choice question blind
+  // and any it disagrees with is dropped before it is shown or saved.
+  const keys = await checkKeys(env, course, module, questions);
+  const kept = questions.filter((_, i) => !keys.rejected.has(i));
+  if (kept.length < 2) throw new Error("Too few questions passed the answer-key check. Try again.");
 
-  const statements = questions.map((q, i) => {
+  const bankModule = keys.checked ? module.catalog_module_id : null;
+  const nextPosition = bankModule
+    ? ((await env.DB.prepare("SELECT MAX(position) AS p FROM catalog_questions WHERE catalog_module_id = ?").bind(bankModule).first<{ p: number | null }>())?.p ?? -1) + 1
+    : 0;
+  const statements = kept.flatMap((q, i) => {
     const placed = q.kind === "mcq" ? placeOptions(q.options, q.correct_index) : null;
     const figure = sanitizeSvg(q.figure);
-    return env.DB.prepare(INSERT_QUESTION).bind(
-      crypto.randomUUID(), course.id, module.id, round, i, q.kind, q.prompt,
-      placed && JSON.stringify(placed.options), placed?.correctIndex ?? null, q.reference, concept(q.concept), q.why.trim() || null,
-      figure, figure ? q.figure_alt.trim() || null : null, null,
-    );
+    const figureAlt = figure ? q.figure_alt.trim() || null : null;
+    const options = placed && JSON.stringify(placed.options);
+    const bankId = bankModule ? `${bankModule}--g${crypto.randomUUID().slice(0, 8)}` : null;
+    return [
+      ...(bankId
+        ? [env.DB.prepare(INSERT_BANK_QUESTION).bind(bankId, bankModule, nextPosition + i, q.kind, q.prompt, options, placed?.correctIndex ?? null, q.reference, concept(q.concept), figure, figureAlt)]
+        : []),
+      env.DB.prepare(INSERT_QUESTION).bind(
+        crypto.randomUUID(), course.id, module.id, round, i, q.kind, q.prompt,
+        options, placed?.correctIndex ?? null, q.reference, concept(q.concept), q.why.trim() || null,
+        figure, figureAlt, bankId, null,
+      ),
+    ];
   });
   const message = parsed.note.trim() || (round === 1 ? `Wrote the first questions for "${module.title}".` : `Wrote follow-ups for "${module.title}".`);
-  await env.DB.batch([...statements, log(env, course.id, message)]);
+  const dropped = keys.rejected.size
+    ? [log(env, course.id, `Dropped ${keys.rejected.size} new question${keys.rejected.size === 1 ? "" : "s"} because ${graderName(env)} didn't agree with the answer key.`)]
+    : [];
+  await env.DB.batch([...statements, ...dropped, log(env, course.id, message)]);
 }
 
 /**
- * Library modules come with a question bank. Round 1 is the core set; follow-ups are unused bank
- * questions on the weak concepts, spread across concepts and with at least one short answer.
- * Returns false when the bank has too little left on the weak concepts, so the writer takes over.
+ * Clef answers each multiple-choice question without seeing the key. Questions where it picks another
+ * option, or says none (or several) are right, are rejected. If Clef can't be reached, nothing is
+ * rejected but `checked` is false, so the questions are shown and not saved to the bank.
  */
-async function drawFromBank(env: Env, course: Course, module: Module, round: number, focus: string[]) {
-  const [{ results: bank }, { results: used }] = await Promise.all([
-    env.DB.prepare("SELECT * FROM catalog_questions WHERE catalog_module_id = ? ORDER BY position").bind(module.catalog_module_id).all<BankQuestion>(),
-    env.DB.prepare("SELECT bank_id FROM questions WHERE module_id = ? AND bank_id IS NOT NULL").bind(module.id).all<{ bank_id: string }>(),
-  ]);
-  const taken = new Set(used.map((u) => u.bank_id));
-  const unused = bank.filter((q) => !taken.has(q.id));
-
-  let picked: BankQuestion[];
-  if (round === 1) {
-    picked = unused.filter((q) => q.tier === "core");
-    if (picked.length < 3) return false;
-  } else {
-    const weak = new Set(focus.map(concept));
-    const onWeak = unused.filter((q) => weak.has(concept(q.concept)));
-    const pool = onWeak.length >= 2 ? onWeak : weak.size ? [] : unused;
-    if (pool.length < 2) return false;
-    picked = spread(pool, FOLLOW_UP_SIZE, focus.map(concept));
-  }
-
-  const statements = picked.map((q, i) => {
-    const placed = q.kind === "mcq" && q.options ? placeOptions(JSON.parse(q.options), q.correct_index!) : null;
-    const why = round > 1 ? `You were shaky on ${q.concept}, so here it is from another angle.` : null;
-    return env.DB.prepare(INSERT_QUESTION).bind(
-      crypto.randomUUID(), course.id, module.id, round, i, q.kind, q.prompt,
-      placed && JSON.stringify(placed.options), placed?.correctIndex ?? null, q.reference, concept(q.concept), why,
-      q.figure, q.figure_alt, q.id,
+async function checkKeys(env: Env, course: Course, module: Module, questions: z.infer<typeof RoundSchema>["questions"]) {
+  const rejected = new Set<number>();
+  const mcqs = questions.map((q, i) => ({ q, i })).filter(({ q }) => q.kind === "mcq");
+  if (!mcqs.length) return { rejected, checked: true };
+  try {
+    const decisions = await decide(
+      env,
+      { course: course.title, module: { title: module.title, objective: module.objective } },
+      Object.fromEntries(
+        mcqs.map(({ q, i }) => [
+          `q${i}`,
+          {
+            instructions: `Answer this question as an expert would: ${q.prompt}`,
+            criteria: {
+              ...Object.fromEntries(q.options.map((option, k) => [`option_${k}`, option])),
+              unclear: "No option is clearly correct, or more than one option is defensible.",
+            },
+          },
+        ]),
+      ),
     );
-  });
-  const message = round === 1
-    ? `Started "${module.title}" with ${picked.length} questions, one or more on each subtopic.`
-    : `Picked ${picked.length} follow-ups for "${module.title}" on ${[...new Set(picked.map((q) => q.concept))].join(", ")}.`;
-  await env.DB.batch([...statements, log(env, course.id, message)]);
-  return true;
+    for (const { q, i } of mcqs) if (decisions[`q${i}`]?.choice !== `option_${q.correct_index}`) rejected.add(i);
+    return { rejected, checked: true };
+  } catch (error) {
+    console.error(JSON.stringify({ message: "clef key check failed", error: String(error) }));
+    return { rejected, checked: false };
+  }
 }
 
 /**
- * Take `count` questions, one concept at a time in `order` (weakest first), easiest first within a concept.
+ * Take `count` questions, one concept at a time in `order` (weakest first). Within a concept, reviewed
+ * questions come before generated ones, then easiest first.
  * If none is a short answer, swap one in from a concept already picked, so no concept loses its slot.
  */
 function spread(pool: BankQuestion[], count: number, order: string[]) {
   const byConcept = new Map<string, BankQuestion[]>();
-  for (const q of [...pool].sort((a, b) => a.difficulty - b.difficulty || a.position - b.position)) {
+  const generated = (q: BankQuestion) => (q.source === "generated" ? 1 : 0);
+  for (const q of [...pool].sort((a, b) => generated(a) - generated(b) || a.difficulty - b.difficulty || a.position - b.position)) {
     const key = concept(q.concept);
     byConcept.set(key, [...(byConcept.get(key) ?? []), q]);
   }
@@ -575,6 +720,7 @@ function reveal(question: Question, answer: Answer) {
     feedback: answer.feedback,
     correct_index: question.correct_index,
     reference: question.reference,
+    source_url: question.source_url,
   };
 }
 
@@ -810,5 +956,6 @@ export async function learnerStats(env: Env, owner: string | null) {
 
 export async function deleteCourse(env: Env, id: string, owner: string | null) {
   // D1 enforces foreign keys, so children go via ON DELETE CASCADE.
-  await env.DB.prepare("DELETE FROM courses WHERE id = ? AND owner IS ?").bind(id, owner).run();
+  const { meta } = await env.DB.prepare("DELETE FROM courses WHERE id = ? AND owner IS ?").bind(id, owner).run();
+  if (meta.changes) await env.DB.prepare("DELETE FROM catalog_courses WHERE id = ? AND visibility = 'private'").bind(privateBankId(id)).run();
 }

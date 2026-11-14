@@ -640,5 +640,17 @@
 "material": "charcoal",
 "roof": "antenna",
 "accent": "teal"
+},
+"canada-ai-policy": {
+"archetype": "capitol",
+"material": "white",
+"roof": "none",
+"accent": "red"
+},
+"eu-ai-act": {
+"archetype": "rotunda",
+"material": "glass",
+"roof": "flag",
+"accent": "blue"
 }
 }
