@@ -134,6 +134,7 @@ Connect the repo in the dashboard: Workers & Pages → `coursesmash` → Setting
 | Build command | `npm ci` |
 | Deploy command | `npm run deploy` (applies D1 migrations, then deploys) |
 | Non-production branch deploy command | `npx wrangler versions upload` (a preview URL per branch, with no migrations) |
+| Build watch paths | Include `*`, exclude `ios/*` and `android/*`, so app-only changes don't redeploy the Worker |
 
 The build's API token needs D1 edit access, since the deploy command runs migrations. After that, merging to `main` deploys, and every other branch gets a preview version.
 
