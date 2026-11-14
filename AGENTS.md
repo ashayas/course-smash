@@ -69,7 +69,7 @@ For the iOS app, from `ios/`:
 
 - Wrangler uses the `wrangler login` session for D1, deploys and secrets.
 - Do not set `CLOUDFLARE_API_TOKEN` to the `.env` token. It would override that login, and the token has no D1 access.
-- The `.env` token (`CLOUDFLARE_API_KEY`) is for inference only and expires on 2026-11-10.
+- The `.env` token (`CLOUDFLARE_API_KEY`) is for inference only and expires on 2027-11-15.
 
 ### Secrets
 
