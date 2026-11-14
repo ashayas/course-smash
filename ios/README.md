@@ -153,6 +153,8 @@ Set `CS_BASE_URL` to use another Worker, such as a local `wrangler dev`. The log
 
 Nothing in `src/` or `public/` refers to `ios/`. The app reads `public/city.js`, and that is the only link, in that one direction. From the repo root, `npm run check:isolation` bundles the Worker with a dry run and fails if any file from `ios/` ends up in the bundle or the static assets.
 
+If the Worker deploys on push through Workers Builds, also exclude `ios/*` under Build watch paths in the Cloudflare dashboard (Workers & Pages, `coursesmash`, Settings, Build). A push that only changes this folder then skips the build. Cloudflare bypasses watch paths for pushes with 20 or more commits or 3000 or more changed files.
+
 ## Licences
 
 Inter Tight is bundled under the SIL Open Font License (`CourseSmash/Resources/Fonts/OFL.txt`). SwiftMath is MIT licensed.

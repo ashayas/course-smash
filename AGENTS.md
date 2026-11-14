@@ -26,6 +26,7 @@
   - Check that each app builds and that its walkthrough passes, in the simulator and in the emulator (commands below).
   - Add a short "Mobile" note to the PR or commit that says how the feature works on a phone, and anything that differs between iOS and Android.
 - Keep the Worker build apart from `ios/` and `android/`. Nothing in `src/` or `public/` may import or link to files under either folder, and no build setting may watch them. The apps read `public/city.js` (and Android reads `public/vendor/katex.min.js`), and those are the only links. Run `npm run check:isolation` after changing `wrangler.jsonc`, the tsconfig files or the build scripts.
+- When the repo is connected to Workers Builds (deploy on push), exclude `ios/*` and `android/*` under Build watch paths, so a push that only touches the apps does not rebuild or redeploy the Worker. That setting is in the dashboard (Workers & Pages, `coursesmash`, Settings, Build, Build watch paths), not in `wrangler.jsonc`. Leave the include path as `*`.
 
 ## What's already set up
 

@@ -158,6 +158,8 @@ It needs a running emulator or a connected device. Set `CS_BASE_URL=http://10.0.
 
 Nothing in `src/` or `public/` refers to `android/`. The app reads `public/city.js` and `public/vendor/katex.min.js`, and those are the only links, in that one direction. From the repo root, `npm run check:isolation` bundles the Worker with a dry run and fails if any file from `ios/` or `android/` ends up in the bundle or the static assets.
 
+If the Worker deploys on push through Workers Builds, also exclude `android/*` (and `ios/*`) under Build watch paths in the Cloudflare dashboard (Workers & Pages, `coursesmash`, Settings, Build). A push that only changes these folders then skips the build. Cloudflare bypasses watch paths for pushes with 20 or more commits or 3000 or more changed files.
+
 ## Licences
 
 Inter Tight is bundled under the SIL Open Font License (`INTER-TIGHT-OFL.txt`). KaTeX is MIT licensed (`public/vendor/KATEX-LICENSE.txt`).
