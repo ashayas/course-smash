@@ -1,0 +1,33 @@
+# fastlane lanes for the Course Smash Android app. Run them from android/: `fastlane android <lane>`.
+# See android/README.md for the one-time setup (upload keystore, Play Console record, service account key).
+default_platform(:android)
+
+platform :android do
+  desc "Build the debug APK, as a check that it compiles"
+  lane :build do
+    gradle(task: ":app:assembleDebug")
+  end
+
+  desc "Build the signed release bundle into app/build/outputs/bundle/release/app-release.aab"
+  lane :bundle do
+    UI.user_error!("Create android/keystore.properties first. See android/README.md, Signing.") unless File.exist?("../keystore.properties")
+    gradle(task: ":app:bundleRelease")
+  end
+
+  desc "Upload a build to the internal testing track"
+  lane :internal do
+    bundle
+    upload_to_play_store(track: "internal", aab: "app/build/outputs/bundle/release/app-release.aab", skip_upload_metadata: true, skip_upload_images: true, skip_upload_screenshots: true)
+  end
+
+  desc "Upload the title, descriptions, graphics and screenshots in fastlane/metadata/android"
+  lane :metadata do
+    upload_to_play_store(skip_upload_aab: true, skip_upload_apk: true, skip_upload_changelogs: true)
+  end
+
+  desc "Upload a build to production as a draft, with its listing. Sending it for review stays a manual step in Play Console"
+  lane :release do
+    bundle
+    upload_to_play_store(track: "production", release_status: "draft", aab: "app/build/outputs/bundle/release/app-release.aab")
+  end
+end

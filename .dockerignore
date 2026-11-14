@@ -13,4 +13,5 @@ dist
 data
 evals
 ios
+android
 *.md

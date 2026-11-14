@@ -28,3 +28,17 @@ ios/fastlane/test_output/
 .agent-grid/
 .boards/
 .drawings/
+
+# Android app. Signing material never goes in the repository.
+android/build/
+android/app/build/
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/keystore.properties
+android/fastlane/report.xml
+android/fastlane/README.md
+android/*.jks
+android/*.keystore
+*.aab
+*.apk
