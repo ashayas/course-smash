@@ -88,6 +88,10 @@ APIs: `GET /api/today`, `POST /api/recall/:id/answer`, `POST /api/recall/:id/ski
 | Rated by the decision model | The agent reads your answers |
 | ![Follow-up questions](docs/screenshots/09-follow-up.png) | ![Course finished](docs/screenshots/10-finished.png) |
 | Follow-ups aimed at your weak spots | Finish the course |
+| ![Today](docs/screenshots/11-today.png) | ![A recall answer](docs/screenshots/12-recall-result.png) |
+| Today: the day's recall, your streak and what's next | A recall answer |
+| ![Recall done](docs/screenshots/13-recall-done.png) | ![Today after recall](docs/screenshots/14-today-after-recall.png) |
+| Recall done, and when each idea comes back | Today after recall: continue, and what to take next |
 
 | | Cloudflare | Docker |
 |---|---|---|

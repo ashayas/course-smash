@@ -1103,8 +1103,8 @@ export async function learnerStats(env: Env, owner: string | null, zone?: string
 
 /**
  * Run the agent for courses whose round is fully answered, so the next questions are there when the learner
- * comes back. Called from the cron. It makes the same model calls the course screen would make while the
- * learner waits, and nothing else. A course that has hit an error is left for the learner to retry, and so is
+ * comes back. Called from the cron. It does what the course screen does while the learner waits and nothing else:
+ * the same model calls, and the same queued embedding when a round it writes is saved to a bank. A course that has hit an error is left for the learner to retry, and so is
  * one nobody has answered in for three days, so a broken or abandoned course can't spend tokens on every run.
  */
 export async function advanceWaiting(env: Env, limit = 2) {

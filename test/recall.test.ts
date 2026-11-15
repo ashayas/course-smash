@@ -69,7 +69,7 @@ test("an answer reschedules the item, stores the attempt and counts toward the d
   const answered = await answerRecall(env, null, beta.id, String(beta.correct_index), ZONE, now);
   assert.equal(answered.result.verdict, "correct");
   assert.equal(answered.result.correct_index, beta.correct_index);
-  assert.match(answered.schedule!.label, /^Beta comes back /);
+  assert.match(answered.schedule!.label, /^You'll see beta again (tomorrow|in \d+ days)\.$/);
   const after = (await item(env, "beta"))!;
   assert.equal(after.reviews, 1);
   assert.equal(after.last_verdict, "correct");

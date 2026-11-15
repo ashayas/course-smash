@@ -434,7 +434,8 @@ export async function closenessToMisses(env: Env, moduleId: string, misses: { pr
  * Empty when either side isn't embedded yet.
  */
 export async function storedCloseness(env: Env, candidateIds: string[], missedIds: string[]): Promise<Map<string, number>> {
-  // D1 binds at most 100 values in one statement.
+  // D1 binds at most 100 values in one statement. Candidates past the cap get no score, which ranks them last;
+  // a subtopic has a handful of bank questions, so the cap is far from being reached.
   const ids = [...new Set([...missedIds.slice(-10), ...candidateIds])].slice(0, 90);
   if (!candidateIds.length || !missedIds.length) return new Map();
   try {

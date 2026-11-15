@@ -37,7 +37,6 @@ type Attempt = {
 };
 type Draft = Omit<SetRow, "id" | "owner" | "status" | "day" | "position" | "created_at" | "last_reviewed_at">;
 
-const sentence = (text: string) => (text ? text[0]!.toUpperCase() + text.slice(1) : text);
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 /** "tomorrow", "in 3 days", "in 3 weeks": the same words on every client. */
 function when(days: number) {
@@ -335,17 +334,18 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
     question: next
       ? {
           id: next.id, kind: next.kind, prompt: next.prompt, options: next.options ? (JSON.parse(next.options) as string[]) : null,
-          concept: sentence(next.concept), why: next.why, figure: next.figure, figure_alt: next.figure_alt,
+          concept: next.concept, why: next.why, figure: next.figure, figure_alt: next.figure_alt,
           new: next.origin === "course", number: next.position + 1, last_seen_days: lastSeen,
-          // "Taints and tolerations · last seen 9 days ago", under the course's name.
-          detail: next.origin === "course" ? `${sentence(next.concept)} · new in your course` : `${sentence(next.concept)}${seen(lastSeen)}`,
+          // "taints and tolerations · last seen 9 days ago", under the course's name. Subtopic names are stored in
+          // lower case and shown that way everywhere, since capitalising them would turn "sdk" into "Sdk".
+          detail: next.origin === "course" ? `${next.concept} · new in your course` : `${next.concept}${seen(lastSeen)}`,
           course: byCourse.get(next.course_id) ?? null,
         }
       : null,
     // The soonest three, so the finished screen can say what comes back when.
     coming_back: attempts.filter((a) => a.due_in_days !== null).sort((a, b) => a.due_in_days! - b.due_in_days!)
       .filter((a) => !seenConcepts.has(a.concept) && seenConcepts.add(a.concept)).slice(0, 3)
-      .map((a) => ({ concept: sentence(a.concept), when: when(a.due_in_days!) })),
+      .map((a) => ({ concept: a.concept, when: when(a.due_in_days!) })),
   };
 }
 
@@ -526,7 +526,7 @@ export async function answerRecall(env: Env, owner: string | null, id: string, r
   const days = attempt.due_in_days ?? 1;
   return {
     result: revealAttempt(row, attempt),
-    schedule: { days, label: `${sentence(row.concept)} comes back ${when(days)}.` },
+    schedule: { days, label: `You'll see ${row.concept} again ${when(days)}.` },
     advance: null,
     ...(await state(env, learner, owner, now)),
   };
