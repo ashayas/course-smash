@@ -11,4 +11,6 @@ What to try:
 6. On "City", type what you want to learn and tap "Build my course". Planning takes up to a minute.
 7. "Log out" is at the bottom of "You".
 
-Short answers are graded by an AI model on the server. Multiple choice answers are graded by an answer key.
+Short answers are graded by an AI model on the server. Multiple choice answers are graded by an answer key. Questions and feedback are written by AI models. A learner who thinks one is wrong can report it through https://coursesmash.app/support.
+
+The app collects nothing beyond what the privacy policy at https://coursesmash.app/privacy lists, has no ads or tracking, and needs no permissions.

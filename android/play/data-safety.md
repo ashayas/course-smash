@@ -16,16 +16,18 @@ Answers for the Data safety section in Play Console (App content). They match wh
 | Data type | Collected | Shared | Processed ephemerally | Required | Purpose |
 |---|---|---|---|---|---|
 | Personal info: User IDs (the username) | Yes | No | No | Required | App functionality, Account management |
-| App activity: Other user-generated content (what you want to learn, your answers) | Yes | No | No | Required | App functionality, Personalization |
+| App activity: Other user-generated content (what you want to learn, your answers in courses and in daily recall) | Yes | No | No | Required | App functionality, Personalization |
+| App activity: App interactions (how many questions you answered on each day, which makes the streak, and when the account was last active) | Yes | No | No | Required | App functionality |
 
-Nothing else is collected: no location, contacts, photos, files, device or advertising IDs, diagnostics or analytics.
+Nothing else that the form asks about is collected: no location, contacts, photos, files, device or advertising IDs, diagnostics or analytics.
 
 ## Why these answers
 
 - The app has one permission, `INTERNET`, and no third-party SDKs.
 - The password is sent once over HTTPS to log in and is never stored on the device. The server stores only a salted hash.
 - After login the app keeps a session token in its private storage, encrypted with a key in the Android Keystore. Backups and device-to-device transfer are switched off for it (`data_extraction_rules.xml`).
-- Every request carries the name of the phone's time zone, such as `Europe/Paris`, and the server keeps it with the account so that a day, and so a streak, starts and ends when the learner's does. It is a setting, not a location: nothing finer than the zone's name is sent, and the app has no location permission. Play's form has no data type for it.
+- Every request carries the name of the phone's time zone, such as `Europe/Paris`, and the server keeps it with the account so that a day, and so a streak, starts and ends when the learner's does. It is a setting, not a location: nothing finer than the zone's name is sent, and the app has no location permission. Play's form has no data type for it. The same goes for the two recall settings, the daily goal and whether recall includes short answers.
+- "App interactions" is new in 1.2.0. The server keeps a count of answers per day so it can show a streak, and the time the account last called it. Both are worked out from answers the app already sends, and they are declared because they describe how a person uses the app.
 - What you want to learn and what you answer go to AI models on Cloudflare Workers AI to write questions, grade short answers and write feedback. That is why "Personalization" is listed.
 
 ## Other App content declarations

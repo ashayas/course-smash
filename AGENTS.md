@@ -17,8 +17,9 @@
     |---|---|---|
     | Version | `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `ios/project.yml` | `versionName` and `versionCode` in `android/app/build.gradle.kts` |
     | Listing text | `ios/fastlane/metadata`: description, keywords, release notes | `android/fastlane/metadata/android`: descriptions and a `changelogs/<versionCode>.txt` |
-    | Screenshots, when a screen changes | `ios/fastlane/screenshots`, with `ios/scripts/walkthrough.sh` | `android/fastlane/metadata/android/en-US/images/phoneScreenshots`, with `android/scripts/walkthrough.sh` |
-    | Privacy, when what the app collects changes | `ios/CourseSmash/Resources/PrivacyInfo.xcprivacy` | `android/play/data-safety.md` and the Data safety form |
+    | Screenshots, when a screen changes | `ios/fastlane/screenshots`, with `ios/scripts/walkthrough.sh` on demo data, then `node scripts/marketing/build.mjs` | `android/fastlane/metadata/android/en-US/images/phoneScreenshots`, with `android/scripts/walkthrough.sh` on demo data, then `node scripts/marketing/build.mjs` |
+    | Privacy, when what the app collects changes | `ios/CourseSmash/Resources/PrivacyInfo.xcprivacy` and `ios/app-store/privacy-label.md` | `android/play/data-safety.md` and the Data safety form |
+    | Store forms with no file: age or content rating, category, audience | `ios/app-store/age-rating.md` | `android/play/content-rating.md` |
     | Icons, when the logo mark changes | `node ios/scripts/make-icons.mjs` | `node android/scripts/make-icons.mjs` |
     | Build, signing or submitting changes | `ios/README.md` | `android/README.md` |
 
@@ -43,7 +44,7 @@ The infrastructure below already exists. Do not recreate it. `src/index.ts` is a
 | iOS app | `ios/`, generated with XcodeGen from `ios/project.yml`; see `ios/README.md` |
 | Android app | `android/`, a Gradle project with its wrapper; see `android/README.md` |
 | Native login | `POST /api/login` returns a session token, sent back as `Authorization: Bearer <token>` |
-| Public pages | `/privacy` and `/support`, which the store listings link to |
+| Public pages | `/privacy` and `/support`, which the store listings link to, and `/press`, the press kit |
 
 ### Keep these so opencode keeps working
 
@@ -66,6 +67,7 @@ Run these with the project's Wrangler through `npx`:
 - Check that `ios/` and `android/` stay out of the Worker build: `npm run check:isolation`
 - Run the tests: `npm test`. They cover the recall schedule, the streak and the recall endpoints on an in-memory SQLite, with no model calls.
 - Make demo data for local runs, walkthroughs and store screenshots: `node scripts/demo.mjs data/demo.db`, then start the Node server on it (see README, "Check your work").
+- Make the marketing images (store screenshots for both apps, the Play feature graphic, the press kit in `public/press-kit`): `node scripts/marketing/build.mjs --ios ios/build/walkthrough --android android/build/walkthrough`, from walkthrough runs on demo data with `CS_KEY_URL` set (see each app's README). Never take store screenshots from a real account: they would show its username and its real scores.
 
 For the iOS app, from `ios/`:
 

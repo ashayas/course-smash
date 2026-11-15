@@ -223,6 +223,12 @@ DATABASE_PATH=data/demo.db CLOUDFLARE_ACCOUNT_ID=<your account id> npm run start
 
 The app walkthroughs can run against it: set `CS_BASE_URL` to `http://localhost:8787` for iOS or `http://10.0.2.2:8787` for Android.
 
+`node scripts/demo.mjs data/demo.db --keep-library` starts the learner over and keeps the library with its embeddings, topics and learning paths, which the server takes about twenty minutes to make for a full library. `node scripts/demo-keys.mjs data/demo.db` is a local helper that tells a walkthrough the right answer to the demo learner's current question, so a demo run can score well. Set `CS_KEY_URL` to `http://localhost:8790` or `http://10.0.2.2:8790` to use it.
+
+## Marketing images and the press kit
+
+`node scripts/marketing/build.mjs --ios ios/build/walkthrough --android android/build/walkthrough` makes every marketing picture from walkthrough captures and `public/city.js`: the store screenshots for both apps (a real screen under a headline), the Google Play feature graphic, and the press kit in `public/press-kit`, which the page at [/press](https://coursesmash.app/press) offers for download. `node scripts/og.mjs` draws the link preview, `public/og.png`. Both need Google Chrome.
+
 ## Evals
 
 `evals/` holds 140 synthetic cases: 40 on course quality, 50 on question quality and 50 on grading decisions. The harness validates them and scores local heuristic graders, with no API calls. Its baseline numbers describe those heuristics, not Clef or any other model. See [evals/README.md](evals/README.md).

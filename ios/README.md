@@ -95,8 +95,8 @@ These need you, once:
 1. **Apple Developer Program** membership, and your Team ID set as above.
 2. **An app record** in [App Store Connect](https://appstoreconnect.apple.com): New App, iOS, bundle ID `app.coursesmash.ios`, name "Course Smash", SKU of your choice. Or run `fastlane produce --app_identifier app.coursesmash.ios --app_name "Course Smash" --team_id <TEAM-ID> --sku coursesmash --language en-US --platform ios --skip_devcenter` and sign in when asked. If either says creation "is not available due to your provider's contract state", the Account Holder has to accept the pending agreement at developer.apple.com and in App Store Connect → Business first.
 3. **A demo account for App Review.** The app has no sign-up, so reviewers need a login. Create one with `scripts/add-user.mjs` (see the root README) and enter it under App Review Information. Do not commit it: `fastlane/metadata/review_information/demo_user.txt` and `demo_password.txt` are placeholders.
-4. **App Privacy answers** in App Store Connect, matching `CourseSmash/Resources/PrivacyInfo.xcprivacy`: User ID and Other User Content, both linked to the user, used for app functionality, not used for tracking.
-5. **Age rating and pricing**, which only App Store Connect can set.
+4. **App Privacy answers** in App Store Connect, matching `CourseSmash/Resources/PrivacyInfo.xcprivacy`. They are written out in [app-store/privacy-label.md](app-store/privacy-label.md): User ID, Other User Content, Product Interaction and Other Data Types, all linked to the user, used for app functionality, not used for tracking.
+5. **Age rating and pricing**, which only App Store Connect can set. The answers are in [app-store/age-rating.md](app-store/age-rating.md).
 6. Read `public/privacy.html` (served at https://coursesmash.app/privacy) and `fastlane/metadata/copyright.txt`, and change anything that is not right for you.
 7. Optional: an App Store Connect API key, so uploads do not ask for a two-factor code. App Manager is enough. Keep the `.p8` in `~/.appstoreconnect/private_keys/` (where `altool` looks for it) and set `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`.
 8. **The distribution certificate and profile** from [Signing](#signing).
@@ -168,13 +168,22 @@ Or open the archive in Xcode's Organizer and choose Distribute App.
 CS_USER=<username> CS_PW=<password> ios/scripts/walkthrough.sh ios/build/walkthrough
 ```
 
-It uses the iPhone 16 Pro Max simulator by default. Its 1320 × 2868 screenshots are the 6.9-inch size the App Store requires, and App Store Connect scales them for smaller iPhones. The ones chosen for the listing are in `fastlane/screenshots/en-US`.
+It uses the iPhone 16 Pro Max simulator by default, whose screen is 1320 × 2868.
 
 Set `CS_BASE_URL` to use another Worker, such as a local `wrangler dev`. The login is passed to the test runner only, and nothing writes it to disk.
 
-An account with nothing to recall yet, which is how every account starts, only gets its Today cards walked. To walk recall and take the store screenshots, run against a local server with demo data (`node scripts/demo.mjs data/demo.db` from the repo root, then the Node server; see the root README, "Check your work"). The demo learner already has two courses in progress, so start a third one with `CS_LIBRARY_COURSE="LLM inference"`. Make the demo data again before each run, because the run answers the day's questions.
+An account with nothing to recall yet, which is how every account starts, only gets its Today cards walked. To walk recall, run against a local server with demo data (`node scripts/demo.mjs data/demo.db` from the repo root, then the Node server; see the root README, "Check your work"). The demo learner already has courses in progress, so start another one with `CS_LIBRARY_COURSE="LLM inference"`. Make the demo data again before each run, because the run answers the day's questions.
 
-The You screen shows the username, so don't use a screenshot of it for the listing.
+**The store screenshots** in `fastlane/screenshots/en-US` are made from a demo run, not from a real account, so they show a believable score and no real username:
+
+```sh
+# From the repo root, with the demo server running on :8787 and a throwaway USER_NAME, since the You screen shows it
+node scripts/demo-keys.mjs data/demo.db &
+CS_USER=<username> CS_PW=<password> CS_BASE_URL=http://localhost:8787 CS_KEY_URL=http://localhost:8790 ios/scripts/walkthrough.sh ios/build/walkthrough
+node scripts/marketing/build.mjs --ios ios/build/walkthrough
+```
+
+With `CS_KEY_URL` set, the walkthrough asks the helper for the right answer to each question, and still gets one recall question and one course question wrong on purpose. The helper only reads the local demo database; the Worker has nothing like it. `scripts/marketing/build.mjs` puts each `store-…` capture under its headline, at 1320 × 2868 for 6.9-inch iPhones (`iphone69-…`) and 1284 × 2778 for 6.5-inch ones (`iphone65-…`). The app is iPhone-only, so there is no iPad set.
 
 ## App icon and launch screen
 
