@@ -50,10 +50,14 @@ data class CourseList(val courses: List<CourseSummary>)
 
 /** GET /api/catalog */
 @Serializable
-data class Catalog(val trackList: List<Track>, val courses: List<CatalogCourse>) {
+data class Catalog(val trackList: List<Track>, val topics: List<Topic> = emptyList(), val courses: List<CatalogCourse>) {
     /** Tracks come as a list so they keep the order the library shows them in. */
     @Serializable
     data class Track(val id: String, val title: String)
+
+    /** A cluster of courses by meaning, across tracks. `courseIds` is in study order: each course follows the ones it builds on. */
+    @Serializable
+    data class Topic(val id: Int, val name: String, val summary: String, val courses: Int, val courseIds: List<String> = emptyList())
 }
 
 @Serializable
@@ -67,6 +71,9 @@ data class CatalogCourse(
     val icon: Icon? = null,
     val modules: Int = 0,
     val questions: Int = 0,
+    val topic: String? = null,
+    /** Ids of the library courses this one builds on. */
+    val requires: List<String> = emptyList(),
 )
 
 /** GET /api/catalog/:id */
@@ -78,10 +85,28 @@ data class CatalogCourseDetail(
     val title: String,
     val summary: String,
     val level: String,
+    val topic: String? = null,
     val modules: List<Module>,
+    /** The learning path around this course: what to take first, and what it opens up. */
+    val prerequisites: List<CatalogCourse> = emptyList(),
+    val leadsTo: List<CatalogCourse> = emptyList(),
 ) {
     @Serializable
     data class Module(val title: String, val concepts: List<String> = emptyList())
+}
+
+/** GET /api/catalog/:id/similar. `pending` until the course has been read for meaning. */
+@Serializable
+data class SimilarCourses(val pending: Boolean = false, val courses: List<CatalogCourse> = emptyList())
+
+/** GET /api/catalog/:id/misses: the subtopics and questions learners miss most in a course. */
+@Serializable
+data class CourseMisses(val concepts: List<Concept> = emptyList(), val questions: List<Hard> = emptyList()) {
+    @Serializable
+    data class Concept(val concept: String, val missRate: Double)
+
+    @Serializable
+    data class Hard(val prompt: String)
 }
 
 /** GET /api/courses/:id */

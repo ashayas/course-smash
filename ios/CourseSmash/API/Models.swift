@@ -50,8 +50,19 @@ struct CourseList: Decodable { let courses: [CourseSummary] }
 /// GET /api/catalog
 struct Catalog: Decodable {
     struct Track: Decodable, Identifiable, Hashable { let id: String; let title: String }
+
+    /// A cluster of courses by meaning, across tracks. `courseIds` is in study order: each course follows the ones it builds on.
+    struct Topic: Decodable, Identifiable, Hashable {
+        let id: Int
+        let name: String
+        let summary: String
+        let courses: Int
+        let courseIds: [String]
+    }
+
     /// Tracks in the order the library shows them.
     let trackList: [Track]
+    let topics: [Topic]?
     let courses: [CatalogCourse]
 }
 
@@ -66,6 +77,9 @@ struct CatalogCourse: Decodable, Identifiable, Hashable {
     let icon: Icon?
     let modules: Int
     let questions: Int
+    let topic: String?
+    /// Ids of the library courses this one builds on.
+    let requires: [String]?
 }
 
 /// GET /api/catalog/:id
@@ -77,7 +91,25 @@ struct CatalogCourseDetail: Decodable {
     let title: String
     let summary: String
     let level: String
+    let topic: String?
     let modules: [Module]
+    /// The learning path around this course: what to take first, and what it opens up.
+    let prerequisites: [CatalogCourse]?
+    let leadsTo: [CatalogCourse]?
+}
+
+/// GET /api/catalog/:id/similar. `pending` until the course has been read for meaning.
+struct SimilarCourses: Decodable {
+    let pending: Bool
+    let courses: [CatalogCourse]
+}
+
+/// GET /api/catalog/:id/misses: the subtopics and questions learners miss most in a course.
+struct CourseMisses: Decodable {
+    struct Concept: Decodable, Hashable { let concept: String; let missRate: Double }
+    struct Hard: Decodable, Hashable { let prompt: String }
+    let concepts: [Concept]
+    let questions: [Hard]
 }
 
 /// GET /api/courses/:id

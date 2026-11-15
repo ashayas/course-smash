@@ -1,0 +1,1 @@
+The library now groups courses into topics. Each topic is a learning path in study order, and a course page shows what to take first, what it leads to, similar courses and where learners slip most.

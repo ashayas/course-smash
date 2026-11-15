@@ -115,7 +115,7 @@ struct CourseScreen: View {
         VStack(alignment: .leading, spacing: 24) {
             ErrorText(message: text)
             FlowLayout(spacing: 14) {
-                Button("Try again") { model.start() }.buttonStyle(PillButtonStyle())
+                Button("Try again") { model.start() }.buttonStyle(PillButtonStyle()).accessibilityIdentifier("try-again")
                 Button("Back to courses") { app.show(.courses) }.buttonStyle(PillButtonStyle(kind: .quiet))
             }
         }

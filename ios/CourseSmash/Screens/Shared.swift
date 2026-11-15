@@ -82,6 +82,8 @@ struct CourseCard: View {
 /// A card for a ready-made library course.
 struct LibraryCard: View {
     let course: CatalogCourse
+    /// Titles of the library courses this one builds on, shown when the card sits in a learning path.
+    var after: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -89,6 +91,9 @@ struct LibraryCard: View {
             Text("\(course.trackTitle) · \(course.level)").type(.small).foregroundStyle(Theme.muted).padding(.bottom, 6)
             Text(course.title).type(.titleSmall).padding(.bottom, 8)
             Text("\(course.modules) modules · \(course.questions) questions").type(.small).foregroundStyle(Theme.muted)
+            if !after.isEmpty {
+                Text("After \(after.joined(separator: ", "))").type(.small).foregroundStyle(Theme.paper).padding(.top, 8)
+            }
         }
         .card()
         .accessibilityElement(children: .combine)
@@ -100,11 +105,13 @@ struct LibraryCard: View {
 struct SectionHead<Trailing: View>: View {
     let title: String
     let note: String
+    /// A name UI tests can find the heading by.
+    var identifier = ""
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.gap) {
-            Text(title).type(.section).accessibilityAddTraits(.isHeader)
+            Text(title).type(.section).accessibilityAddTraits(.isHeader).accessibilityIdentifier(identifier)
             Text(note).type(.body).foregroundStyle(Theme.muted)
             trailing
         }
@@ -114,8 +121,8 @@ struct SectionHead<Trailing: View>: View {
 }
 
 extension SectionHead where Trailing == EmptyView {
-    init(title: String, note: String) {
-        self.init(title: title, note: note) { EmptyView() }
+    init(title: String, note: String, identifier: String = "") {
+        self.init(title: title, note: note, identifier: identifier) { EmptyView() }
     }
 }
 

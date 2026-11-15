@@ -5,7 +5,7 @@ The native Android app. It is a Kotlin and Jetpack Compose port of the web app i
 | | |
 |---|---|
 | Application ID | `app.coursesmash.android` |
-| Version | `1.0.0`, version code `1` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
+| Version | `1.1.0`, version code `2` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
 | Runs on | Phones, Android 8.0 (API 26) or later, portrait. Targets API 36. |
 | Server | `https://coursesmash.app` (`API_BASE_URL` in `app/build.gradle.kts`) |
 | Libraries | Jetpack Compose (UI and Foundation), Activity Compose, kotlinx.serialization and coroutines. No Material library and no third-party SDKs. |
@@ -133,10 +133,10 @@ Build the bundle with `./gradlew :app:bundleRelease`, then in Play Console choos
 | `title.txt` | Course Smash |
 | `short_description.txt` | Say what you want to learn, and build a city one course at a time. |
 | `full_description.txt` | The store description |
-| `changelogs/1.txt` | What's new in version code 1 |
+| `changelogs/<versionCode>.txt` | What's new in each version code |
 | `images/icon.png` | 512 × 512 store icon |
 | `images/featureGraphic.png` | 1024 × 500 feature graphic |
-| `images/phoneScreenshots/` | Eight phone screenshots, 1080 × 1920 |
+| `images/phoneScreenshots/` | Nine phone screenshots, 1080 × 1920 |
 
 Category (Education), contact details and the privacy policy URL are set in Play Console.
 

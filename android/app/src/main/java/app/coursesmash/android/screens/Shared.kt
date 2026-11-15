@@ -135,14 +135,16 @@ fun CourseCard(model: AppModel, course: CourseSummary) {
     }
 }
 
-/** A card for a ready-made library course. */
+/** A card for a ready-made library course. `after`: titles of the courses it builds on. */
 @Composable
-fun LibraryCard(model: AppModel, course: CatalogCourse) {
+fun LibraryCard(model: AppModel, course: CatalogCourse, after: List<String> = emptyList()) {
     TapCard({ model.open(app.coursesmash.android.Route.LibraryCourse(course.id)) }, tag = "library-card") {
         ArtInset(model, model.city.building(course.art, ArtProgress(floors = course.modules, lit = 0, ambient = 0.18)))
         T("${course.trackTitle} · ${course.level}", TypeStyle.Small, Modifier.padding(bottom = 6.dp), color = Theme.Muted)
         T(course.title, TypeStyle.TitleSmall, Modifier.padding(bottom = 8.dp))
         T("${course.modules} modules · ${course.questions} questions", TypeStyle.Small, color = Theme.Muted)
+        // The courses it builds on, shown when the card sits in a learning path.
+        if (after.isNotEmpty()) T("After ${after.joinToString(", ")}", TypeStyle.Small, Modifier.padding(top = 8.dp), color = Theme.Paper)
     }
 }
 
