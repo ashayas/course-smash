@@ -3,8 +3,9 @@
 /** The store screenshots, in store order: the capture each uses, its headline and the line under it. */
 export const SHOTS = [
   { name: "today", capture: "store-today", headline: "A few questions a day, from what you've learned", line: "Daily recall takes a few minutes." },
-  // `whole`: what matters here is at the bottom of the screen, so on a short page the whole phone is shown, smaller.
-  { name: "recall", capture: "store-recall-right", headline: "Get it right and it comes back later", line: "Miss it and it comes back sooner.", whole: true },
+  // `lower`: what matters here is at the bottom of the screen, so the picture is a close crop of the lower part of
+  // the phone, a little larger than the others, with the status bar and the progress row cut off.
+  { name: "recall", capture: "store-recall-right", headline: "Get it right and it comes back later", line: "Miss it and it comes back sooner.", lower: true },
   { name: "streak", capture: "store-recall-done", headline: "Answer five and the day counts", line: "Days in a row make your streak." },
   { name: "city", capture: "store-city", headline: "Every course is a building in your city", line: "One floor per module. Pass one and its windows light up." },
   { name: "course", capture: "store-question", headline: "Courses made of questions", line: "Say what you want to learn. The next questions follow how you answer." },
