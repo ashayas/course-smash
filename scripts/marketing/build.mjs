@@ -11,6 +11,7 @@
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { inflateSync } from "node:zlib";
 import { join, resolve } from "node:path";
 import { SHOTS } from "./shots.mjs";
 
@@ -54,6 +55,54 @@ function render(html, width, height, out) {
     `--window-size=${width},${height}`, "--virtual-time-budget=4000", `--screenshot=${out}`, `file://${page}`], { stdio: ["ignore", "ignore", "ignore"] });
 }
 
+/** The pixels of an 8-bit RGB or RGBA PNG that isn't interlaced, which is what both walkthroughs save. */
+function readPng(file) {
+  const data = readFileSync(file);
+  const width = data.readUInt32BE(16), height = data.readUInt32BE(20);
+  const bytes = { 2: 3, 6: 4 }[data[25]];
+  if (data[24] !== 8 || !bytes || data[28] !== 0) throw new Error(`${file} is not an 8-bit RGB or RGBA PNG.`);
+  const parts = [];
+  for (let at = 8; at < data.length; at += 12 + data.readUInt32BE(at)) {
+    if (data.toString("latin1", at + 4, at + 8) === "IDAT") parts.push(data.subarray(at + 8, at + 8 + data.readUInt32BE(at)));
+  }
+  const raw = inflateSync(Buffer.concat(parts));
+  const stride = width * bytes;
+  const pixels = Buffer.alloc(stride * height);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    const line = y * stride, source = y * (stride + 1) + 1;
+    for (let i = 0; i < stride; i++) {
+      const left = i >= bytes ? pixels[line + i - bytes] : 0;
+      const up = y ? pixels[line - stride + i] : 0;
+      const corner = y && i >= bytes ? pixels[line - stride + i - bytes] : 0;
+      const guess = left + up - corner;
+      const paeth = Math.abs(guess - left) <= Math.abs(guess - up) && Math.abs(guess - left) <= Math.abs(guess - corner) ? left : Math.abs(guess - up) <= Math.abs(guess - corner) ? up : corner;
+      pixels[line + i] = (raw[source + i] + [0, left, up, (left + up) >> 1, paeth][filter]) & 255;
+    }
+  }
+  return { width, height, at: (x, y) => pixels.subarray(y * stride + x * bytes, y * stride + x * bytes + 3) };
+}
+
+/**
+ * The first row at or below `from` that sits in a gap between two blocks: a band of rows that are nothing but
+ * the page's ink colour from side to side. A crop that starts there never cuts through a line of text or a card.
+ */
+function gapRow(png, from) {
+  const INK = [0x14, 0x14, 0x14];
+  const blank = (y) => {
+    for (let x = Math.round(png.width * 0.03); x < png.width * 0.97; x += 3) {
+      const pixel = png.at(x, y);
+      if (INK.some((value, i) => Math.abs(pixel[i] - value) > 5)) return false;
+    }
+    return true;
+  };
+  for (let y = Math.max(0, Math.ceil(from)), run = 0; y < png.height; y++) {
+    run = blank(y) ? run + 1 : 0;
+    if (run >= 12) return y - 5;
+  }
+  return Math.ceil(from);
+}
+
 /** The walkthrough's capture called NN-<name>.png, or null. */
 function capture(dir, name) {
   const file = dir && existsSync(dir) ? readdirSync(dir).find((f) => f.replace(/^\d+-/, "") === `${name}.png`) : null;
@@ -73,12 +122,20 @@ function shotHtml(shot, index, image, width, height) {
   const windows = SHOTS.map((_, i) => `<i class="${i <= index ? "lit" : ""}"></i>`).join("");
   // The phone normally shows from its top and runs off the bottom of the page. A `lower` picture is the other way
   // round: the phone's bottom is on the page, with a margin under it, and its top is cut off under the words.
-  const room = Math.floor(height / scale - type.top - type.words - 40 - 72);
-  const frame = shot.lower
-    ? `.phone { margin: 40px auto 0; width: 1128px; height: ${room}px; flex: none; padding: 0 24px 24px; background: ${C.surface}; border-radius: 0 0 124px 124px; overflow: hidden; display: flex; align-items: flex-end; }
-    .phone img { display: block; width: 100%; flex: none; border-radius: 0 0 100px 100px; }`
-    : `.phone { margin: 0 auto; width: 1044px; flex: none; padding: 24px 24px 0; background: ${C.surface}; border-radius: 132px 132px 0 0; }
+  // The cut is moved down to the nearest gap between two blocks, so it never goes through text.
+  let frame;
+  if (shot.lower) {
+    const png = readPng(image);
+    const perPixel = 1080 / png.width; // the screen is drawn 1080 units wide inside the frame
+    const room = Math.floor(height / scale - type.top - type.words - 40 - 72);
+    const cut = gapRow(png, png.height - (room - 24) / perPixel);
+    const tall = Math.floor((png.height - cut) * perPixel) + 24;
+    frame = `.phone { margin: auto auto 72px; width: 1128px; height: ${tall}px; flex: none; padding: 0 24px 24px; background: ${C.surface}; border-radius: 0 0 124px 124px; overflow: hidden; display: flex; align-items: flex-end; }
+    .phone img { display: block; width: 100%; flex: none; border-radius: 0 0 100px 100px; }`;
+  } else {
+    frame = `.phone { margin: 0 auto; width: 1044px; flex: none; padding: 24px 24px 0; background: ${C.surface}; border-radius: 132px 132px 0 0; }
     .phone img { display: block; width: 100%; border-radius: 108px 108px 0 0; }`;
+  }
   return `<style>
     .page { width: 1320px; height: ${Math.ceil(height / scale)}px; zoom: ${scale}; padding: ${type.top}px 96px 0; display: flex; flex-direction: column; overflow: hidden; }
     /* The words get the same room in every picture, so the phone starts at the same height in all of them. */
