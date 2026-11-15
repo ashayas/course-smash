@@ -54,6 +54,12 @@ function render(html, width, height, out) {
     `--window-size=${width},${height}`, "--virtual-time-budget=4000", `--screenshot=${out}`, `file://${page}`], { stdio: ["ignore", "ignore", "ignore"] });
 }
 
+/** A PNG's width and height, read from its header. */
+function pngSize(file) {
+  const header = readFileSync(file).subarray(16, 24);
+  return [header.readUInt32BE(0), header.readUInt32BE(4)];
+}
+
 /** The walkthrough's capture called NN-<name>.png, or null. */
 function capture(dir, name) {
   const file = dir && existsSync(dir) ? readdirSync(dir).find((f) => f.replace(/^\d+-/, "") === `${name}.png`) : null;
@@ -71,6 +77,12 @@ function shotHtml(shot, index, image, width, height) {
   const short = height / width < 2;
   const type = short ? { top: 104, h1: 112, p: 46, words: 500 } : { top: 150, h1: 128, p: 50, words: 590 };
   const windows = SHOTS.map((_, i) => `<i class="${i <= index ? "lit" : ""}"></i>`).join("");
+  // The phone normally runs off the bottom of the page. When the whole screen has to show, it is made narrow
+  // enough to fit, with a margin under it.
+  const room = height / scale - type.top - type.words - 72;
+  const [pixelsWide, pixelsHigh] = pngSize(image);
+  const fits = shot.whole && short;
+  const phone = fits ? Math.min(1044, Math.floor((room - 48) * (pixelsWide / pixelsHigh)) + 48) : 1044;
   return `<style>
     .page { width: 1320px; height: ${Math.ceil(height / scale)}px; zoom: ${scale}; padding: ${type.top}px 96px 0; display: flex; flex-direction: column; overflow: hidden; }
     /* The words get the same room in every picture, so the phone starts at the same height in all of them. */
@@ -80,8 +92,8 @@ function shotHtml(shot, index, image, width, height) {
     .windows .lit { background: ${C.yellow}; }
     h1 { font-size: ${type.h1}px; font-weight: 800; letter-spacing: -.055em; line-height: .96; text-wrap: balance; }
     p { margin-top: 36px; font-size: ${type.p}px; font-weight: 500; letter-spacing: -.02em; line-height: 1.15; color: ${C.muted}; text-wrap: balance; }
-    .phone { margin: 0 auto; width: 1044px; flex: none; padding: 24px 24px 0; background: ${C.surface}; border-radius: 132px 132px 0 0; }
-    .phone img { display: block; width: 100%; border-radius: 108px 108px 0 0; }
+    .phone { margin: 0 auto; width: ${phone}px; flex: none; padding: 24px 24px ${fits ? 24 : 0}px; background: ${C.surface}; border-radius: ${fits ? "104px" : "132px 132px 0 0"}; }
+    .phone img { display: block; width: 100%; border-radius: ${fits ? "80px" : "108px 108px 0 0"}; }
   </style>
   <div class="page"><div class="words"><div class="windows">${windows}</div><h1>${shot.headline}</h1><p>${shot.line}</p></div>
     <div class="phone"><img src="file://${image}"></div></div>`;
