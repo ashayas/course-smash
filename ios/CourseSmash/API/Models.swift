@@ -191,6 +191,8 @@ struct Stats: Decodable {
         let average: Double?
         let activeDays: Int
         let streak: Int
+        /// Answers given in daily recall, which `answered` already counts.
+        let recallAnswered: Int?
     }
     struct Day: Decodable, Hashable {
         let date: String
@@ -232,4 +234,113 @@ struct Stats: Decodable {
     let courses: [Course]
     /// The top of the activity chart's scale.
     let chartMax: Int
+    /// The same streak as on Today and You.
+    let streak: Streak?
+}
+
+/// The learner's run of days, written by the Worker. Every response that can change it carries one.
+struct Streak: Decodable, Hashable {
+    struct Progress: Decodable, Hashable {
+        let answered: Int
+        let needed: Int
+        let counted: Bool
+    }
+    /// One day. `state` is one of: done, rest, missed, today, future, none.
+    struct Day: Decodable, Hashable, Identifiable {
+        let day: String
+        let state: String
+        var id: String { day }
+    }
+
+    let day: String
+    let current: Int
+    let longest: Int
+    let label: String
+    let restLabel: String?
+    let today: Progress
+    /// Monday first.
+    let week: [Day]
+    /// The last 28 days, oldest first, ending today.
+    let calendar: [Day]
+}
+
+/// Today's recall set and the next question in it.
+struct Recall: Decodable, Hashable {
+    struct ComingBack: Decodable, Hashable { let concept: String; let when: String }
+
+    /// ready, done, skipped or empty.
+    let status: String
+    let lead: String
+    let total: Int
+    let answered: Int
+    let correct: Int
+    /// One per question, in order: correct, partial, incorrect, skipped or open.
+    let marks: [String]
+    let moreAvailable: Bool
+    let question: RecallQuestion?
+    let comingBack: [ComingBack]
+}
+
+/// A recall question. It never carries its answer key.
+struct RecallQuestion: Decodable, Hashable, Identifiable {
+    let id: String
+    let kind: String
+    let prompt: String
+    let options: [String]?
+    /// "Message roles and turns · last seen 10 days ago", written by the Worker.
+    let detail: String
+    let why: String?
+    let figure: String?
+    let figureAlt: String?
+    /// Its place in today's set, from 1.
+    let number: Int
+    let course: CourseSummary?
+}
+
+/// GET /api/today
+struct Today: Decodable {
+    struct Continue: Decodable, Hashable {
+        let course: CourseSummary
+        let detail: String
+    }
+    struct UpNext: Decodable, Hashable {
+        let course: CatalogCourse
+        let detail: String
+    }
+
+    var streak: Streak
+    var recall: Recall
+    /// The course in progress, or nil.
+    let resume: Continue?
+    let upNext: UpNext?
+    /// Library courses to start with, only when the learner has no courses.
+    let picks: [CatalogCourse]
+
+    private enum CodingKeys: String, CodingKey {
+        case streak, recall, resume = "continue", upNext, picks
+    }
+}
+
+/// POST /api/recall/:id/skip, /api/recall/more and /api/recall/skip-day
+struct RecallState: Decodable {
+    let streak: Streak
+    let recall: Recall
+}
+
+/// POST /api/recall/:id/answer. `recall.question` is the next question, or nil when the set is finished.
+struct RecallAnswer: Decodable {
+    struct Schedule: Decodable, Hashable { let label: String }
+    let result: AnswerResult
+    /// When the subtopic comes back. Nil for a question that is new in a course.
+    let schedule: Schedule?
+    let streak: Streak
+    let recall: Recall
+}
+
+/// GET and PUT /api/settings
+struct LearnerSettings: Decodable, Hashable {
+    let dailyGoal: Int
+    let shortAnswers: Bool
+    let timeZone: String
+    let goals: [Int]
 }

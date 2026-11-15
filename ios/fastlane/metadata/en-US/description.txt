@@ -2,6 +2,13 @@ Say what you want to learn. Course Smash builds a course of questions, reads how
 
 Every course goes up as a building in your city, one floor per module. Pass a module and its floor lights up.
 
+DAILY RECALL
+• The app opens on Today: about 10 questions from what you have already learned, a few minutes' worth.
+• Ideas you got right come back after a longer gap. Ideas you missed come back sooner.
+• Answer 5 questions in a day, in recall or in a course, and the day counts toward your streak. A rest day is saved for every 7 days in a row, up to 2, and covers a day you miss.
+• After recall, one tap carries on with your course, and the course that builds on it is lined up next.
+• Set your daily goal to 5, 10, 15 or 20 questions, and choose whether recall includes short answers.
+
 HOW IT WORKS
 • Describe what you want to understand and why, in a sentence. An AI agent plans a short course around it.
 • Answer multiple choice and short answer questions. Short answers are graded on what you mean, not on matching words.
@@ -21,7 +28,8 @@ THE LIBRARY
 • Tell a library course what you want out of it, and it sets how well you need to know each module.
 
 YOUR STATS
-• Answers per day for the last 30 days, your streak and your average score.
+• Your streak, your longest run and the last 4 weeks, day by day.
+• Answers per day for the last 30 days and your average score.
 • For each course: the modules you passed, what you are strongest on and what needs work.
 
 Course Smash needs an account on a Course Smash server. The app has no sign-up screen: accounts are set up by whoever runs the server you use.

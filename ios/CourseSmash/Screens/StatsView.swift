@@ -12,14 +12,15 @@ struct StatsView: View {
                 ErrorText(message: error).padding(.top, 20)
             } else if let stats {
                 PageHead(title: "Your stats", note: "How you're doing on every course. Scores count partly right answers as half.")
-                tiles(stats.totals)
+                tiles(stats.totals, stats.streak)
+                if let streak = stats.streak { StreakCard(streak: streak).padding(.top, Theme.gap) }
                 ActivityPanel(days: stats.days, max: stats.chartMax).padding(.top, Theme.gap)
                 SectionHead(title: "By course", note: stats.courses.contains { $0.answered > 0 } ? "Most recently studied first. Open a course to keep going." : "Answer a few questions and your scores show up here.")
                     .padding(.top, 72)
                 if stats.courses.isEmpty {
                     VStack(spacing: 14) {
                         Text("No courses yet.").type(.body).foregroundStyle(Theme.muted)
-                        Button("Start one.") { model.show(.courses) }.buttonStyle(LinkButtonStyle())
+                        Button("Start one.") { model.show(.city) }.buttonStyle(LinkButtonStyle())
                     }
                     .frame(maxWidth: .infinity)
                     .card(padding: 44)
@@ -36,12 +37,12 @@ struct StatsView: View {
         .task { await load() }
     }
 
-    private func tiles(_ t: Stats.Totals) -> some View {
+    private func tiles(_ t: Stats.Totals, _ streak: Streak?) -> some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: Theme.gap), GridItem(.flexible(), spacing: Theme.gap)], spacing: Theme.gap) {
             StatTile(value: String(t.answered), title: "questions answered", note: t.activeDays > 0 ? "over \(plural(t.activeDays, "day"))" : nil)
             StatTile(value: percent(t.average), title: "average score", note: t.answered > 0 ? "\(t.correct) right, \(t.partial) partly, \(t.incorrect) wrong" : nil)
             StatTile(value: String(t.modulesPassed), title: "modules passed", note: "\(t.finished) of \(plural(t.courses, "course")) finished")
-            StatTile(value: String(t.streak), title: "day streak", note: t.streak > 0 ? "Answer today to keep it going" : "Answer a question to start one")
+            StatTile(value: String(streak?.current ?? t.streak), title: "day streak", note: streak?.label)
         }
     }
 

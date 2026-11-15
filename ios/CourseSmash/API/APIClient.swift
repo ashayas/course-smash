@@ -53,6 +53,8 @@ final class APIClient: @unchecked Sendable {
         var request = URLRequest(url: components.url!)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // The Worker works out the learner's day, and so the streak, from the device's time zone.
+        request.setValue(TimeZone.current.identifier, forHTTPHeaderField: "X-Time-Zone")
         if let body {
             request.httpBody = body
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
