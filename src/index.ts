@@ -106,10 +106,10 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
       if (recall[2] === "skip") return json(await skipRecall(env, owner, recall[1]!, zone));
       const body = (await request.json().catch(() => null)) as { response?: unknown } | null;
       if (typeof body?.response !== "string") return json({ error: "Write an answer first." }, 400);
-      const { advance: waiting, ...answer } = await answerRecall(env, owner, recall[1]!, body.response, zone);
-      // That answer finished a course's round, so start writing what comes next while the learner carries on.
-      if (waiting) ctx.waitUntil(advance(env, waiting, owner));
-      return json(answer);
+      // When this answer finishes a course's round, the agent isn't started from here: after a response is sent a
+      // request gets 30 seconds, and writing a round takes longer. The course screen starts it when the learner
+      // opens the course, and the cron does within ten minutes otherwise.
+      return json(await answerRecall(env, owner, recall[1]!, body.response, zone));
     } catch (error) {
       if (error instanceof AnswerError) return json({ error: error.message }, error.status);
       throw error;
@@ -213,7 +213,8 @@ export default {
   // finds a question. The two jobs run side by side and neither depends on the other.
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(sweep(env).catch((error) => console.error(JSON.stringify({ message: "embedding sweep failed", error: String(error) }))));
-    ctx.waitUntil(advanceWaiting(env).catch((error) => console.error(JSON.stringify({ message: "advancing waiting courses failed", error: String(error) }))));
+    // Awaited, so the handler stays open for as long as the writing takes, up to the cron's own limit.
+    await advanceWaiting(env).catch((error) => console.error(JSON.stringify({ message: "advancing waiting courses failed", error: String(error) })));
   },
 
   async queue(batch, env) {
