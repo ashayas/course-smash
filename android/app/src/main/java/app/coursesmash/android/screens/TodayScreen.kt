@@ -1,21 +1,26 @@
 package app.coursesmash.android.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -87,8 +92,13 @@ fun TodayScreen(model: AppModel) {
             }
             today.next?.let { next ->
                 item("then") {
-                    // What follows recall, so the whole visit is in view.
-                    SourceRow(model, model.city.building(next.course.art), "Then: ${plain(next.course.name)}", next.detail, onInk = true, Modifier.padding(top = 18.dp).testTag("then-course"))
+                    // What follows recall, so the whole visit is in view. Tapping it opens that course.
+                    SourceRow(
+                        model, model.city.building(next.course.art), "Then: ${plain(next.course.name)}", next.detail, onInk = true,
+                        Modifier.padding(top = 12.dp).testTag("then-course")
+                            .clickable(remember { MutableInteractionSource() }, indication = null, role = Role.Button) { model.open(Route.Course(next.course.id)) }
+                            .heightIn(min = 48.dp),
+                    )
                 }
             }
             return@Page

@@ -284,6 +284,16 @@ class WalkthroughTest {
         waitFor("today-title", 240)
         Thread.sleep(2000) // the buildings are drawn by city.js
         shot("today")
+        // The "Then:" row under the question opens the course that follows recall.
+        if (exists("recall-question") && runCatching { scrollTo("then-course") }.isSuccess) {
+            tap("then-course")
+            waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
+            Thread.sleep(1000)
+            shot("then-course")
+            press("back")
+            waitFor("today-title", 20)
+            waitFor("recall-question", 20)
+        }
         if (exists("recall-question")) recall() else if (exists("recall-soon")) shot("today-no-recall-yet")
 
         if (exists("continue-card")) {
