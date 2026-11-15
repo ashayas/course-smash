@@ -1,9 +1,11 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { AnswerError, advance, answerQuestion, catalogCourse, catalogMisses, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, listTopics, setCourseIcon, similarCatalogCourses, startCatalogCourse } from "./agent";
+import { AnswerError, advance, advanceWaiting, answerQuestion, catalogCourse, catalogMisses, courseView, createCourse, deleteCourse, learnerStats, listCatalog, listCourses, listTopics, setCourseIcon, similarCatalogCourses, startCatalogCourse } from "./agent";
 import { authenticate, authenticateBasic, clearedSessionCookie, ownerOf, sessionCookie, sessionToken, sessionUser } from "./auth";
 import { type EmbedMessage, consume, sweep } from "./embeddings";
 import { IconSchema } from "./icon";
 import { createMcpServer } from "./mcp";
+import { getLearner, saveSettings, settingsView } from "./days";
+import { answerRecall, moreRecall, skipRecall, skipRecallDay, today } from "./recall";
 import { appConfig, filterCatalog, withInsights } from "./views";
 
 const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png", "/privacy", "/support"]);
@@ -70,6 +72,8 @@ async function handleMcp(request: Request, env: Env): Promise<Response> {
 async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path: string, username: string): Promise<Response> {
   const { method } = request;
   const owner = ownerOf(username, env);
+  // The learner's IANA time zone, which decides the day an answer belongs to. See src/days.ts.
+  const zone = request.headers.get("X-Time-Zone");
   if (path === "/api/me" && method === "GET") return json({ username });
   if (path === "/api/courses" && method === "GET") return json({ courses: await listCourses(env, owner) });
 
@@ -82,7 +86,35 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
   }
 
   if (path === "/api/app" && method === "GET") return json(appConfig());
-  if (path === "/api/stats" && method === "GET") return json(withInsights(await learnerStats(env, owner)));
+  if (path === "/api/stats" && method === "GET") return json(withInsights(await learnerStats(env, owner, zone)));
+
+  if (path === "/api/today" && method === "GET") return json(await today(env, owner, zone));
+  if (path === "/api/settings" && method === "GET") return json(settingsView(await getLearner(env, owner, zone)));
+  if (path === "/api/settings" && method === "PUT") {
+    const body = (await request.json().catch(() => null)) as { daily_goal?: unknown; short_answers?: unknown } | null;
+    const saved = await saveSettings(env, await getLearner(env, owner, zone), body ?? {});
+    return saved ? json(saved) : json({ error: "Pick one of the choices on the screen." }, 400);
+  }
+  if (path === "/api/recall/more" && method === "POST") return json(await moreRecall(env, owner, zone));
+  if (path === "/api/recall/skip-day" && method === "POST") {
+    const body = (await request.json().catch(() => null)) as { skipped?: unknown } | null;
+    return json(await skipRecallDay(env, owner, body?.skipped !== false, zone));
+  }
+  const recall = path.match(/^\/api\/recall\/([\w-]+)\/(answer|skip)$/);
+  if (recall && method === "POST") {
+    try {
+      if (recall[2] === "skip") return json(await skipRecall(env, owner, recall[1]!, zone));
+      const body = (await request.json().catch(() => null)) as { response?: unknown } | null;
+      if (typeof body?.response !== "string") return json({ error: "Write an answer first." }, 400);
+      const { advance: waiting, ...answer } = await answerRecall(env, owner, recall[1]!, body.response, zone);
+      // That answer finished a course's round, so start writing what comes next while the learner carries on.
+      if (waiting) ctx.waitUntil(advance(env, waiting, owner));
+      return json(answer);
+    } catch (error) {
+      if (error instanceof AnswerError) return json({ error: error.message }, error.status);
+      throw error;
+    }
+  }
 
   if (path === "/api/catalog" && method === "GET") {
     const { searchParams } = new URL(request.url);
@@ -141,7 +173,7 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     const body = (await request.json().catch(() => null)) as { response?: unknown } | null;
     if (typeof body?.response !== "string") return json({ error: "Write an answer first." }, 400);
     try {
-      return json(await answerQuestion(env, question[1]!, body.response, owner));
+      return json(await answerQuestion(env, question[1]!, body.response, owner, zone));
     } catch (error) {
       if (error instanceof AnswerError) return json({ error: error.message }, error.status);
       throw error;
@@ -177,8 +209,11 @@ export default {
   },
 
   // Embedding work: the cron sweep queues stale banks and rebuilds topics, and the queue consumer embeds them.
+  // The same trigger writes the next round for courses that are waiting on the agent, so a learner who comes back
+  // finds a question. The two jobs run side by side and neither depends on the other.
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(sweep(env).catch((error) => console.error(JSON.stringify({ message: "embedding sweep failed", error: String(error) }))));
+    ctx.waitUntil(advanceWaiting(env).catch((error) => console.error(JSON.stringify({ message: "advancing waiting courses failed", error: String(error) }))));
   },
 
   async queue(batch, env) {
