@@ -66,6 +66,8 @@ function startCourse(id, catalogId, { passed, answered, lastAnswer }) {
   const course = all("SELECT * FROM catalog_courses WHERE id = ?", catalogId)[0];
   if (!course) throw new Error(`The library has no course ${catalogId}. Is catalog/courses/${catalogId}.json there?`);
   const modules = all("SELECT * FROM catalog_modules WHERE catalog_course_id = ? ORDER BY position", catalogId);
+  // A finished course is asked for with more modules than any course has.
+  passed = Math.min(passed, modules.length);
   run("INSERT INTO courses (id, prompt, title, summary, status, owner, catalog_id, icon, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)",
     id, course.prompt, course.title, course.summary, passed >= modules.length ? "complete" : "active", catalogId, course.icon, lastAnswer - (passed + 2) * 2 * DAY);
   run("INSERT INTO events (course_id, message, created_at) VALUES (?, ?, ?)", id, `Opened "${course.title}" from the library: ${modules.length} modules.`, lastAnswer - (passed + 2) * 2 * DAY);
@@ -104,12 +106,13 @@ if (finished) startCourse("demo-finished", finished, { passed: 99, answered: 0, 
 // The library works this out itself once it has embedded enough courses. The demo states one learning path directly.
 run("INSERT OR IGNORE INTO course_prerequisites (course_id, requires_id, created_at) VALUES ('inference-basics', 'llm-api-fundamentals', ?)", now);
 
-// Twelve counted days up to yesterday, with one rest day in the run. Days the migration filled in from the answers
-// above are kept, since they are part of the same history.
+// Four weeks of history: twelve counted days up to yesterday with one rest day in the run, a missed day before
+// that, and an earlier run. Days the migration filled in from the answers above are replaced by these.
 run("INSERT INTO learners (owner, time_zone, rest_days, longest_streak, created_at) VALUES ('', ?, 1, 21, ?)", zone, now - 60 * DAY);
 run("DELETE FROM learner_days");
-for (let back = 13; back >= 1; back--) {
+for (let back = 27; back >= 1; back--) {
   const day = dayOf(now - back * DAY);
+  if (back === 14) continue;
   if (back === 4) run("INSERT INTO learner_days (owner, day, rest) VALUES ('', ?, 1)", day);
   else run("INSERT INTO learner_days (owner, day, recall_answered, course_answered, counted) VALUES ('', ?, ?, ?, 1)", day, 6 + (back % 5), back % 3);
 }
