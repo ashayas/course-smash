@@ -11,7 +11,7 @@ final class TodayModel {
     private(set) var today: Today?
     private(set) var loadError: String?
 
-    /// A session covers the whole screen. It starts when the first answer is sent from Today.
+    /// A session covers the whole screen. It starts when the first answer is sent from Today, or with "5 more recall".
     private(set) var inSession = false
     private(set) var stage: Stage = .question
     /// The question on screen. During a verdict this is the one just answered, not the next one.
@@ -106,9 +106,13 @@ final class TodayModel {
         act("/api/recall/\(question.id)/skip") { self.advance() }
     }
 
-    /// "5 more questions": adds to today's set. In a session, the session carries on.
+    /// "5 more questions" and "5 more recall": adds to today's set and carries on in the session,
+    /// opening one when the button was on Today.
     func more() {
-        act("/api/recall/more") { self.advance() }
+        act("/api/recall/more") {
+            if self.recall?.question != nil { self.inSession = true }
+            self.advance()
+        }
     }
 
     /// "Skip for today" hides recall for the day. `false` brings it back.

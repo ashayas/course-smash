@@ -362,12 +362,13 @@ final class WalkthroughTests: XCTestCase {
         shot("today-recall-done")
         walkTodayCards()
 
-        // "5 more recall" on the Continue card puts a question back on Today. Answer that set too, and leave by "Done".
+        // "5 more recall" on the Continue card goes straight into the session. Answer that set too, and leave by "Done".
         scrollToTop()
         if scrollTo(app.buttons["more-recall"], tries: 4) {
             app.buttons["more-recall"].tap()
-            XCTAssertTrue(app.buttons["skip-today"].waitForExistence(timeout: 30), "5 more recall did not add any")
-            scrollToTop()
+            XCTAssertTrue(app.buttons["recall-close"].waitForExistence(timeout: 30), "5 more recall did not open the session")
+            XCTAssertTrue(app.staticTexts["recall-question"].waitForExistence(timeout: 10), "5 more recall did not add any")
+            XCTAssertFalse(app.buttons["tab-today"].exists, "The tab bar is showing during a recall session")
             sleep(1)
             shot("today-more-recall")
             answerRecallSet(&seen, from: 3)
