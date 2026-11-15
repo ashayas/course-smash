@@ -284,7 +284,7 @@ type CourseCard = Awaited<ReturnType<typeof listCourses>>[number];
 async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: CourseCard[], skipped: boolean, now: number) {
   const day = rows[0]?.day;
   const courseIds = rows.filter((r) => r.course_question_id).map((r) => r.course_question_id!);
-  const [attempts, courseAnswers, left] = await Promise.all([
+  const [attempts, courseAnswers, unused] = await Promise.all([
     day
       ? env.DB.prepare("SELECT t.question_id, t.verdict, t.concept, t.due_in_days FROM recall_attempts t JOIN recall_questions r ON r.id = t.question_id WHERE r.owner = ? AND r.day = ?")
         .bind(learner.owner, day).all<{ question_id: string; verdict: Answer["verdict"]; concept: string; due_in_days: number | null }>().then((r) => r.results)
@@ -308,21 +308,37 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
   const next = rows.find((r) => r.status === "set") ?? null;
   const byCourse = new Map(courses.map((c) => [c.id, c]));
   const answered = rows.filter((r) => r.status === "answered").length;
+  const correct = [...verdicts.values()].filter((v) => v === "correct").length;
+  const left = rows.filter((r) => r.status === "set").length;
+  const status = !rows.length ? "empty" : !next ? "done" : skipped ? "skipped" : "ready";
   const seenConcepts = new Set<string>();
+  // The words under the heading are written here, so the web app and both phone apps say the same thing.
+  const lead = {
+    empty: "When you pass a module, its ideas come back here a few days later as new questions.",
+    skipped: "Recall is skipped for today.",
+    done: answered ? `Recall done, ${correct} of ${answered} right.` : "Recall done for today.",
+    ready: left < rows.length
+      ? `${left} of ${rows.length} left.`
+      : `${plural(rows.length, "question")} from your courses. About ${plural(Math.max(1, Math.round(rows.length * 0.4)), "minute")}.`,
+  }[status];
+  const seen = (days: number | null) => (days === null ? "" : days === 0 ? " · last seen today" : days === 1 ? " · last seen yesterday" : ` · last seen ${days} days ago`);
+  const lastSeen = next?.last_reviewed_at == null ? null : Math.max(0, Math.floor((now - next.last_reviewed_at) / DAY_MS));
   return {
-    status: !rows.length ? "empty" : !next ? "done" : skipped ? "skipped" : "ready",
+    status,
+    lead,
     total: rows.length,
     answered,
-    correct: [...verdicts.values()].filter((v) => v === "correct").length,
+    correct,
     /** One entry per question, in order: its verdict, "skipped", or "open". */
     marks: rows.map((r) => (r.status === "skipped" ? "skipped" : r.status === "answered" ? (verdicts.get(r.id) ?? "correct") : "open")),
-    more_available: Boolean(left?.n),
+    more_available: Boolean(unused?.n),
     question: next
       ? {
           id: next.id, kind: next.kind, prompt: next.prompt, options: next.options ? (JSON.parse(next.options) as string[]) : null,
           concept: sentence(next.concept), why: next.why, figure: next.figure, figure_alt: next.figure_alt,
-          new: next.origin === "course", number: next.position + 1,
-          last_seen_days: next.last_reviewed_at === null ? null : Math.max(0, Math.floor((now - next.last_reviewed_at) / DAY_MS)),
+          new: next.origin === "course", number: next.position + 1, last_seen_days: lastSeen,
+          // "Taints and tolerations · last seen 9 days ago", under the course's name.
+          detail: next.origin === "course" ? `${sentence(next.concept)} · new in your course` : `${sentence(next.concept)}${seen(lastSeen)}`,
           course: byCourse.get(next.course_id) ?? null,
         }
       : null,

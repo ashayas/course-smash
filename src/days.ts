@@ -189,12 +189,22 @@ export async function streakView(env: Env, learner: Learner, now = Date.now()) {
   const entry = (day: string) => ({ day, state: state(day), recall: byDay.get(day)?.recall_answered ?? 0, course: byDay.get(day)?.course_answered ?? 0 });
   const monday = addDays(today, -((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7));
   const mine = byDay.get(today);
+  const answered = (mine?.recall_answered ?? 0) + (mine?.course_answered ?? 0);
+  const more = Math.max(1, DAY_GOAL - answered);
+  const days = (count: number) => `${count} day${count === 1 ? "" : "s"}`;
   return {
     day: today,
     current,
+    // Written here, so every client says the same thing about the streak.
+    label: mine?.counted
+      ? `${days(current)} in a row`
+      : current
+        ? `Answer ${more} more today to keep your ${current}-day streak.`
+        : answered ? `Answer ${more} more today to start a streak.` : `Answer ${DAY_GOAL} questions today to start a streak.`,
+    rest_label: fresh.rest_days ? `${fresh.rest_days} rest day${fresh.rest_days === 1 ? "" : "s"} saved` : null,
     longest: Math.max(fresh.longest_streak, current),
     rest_days: fresh.rest_days,
-    today: { answered: (mine?.recall_answered ?? 0) + (mine?.course_answered ?? 0), needed: DAY_GOAL, counted: Boolean(mine?.counted) },
+    today: { answered, needed: DAY_GOAL, counted: Boolean(mine?.counted) },
     recall_skipped: Boolean(mine?.recall_skipped),
     week: Array.from({ length: 7 }, (_, i) => entry(addDays(monday, i))),
     calendar: Array.from({ length: 28 }, (_, i) => entry(addDays(today, i - 27))),
