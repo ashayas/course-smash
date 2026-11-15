@@ -19,6 +19,23 @@ test("the local day turns over at 3:00 am in the learner's zone", () => {
   assert.equal(validZone(ZONE), ZONE);
 });
 
+test("the day still turns over at 3:00 am when the clocks change", () => {
+  // Spring forward in Denver, 8 March 2026: 2:00 am becomes 3:00 am, so the offset goes from UTC-7 to UTC-6.
+  assert.equal(localDay(Date.UTC(2026, 2, 8, 8, 59), ZONE), "2026-03-07"); // 1:59 am MST, the last minute before the jump
+  assert.equal(localDay(Date.UTC(2026, 2, 8, 9, 0), ZONE), "2026-03-08"); // 3:00 am MDT, the next minute
+  assert.equal(localDay(Date.UTC(2026, 2, 9, 8, 59), ZONE), "2026-03-08"); // 2:59 am MDT the next night
+  assert.equal(localDay(Date.UTC(2026, 2, 9, 9, 0), ZONE), "2026-03-09"); // 3:00 am MDT
+  // Fall back, 1 November 2026: 2:00 am MDT becomes 1:00 am MST, so that hour happens twice.
+  assert.equal(localDay(Date.UTC(2026, 10, 1, 7, 30), ZONE), "2026-10-31"); // 1:30 am MDT
+  assert.equal(localDay(Date.UTC(2026, 10, 1, 8, 30), ZONE), "2026-10-31"); // 1:30 am MST, the second time
+  assert.equal(localDay(Date.UTC(2026, 10, 1, 9, 59), ZONE), "2026-10-31"); // 2:59 am MST
+  assert.equal(localDay(Date.UTC(2026, 10, 1, 10, 0), ZONE), "2026-11-01"); // 3:00 am MST
+  // A zone with no clock changes, and one ahead of UTC.
+  assert.equal(localDay(Date.UTC(2026, 5, 1, 17, 59), "Asia/Tokyo"), "2026-06-01"); // 2:59 am on the 2nd in Tokyo
+  assert.equal(localDay(Date.UTC(2026, 5, 1, 18, 0), "Asia/Tokyo"), "2026-06-02");
+  assert.equal(localDay(Date.UTC(2026, 0, 1, 2, 0), "UTC"), "2025-12-31"); // the year turns over at 3:00 am too
+});
+
 test("answers add to the local day", async () => {
   const env = makeEnv();
   await recordAnswer(env, null, "recall", ZONE, noon(15));

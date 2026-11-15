@@ -7,7 +7,7 @@
 // - The streak is the number of counted days in the unbroken run. Rest days hold the run together without adding to it.
 
 export const DAY_MS = 86_400_000;
-const ROLLOVER_MS = 3 * 3_600_000;
+const ROLLOVER_HOUR = 3;
 export const DAY_GOAL = 5;
 const REST_EVERY = 7;
 const MAX_REST = 2;
@@ -20,7 +20,7 @@ const formatters = new Map<string, Intl.DateTimeFormat | null>();
 function formatter(zone: string) {
   if (!formatters.has(zone)) {
     try {
-      formatters.set(zone, new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }));
+      formatters.set(zone, new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }));
     } catch {
       formatters.set(zone, null);
     }
@@ -31,12 +31,21 @@ function formatter(zone: string) {
 /** The zone if it is a real IANA name, otherwise null. */
 export const validZone = (zone: string | null | undefined) => (zone && zone.length <= 64 && formatter(zone) ? zone : null);
 
-/** The learner's day at `time`, as YYYY-MM-DD. Before 3:00 am it is still the day before. */
+/**
+ * The learner's day at `time`, as YYYY-MM-DD. Before 3:00 am on their clock it is still the day before.
+ * The rule reads the wall-clock hour rather than taking three hours off the instant, so the day still turns
+ * over at 3:00 am on the two days a year the clocks change.
+ */
 export function localDay(time: number, zone: string) {
-  return (formatter(zone) ?? formatter("UTC")!).format(new Date(time - ROLLOVER_MS));
+  const parts = (formatter(zone) ?? formatter("UTC")!).formatToParts(new Date(time));
+  const part = (type: string) => parts.find((p) => p.type === type)!.value;
+  const day = `${part("year")}-${part("month")}-${part("day")}`;
+  return Number(part("hour")) < ROLLOVER_HOUR ? addDays(day, -1) : day;
 }
 
-export const addDays = (day: string, count: number) => new Date(Date.parse(`${day}T00:00:00Z`) + count * DAY_MS).toISOString().slice(0, 10);
+export function addDays(day: string, count: number) {
+  return new Date(Date.parse(`${day}T00:00:00Z`) + count * DAY_MS).toISOString().slice(0, 10);
+}
 const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 
 export type Learner = {

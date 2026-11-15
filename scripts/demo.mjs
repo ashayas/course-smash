@@ -8,6 +8,10 @@
 //
 // The learner is the admin login (USER_NAME and PW). `--zone` sets the time zone the streak's days are in;
 // it defaults to this machine's, which is what a simulator or emulator on it reports.
+//
+// `--keep-library` starts the learner over but keeps the library in an existing database, with its embeddings,
+// topics and learning paths. The server makes those in the background over its first twenty minutes or so, and
+// the library screens only show topics and paths once it has, so keep a database that has them.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -16,7 +20,7 @@ import { DatabaseSync } from "node:sqlite";
 const ROOT = new URL("../", import.meta.url).pathname;
 const path = process.argv[2];
 if (!path || path.startsWith("--")) {
-  console.error("Usage: node scripts/demo.mjs <database file> [--zone <IANA time zone>]");
+  console.error("Usage: node scripts/demo.mjs <database file> [--zone <IANA time zone>] [--keep-library]");
   process.exit(1);
 }
 const zoneAt = process.argv.indexOf("--zone");
@@ -24,18 +28,25 @@ const zone = zoneAt > 0 ? process.argv[zoneAt + 1] : Intl.DateTimeFormat().resol
 
 const file = resolve(path);
 mkdirSync(dirname(file), { recursive: true });
-for (const suffix of ["", "-wal", "-shm"]) rmSync(file + suffix, { force: true });
+const keep = process.argv.includes("--keep-library") && existsSync(file);
+if (!keep) for (const suffix of ["", "-wal", "-shm"]) rmSync(file + suffix, { force: true });
 
 // The same steps the Node server takes on start: every migration, in order.
 const db = new DatabaseSync(file);
 db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
 db.exec("CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)");
+const applied = new Set(db.prepare("SELECT name FROM schema_migrations").all().map((row) => String(row.name)));
 for (const name of readdirSync(join(ROOT, "migrations")).filter((f) => f.endsWith(".sql")).sort()) {
+  if (applied.has(name)) continue;
   db.exec(readFileSync(join(ROOT, "migrations", name), "utf8"));
   db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(name, Date.now());
 }
+if (keep) {
+  // Every learner's courses go, and with them their questions, answers and recall. The library stays as it is.
+  db.exec("DELETE FROM courses; DELETE FROM catalog_courses WHERE visibility = 'private'; DELETE FROM learners; DELETE FROM learner_days;");
+}
 db.close();
-execFileSync("node", [join(ROOT, "scripts/catalog/import.mjs"), "--sqlite", file], { stdio: "inherit" });
+if (!keep) execFileSync("node", [join(ROOT, "scripts/catalog/import.mjs"), "--sqlite", file], { stdio: "inherit" });
 
 const DAY = 86_400_000;
 const now = Date.now();
@@ -55,8 +66,8 @@ function startCourse(id, catalogId, { passed, answered, lastAnswer }) {
   const course = all("SELECT * FROM catalog_courses WHERE id = ?", catalogId)[0];
   if (!course) throw new Error(`The library has no course ${catalogId}. Is catalog/courses/${catalogId}.json there?`);
   const modules = all("SELECT * FROM catalog_modules WHERE catalog_course_id = ? ORDER BY position", catalogId);
-  run("INSERT INTO courses (id, prompt, title, summary, status, owner, catalog_id, icon, created_at) VALUES (?, ?, ?, ?, 'active', NULL, ?, ?, ?)",
-    id, course.prompt, course.title, course.summary, catalogId, course.icon, lastAnswer - (passed + 2) * 2 * DAY);
+  run("INSERT INTO courses (id, prompt, title, summary, status, owner, catalog_id, icon, created_at) VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)",
+    id, course.prompt, course.title, course.summary, passed >= modules.length ? "complete" : "active", catalogId, course.icon, lastAnswer - (passed + 2) * 2 * DAY);
   run("INSERT INTO events (course_id, message, created_at) VALUES (?, ?, ?)", id, `Opened "${course.title}" from the library: ${modules.length} modules.`, lastAnswer - (passed + 2) * 2 * DAY);
   let count = 0;
   modules.forEach((module, position) => {
@@ -86,8 +97,12 @@ function startCourse(id, catalogId, { passed, answered, lastAnswer }) {
 startCourse("demo-llm-apis", "llm-api-fundamentals", { passed: 5, answered: 4, lastAnswer: now - DAY });
 // Older, so most of what it taught is due for recall.
 startCourse("demo-kubernetes", "k8s-architecture", { passed: 3, answered: 2, lastAnswer: now - 9 * DAY });
+// With more of the library on disk than the three public samples, the learner has also finished a course,
+// so the city has a building with every floor lit.
+const finished = ["rag-fundamentals", "k8s-pods-workloads", "prompt-engineering-basics"].find((id) => all("SELECT 1 FROM catalog_courses WHERE id = ?", id).length);
+if (finished) startCourse("demo-finished", finished, { passed: 99, answered: 0, lastAnswer: now - 20 * DAY });
 // The library works this out itself once it has embedded enough courses. The demo states one learning path directly.
-run("INSERT INTO course_prerequisites (course_id, requires_id, created_at) VALUES ('inference-basics', 'llm-api-fundamentals', ?)", now);
+run("INSERT OR IGNORE INTO course_prerequisites (course_id, requires_id, created_at) VALUES ('inference-basics', 'llm-api-fundamentals', ?)", now);
 
 // Twelve counted days up to yesterday, with one rest day in the run. Days the migration filled in from the answers
 // above are kept, since they are part of the same history.
