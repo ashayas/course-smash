@@ -156,7 +156,7 @@ test("a skipped question can't be answered afterwards", async () => {
   assert.equal((await rowFor(env, "beta")).status, "answered");
 });
 
-test("a course answer closes its set entry, and the last one hands the course to the agent", async () => {
+test("a course answer closes its set entry, and the last one leaves the course for the cron", async (t) => {
   const env = makeEnv();
   const now = Date.now();
   await usualLearner(env, now - 10 * DAY);
@@ -171,12 +171,16 @@ test("a course answer closes its set entry, and the last one hands the course to
   const middle = await answerRecall(env, null, second!.id, "0", ZONE, now + 2000);
   assert.equal(middle.result.verdict, "correct");
   assert.equal(middle.schedule, null);
-  assert.equal(middle.advance, null);
+  assert.equal(await advanceWaiting(env), 0); // one question is still waiting
   const last = await answerRecall(env, null, third!.id, "1", ZONE, now + 3000);
   assert.equal(last.result.verdict, "incorrect");
-  assert.equal(last.advance, "c1");
+  assert.ok(!("advance" in last));
   assert.equal((await rows(env, "SELECT id FROM answers WHERE question_id LIKE 'q-gamma-%'")).length, 3);
   assert.deepEqual(await one(env, "SELECT recall_answered, course_answered FROM learner_days"), { recall_answered: 0, course_answered: 3 });
+  // The round is fully answered now, so the cron takes the course from here. No model is reachable in this test,
+  // so its step fails, which is enough to show the course was picked up.
+  t.mock.method(globalThis, "fetch", async () => { throw new Error("no network in tests"); });
+  assert.equal(await advanceWaiting(env), 1);
 });
 
 test("a day counts at five answers across recall and the course", async () => {

@@ -465,7 +465,6 @@ const revealAttempt = (row: SetRow, attempt: Attempt) => ({
 /**
  * Grade one recall question, move its subtopic's schedule, and count the answer toward the day.
  * Returns the verdict, when the subtopic comes back, and the state of the set with the next question.
- * `advance` names a course whose round this answer finished, so the caller can start the agent on it.
  */
 export async function answerRecall(env: Env, owner: string | null, id: string, rawResponse: string, zone?: string | null, now = Date.now()) {
   const learner = await getLearner(env, owner, zone, now);
@@ -478,11 +477,7 @@ export async function answerRecall(env: Env, owner: string | null, id: string, r
     const result = await answerQuestion(env, row.course_question_id!, rawResponse, owner, zone);
     await env.DB.prepare("UPDATE recall_questions SET status = 'answered' WHERE id = ? AND status = 'set'").bind(row.id).run();
     await countDay(env, learner, await currentDay(env, learner, now));
-    const waiting = await env.DB.prepare(
-      `SELECT COUNT(*) AS n FROM questions q JOIN modules m ON m.id = q.module_id AND m.status = 'active'
-       WHERE q.course_id = ? AND NOT EXISTS (SELECT 1 FROM answers a WHERE a.question_id = q.id)`,
-    ).bind(row.course_id).first<{ n: number }>();
-    return { result: { ...result, question_id: row.id }, schedule: null, advance: waiting?.n ? null : row.course_id, ...(await state(env, learner, owner, now)) };
+    return { result: { ...result, question_id: row.id }, schedule: null, ...(await state(env, learner, owner, now)) };
   }
 
   const findAttempt = () => env.DB.prepare("SELECT * FROM recall_attempts WHERE question_id = ?").bind(row.id).first<Attempt>();
@@ -535,7 +530,6 @@ export async function answerRecall(env: Env, owner: string | null, id: string, r
   return {
     result: revealAttempt(row, attempt),
     schedule: { days, label: `You'll see ${row.concept} again ${when(days)}.` },
-    advance: null,
     ...(await state(env, learner, owner, now)),
   };
 }
