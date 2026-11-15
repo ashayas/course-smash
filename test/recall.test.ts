@@ -132,6 +132,30 @@ test("a skip leaves the item due", async () => {
   assert.equal((await rows(env, "SELECT id FROM recall_attempts")).length, 0);
 });
 
+test("a skipped question can't be answered afterwards", async () => {
+  const env = makeEnv();
+  const now = Date.now();
+  await usualLearner(env, now - 10 * DAY);
+  await today(env, null, ZONE, now);
+  const alpha = await rowFor(env, "alpha");
+  const before = (await item(env, "alpha"))!;
+  await skipRecall(env, null, alpha.id, ZONE, now);
+  await assert.rejects(() => answerRecall(env, null, alpha.id, String(alpha.correct_index), ZONE, now + 5), /skipped that question/);
+  assert.deepEqual(await item(env, "alpha"), before);
+  assert.equal((await rows(env, "SELECT id FROM recall_attempts")).length, 0);
+  assert.equal((await rowFor(env, "alpha")).status, "skipped");
+  // The same holds for a question from the course in progress: it stays skipped here, and is still open in its course.
+  const fresh = (await setRows(env)).find((r) => r.origin === "course")!;
+  await skipRecall(env, null, fresh.id, ZONE, now);
+  await assert.rejects(() => answerRecall(env, null, fresh.id, "0", ZONE, now + 5), /skipped that question/);
+  assert.equal((await rows(env, "SELECT id FROM answers WHERE question_id = ?", fresh.course_question_id)).length, 0);
+  // A skip after an answer changes nothing either.
+  const beta = await rowFor(env, "beta");
+  await answerRecall(env, null, beta.id, String(beta.correct_index), ZONE, now);
+  await skipRecall(env, null, beta.id, ZONE, now + 5);
+  assert.equal((await rowFor(env, "beta")).status, "answered");
+});
+
 test("a course answer closes its set entry, and the last one hands the course to the agent", async () => {
   const env = makeEnv();
   const now = Date.now();

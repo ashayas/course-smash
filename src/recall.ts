@@ -448,6 +448,8 @@ export async function today(env: Env, owner: string | null, zone?: string | null
 
 /* Actions */
 
+const SKIPPED = "You skipped that question, so it wasn't graded. It will come back another day.";
+
 async function findRow(env: Env, key: string, id: string) {
   const row = await env.DB.prepare("SELECT r.*, i.last_reviewed_at FROM recall_questions r LEFT JOIN recall_items i ON i.id = r.item_id WHERE r.id = ? AND r.owner = ?")
     .bind(id, key).first<SetRow>();
@@ -468,11 +470,13 @@ const revealAttempt = (row: SetRow, attempt: Attempt) => ({
 export async function answerRecall(env: Env, owner: string | null, id: string, rawResponse: string, zone?: string | null, now = Date.now()) {
   const learner = await getLearner(env, owner, zone, now);
   const row = await findRow(env, learner.owner, id);
+  // A skip is final for the day: the subtopic stays due, so a late or repeated answer must not move its schedule.
+  if (row.status === "skipped") throw new AnswerError(SKIPPED, 409);
 
   if (row.origin === "course") {
     // A question from a course in progress: the course grades it, exactly as on its own screen.
     const result = await answerQuestion(env, row.course_question_id!, rawResponse, owner, zone);
-    await env.DB.prepare("UPDATE recall_questions SET status = 'answered' WHERE id = ?").bind(row.id).run();
+    await env.DB.prepare("UPDATE recall_questions SET status = 'answered' WHERE id = ? AND status = 'set'").bind(row.id).run();
     await countDay(env, learner, await currentDay(env, learner, now));
     const waiting = await env.DB.prepare(
       `SELECT COUNT(*) AS n FROM questions q JOIN modules m ON m.id = q.module_id AND m.status = 'active'
@@ -508,19 +512,23 @@ export async function answerRecall(env: Env, owner: string | null, id: string, r
     const days = intervalDays(memory.stability);
     const day = await currentDay(env, learner, now);
     const attemptId = crypto.randomUUID();
-    // One transaction. If another request answered first, this attempt isn't stored, and then nothing else here applies.
+    // One transaction. The attempt is stored only while the question is still open, so if another request answered
+    // or skipped it first, this attempt isn't stored, and then nothing else here applies.
     const mine = "EXISTS (SELECT 1 FROM recall_attempts WHERE id = ?)";
     await env.DB.batch([
       env.DB.prepare(
         `INSERT INTO recall_attempts (id, owner, question_id, item_id, course_id, concept, day, response, verdict, score, confidence, error_type, feedback, days_since_last, stability_before, stability_after, due_in_days, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (question_id) DO NOTHING`,
-      ).bind(attemptId, learner.owner, row.id, item.id, row.course_id, row.concept, day, chosen, graded.verdict, SCORE[graded.verdict], graded.confidence, graded.errorType, graded.feedback, elapsed, item.stability, memory.stability, days, now),
+         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM recall_questions WHERE id = ? AND status = 'set')
+         ON CONFLICT (question_id) DO NOTHING`,
+      ).bind(attemptId, learner.owner, row.id, item.id, row.course_id, row.concept, day, chosen, graded.verdict, SCORE[graded.verdict], graded.confidence, graded.errorType, graded.feedback, elapsed, item.stability, memory.stability, days, now, row.id),
       env.DB.prepare(`UPDATE recall_questions SET status = 'answered' WHERE id = ? AND ${mine}`).bind(row.id, attemptId),
       env.DB.prepare(
         `UPDATE recall_items SET stability = ?, difficulty = ?, due_at = ?, last_reviewed_at = ?, last_verdict = ?, reviews = reviews + 1, lapses = lapses + ? WHERE id = ? AND ${mine}`,
       ).bind(memory.stability, memory.difficulty, now + days * DAY_MS, now, graded.verdict, graded.verdict === "incorrect" ? 1 : 0, item.id, attemptId),
     ]);
-    attempt = (await findAttempt())!;
+    attempt = await findAttempt();
+    // No attempt at all means a skip got there first, while this answer was being graded.
+    if (!attempt) throw new AnswerError(SKIPPED, 409);
     if (attempt.id === attemptId) await recordAnswer(env, owner, "recall", zone, now);
   }
   const days = attempt.due_in_days ?? 1;

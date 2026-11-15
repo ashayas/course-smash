@@ -820,7 +820,8 @@ function recallQuestion(data, token, session) {
       const value = new FormData(form).get("answer");
       if (!value || !String(value).trim()) return;
       error.hidden = true;
-      submit.disabled = true;
+      // Skip is off while the answer is being graded, so one question can't be both answered and skipped.
+      submit.disabled = skip.disabled = true;
       submit.textContent = "Checking...";
       try {
         const answer = await api(`/api/recall/${q.id}/answer`, { method: "POST", body: JSON.stringify({ response: String(value) }) });
@@ -831,7 +832,7 @@ function recallQuestion(data, token, session) {
       } catch (e) {
         error.textContent = e.message;
         error.hidden = false;
-        submit.disabled = false;
+        submit.disabled = skip.disabled = false;
         submit.textContent = "Check";
       }
     },
@@ -917,6 +918,7 @@ async function recallAction(data, token, path, body, button, view) {
 const skipDay = (data, token, skipped, button) => recallAction(data, token, "/api/recall/skip-day", { skipped }, button, {});
 const moreRecall = (data, token, button) => recallAction(data, token, "/api/recall/more", {}, button, { session: true });
 function skipQuestion(data, token, q, controls) {
+  // Nothing happens while an answer or another skip is on its way.
   if (controls.buttons.some((b) => b.disabled)) return;
   for (const b of controls.buttons) b.disabled = true;
   return recallAction(data, token, `/api/recall/${q.id}/skip`, {}, null, { session: true }).finally(() => { for (const b of controls.buttons) b.disabled = false; });
