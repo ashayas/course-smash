@@ -25,6 +25,7 @@ Nothing else is collected: no location, contacts, photos, files, device or adver
 - The app has one permission, `INTERNET`, and no third-party SDKs.
 - The password is sent once over HTTPS to log in and is never stored on the device. The server stores only a salted hash.
 - After login the app keeps a session token in its private storage, encrypted with a key in the Android Keystore. Backups and device-to-device transfer are switched off for it (`data_extraction_rules.xml`).
+- Every request carries the name of the phone's time zone, such as `Europe/Paris`, and the server keeps it with the account so that a day, and so a streak, starts and ends when the learner's does. It is a setting, not a location: nothing finer than the zone's name is sent, and the app has no location permission. Play's form has no data type for it.
 - What you want to learn and what you answer go to AI models on Cloudflare Workers AI to write questions, grade short answers and write feedback. That is why "Personalization" is listed.
 
 ## Other App content declarations

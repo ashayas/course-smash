@@ -1,5 +1,6 @@
 package app.coursesmash.android
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 // The shapes the Worker returns from /api/. Keys are snake_case on the wire.
@@ -173,11 +174,11 @@ data class AdvanceResult(val status: String, val error: String? = null)
 
 /** GET /api/stats */
 @Serializable
-data class Stats(val totals: Totals, val days: List<Day>, val courses: List<Course>, val chartMax: Int) {
+data class Stats(val totals: Totals, val days: List<Day>, val courses: List<Course>, val chartMax: Int, val streak: Streak? = null) {
     @Serializable
     data class Totals(
         val courses: Int, val finished: Int, val modulesPassed: Int, val answered: Int, val correct: Int, val partial: Int,
-        val incorrect: Int, val average: Double? = null, val activeDays: Int, val streak: Int,
+        val incorrect: Int, val average: Double? = null, val activeDays: Int, val streak: Int, val recallAnswered: Int = 0,
     )
 
     @Serializable
@@ -209,3 +210,98 @@ data class Stats(val totals: Totals, val days: List<Day>, val courses: List<Cour
         val name: String get() = title ?: prompt
     }
 }
+
+/** The learner's streak, as every recall endpoint and /api/stats return it. The Worker writes `label` and `restLabel`. */
+@Serializable
+data class Streak(
+    val day: String,
+    val current: Int,
+    val longest: Int = 0,
+    val restDays: Int = 0,
+    val label: String,
+    val restLabel: String? = null,
+    val today: Progress = Progress(),
+    val recallSkipped: Boolean = false,
+    /** This week, Monday first. */
+    val week: List<Day> = emptyList(),
+    /** The last 28 days, oldest first, ending today. */
+    val calendar: List<Day> = emptyList(),
+) {
+    @Serializable
+    data class Progress(val answered: Int = 0, val needed: Int = 0, val counted: Boolean = false)
+
+    /** `state` is one of done, rest, missed, today, future, none. */
+    @Serializable
+    data class Day(val day: String, val state: String, val recall: Int = 0, val course: Int = 0)
+}
+
+/** Today's recall set. `question` is the next unanswered one and never carries its answer key. */
+@Serializable
+data class Recall(
+    /** ready, done, skipped or empty. */
+    val status: String,
+    val lead: String,
+    val total: Int = 0,
+    val answered: Int = 0,
+    val correct: Int = 0,
+    /** One per question, in order: correct, partial, incorrect, skipped or open. */
+    val marks: List<String> = emptyList(),
+    val moreAvailable: Boolean = false,
+    val question: RecallQuestion? = null,
+    val comingBack: List<ComingBack> = emptyList(),
+) {
+    @Serializable
+    data class ComingBack(val concept: String, val `when`: String)
+}
+
+@Serializable
+data class RecallQuestion(
+    val id: String,
+    /** mcq or short. */
+    val kind: String,
+    val prompt: String,
+    val options: List<String>? = null,
+    val concept: String = "",
+    /** "Taints and tolerations · last seen 9 days ago", written by the Worker. */
+    val detail: String = "",
+    val why: String? = null,
+    val figure: String? = null,
+    val figureAlt: String? = null,
+    val number: Int = 1,
+    val course: CourseSummary? = null,
+)
+
+/** GET /api/today */
+@Serializable
+data class Today(
+    val day: String,
+    val streak: Streak,
+    val recall: Recall,
+    @SerialName("continue") val next: ContinueCard? = null,
+    val upNext: UpNext? = null,
+    /** Library courses to start with, only when the learner has no courses. */
+    val picks: List<CatalogCourse> = emptyList(),
+) {
+    /** The course to carry on with. */
+    @Serializable
+    data class ContinueCard(val course: CourseSummary, val waiting: Int = 0, val lastModule: Boolean = false, val detail: String)
+
+    @Serializable
+    data class UpNext(val course: CatalogCourse, val reason: String = "", val detail: String)
+}
+
+/** POST /api/recall/:id/answer. `result` has the shape of a course answer; `recall.question` is the next question. */
+@Serializable
+data class RecallAnswer(val result: AnswerResult, val schedule: Schedule? = null, val streak: Streak, val recall: Recall) {
+    /** When the subtopic comes back. Null for a question that is new in a course. */
+    @Serializable
+    data class Schedule(val days: Int = 0, val label: String)
+}
+
+/** POST /api/recall/:id/skip, /api/recall/more and /api/recall/skip-day */
+@Serializable
+data class RecallUpdate(val streak: Streak, val recall: Recall)
+
+/** GET and PUT /api/settings */
+@Serializable
+data class Settings(val dailyGoal: Int, val shortAnswers: Boolean, val timeZone: String, val goals: List<Int> = emptyList())

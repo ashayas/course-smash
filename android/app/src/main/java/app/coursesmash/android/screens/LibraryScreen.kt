@@ -32,7 +32,7 @@ import app.coursesmash.android.CatalogCourseDetail
 import app.coursesmash.android.CourseMisses
 import app.coursesmash.android.Created
 import app.coursesmash.android.Route
-import app.coursesmash.android.Section
+import app.coursesmash.android.Tab
 import app.coursesmash.android.SimilarCourses
 import app.coursesmash.android.messageOf
 import app.coursesmash.android.ui.CardColumn
@@ -221,7 +221,7 @@ fun LibraryCourseScreen(model: AppModel, id: String) {
             item("error") {
                 Column(Modifier.padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     ErrorText(loadError!!)
-                    PillButton("Back to the library", { model.show(Section.Library) }, kind = Pill.Quiet)
+                    PillButton("Back to the library", { model.show(Tab.Library) }, kind = Pill.Quiet)
                 }
             }
         } else if (detail == null) {
@@ -229,7 +229,7 @@ fun LibraryCourseScreen(model: AppModel, id: String) {
         } else {
             item("head") {
                 PageHead(detail.title, eyebrow = listOfNotNull(detail.trackTitle, detail.topic, detail.level).joinToString(" · "), note = detail.summary) {
-                    LinkButton("Back to the library", { model.show(Section.Library, detail.track) })
+                    LinkButton("Back to the library", { model.show(Tab.Library, detail.track) })
                 }
             }
             item("start") {

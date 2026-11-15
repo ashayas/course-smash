@@ -5,7 +5,7 @@
 #
 # Optional: CS_BASE_URL (a Worker other than https://coursesmash.app; http://10.0.2.2:8787 is a
 # `wrangler dev` on this computer, seen from the emulator), CS_LIBRARY_COURSE (the library course
-# to start) and CS_QUICK=1 (stop after login, home and the city).
+# to start) and CS_QUICK=1 (stop after login, Today and the city).
 # The login is only passed to the test. It is not written anywhere.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -14,6 +14,7 @@ OUT="${1:-$PWD/build/walkthrough}"
 ADB="${ANDROID_HOME:-$HOME/Library/Android/sdk}/platform-tools/adb"
 APP=app.coursesmash.android
 mkdir -p "$OUT"
+rm -f "$OUT"/[0-9][0-9]-*.png # pictures from an earlier run
 
 ./gradlew -q :app:installDebug :app:installDebugAndroidTest
 
@@ -26,9 +27,12 @@ demo -e command battery -e level 100 -e plugged false
 demo -e command network -e wifi show -e level 4 -e mobile show -e datatype none -e level 4
 demo -e command notifications -e visible false
 
-ARGS=(-e class "$APP.WalkthroughTest" -e csUser "$CS_USER" -e csPw "$CS_PW")
-[ -n "${CS_BASE_URL:-}" ] && ARGS+=(-e csBaseUrl "$CS_BASE_URL")
-[ -n "${CS_LIBRARY_COURSE:-}" ] && ARGS+=(-e csLibraryCourse "$CS_LIBRARY_COURSE")
+# adb hands the command to the device's shell as one line, so each value is quoted for that shell.
+# Without this a value with a space in it, such as a course title, is split in two.
+q() { local value=${1//\'/\'\\\'\'}; printf "'%s'" "$value"; }
+ARGS=(-e class "$APP.WalkthroughTest" -e csUser "$(q "$CS_USER")" -e csPw "$(q "$CS_PW")")
+[ -n "${CS_BASE_URL:-}" ] && ARGS+=(-e csBaseUrl "$(q "$CS_BASE_URL")")
+[ -n "${CS_LIBRARY_COURSE:-}" ] && ARGS+=(-e csLibraryCourse "$(q "$CS_LIBRARY_COURSE")")
 [ -n "${CS_QUICK:-}" ] && ARGS+=(-e csQuick "$CS_QUICK")
 RESULT=$("$ADB" shell am instrument -w "${ARGS[@]}" "$APP.test/androidx.test.runner.AndroidJUnitRunner" | tr -d '\r')
 demo -e command exit

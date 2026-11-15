@@ -6,15 +6,18 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import app.coursesmash.android.art.CityEngine
+import app.coursesmash.android.screens.RecallModel
 
-/** The three places in the header, matching the web app's nav. */
-enum class Section(val title: String) { Courses("Courses"), Library("Library"), Stats("Stats") }
+/** The four tabs in the bar at the bottom. The app opens on Today. */
+enum class Tab(val title: String) { Today("Today"), City("City"), Library("Library"), You("You") }
 
-/** Screens pushed on top of a section. */
+/** Screens pushed on top of a tab. */
 sealed interface Route {
     data class Course(val id: String) : Route
     data class LibraryCourse(val id: String) : Route
+    data object Stats : Route
 }
 
 class AppModel(application: Application) : AndroidViewModel(application) {
@@ -22,7 +25,10 @@ class AppModel(application: Application) : AndroidViewModel(application) {
     val session = SessionStore(KeystoreSessionStorage(application), WorkerAuthService(api))
     val city = CityEngine(application)
 
-    var section by mutableStateOf(Section.Courses)
+    /** Daily recall and the streak, kept here so Today shows at once when the learner comes back to it. */
+    val recall = RecallModel(api, viewModelScope)
+
+    var tab by mutableStateOf(Tab.Today)
         private set
     val path = mutableStateListOf<Route>()
 
@@ -38,10 +44,10 @@ class AppModel(application: Application) : AndroidViewModel(application) {
         api.onUnauthorized = { signOut() }
     }
 
-    fun show(section: Section, track: String = "") {
+    fun show(tab: Tab, track: String = "") {
         libraryTrack = track
         path.clear()
-        this.section = section
+        this.tab = tab
     }
 
     fun open(route: Route) {
@@ -55,8 +61,9 @@ class AppModel(application: Application) : AndroidViewModel(application) {
     fun signOut() {
         session.signOut()
         path.clear()
-        section = Section.Courses
+        tab = Tab.Today
         catalog = null
+        recall.reset()
     }
 
     /** Starter ideas and the building picker's choices. Fetched once. */

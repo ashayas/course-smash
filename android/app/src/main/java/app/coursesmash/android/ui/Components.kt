@@ -159,6 +159,7 @@ fun TextArea(
     limit: Int,
     modifier: Modifier = Modifier,
     tag: String? = null,
+    onInk: Boolean = false,
 ) {
     BasicTextField(
         value = value,
@@ -167,7 +168,7 @@ fun TextArea(
         cursorBrush = SolidColor(Theme.Yellow),
         modifier = modifier.tag(tag).fillMaxWidth().semantics { contentDescription = label },
         decorationBox = { field ->
-            Box(Modifier.fillMaxWidth().inset().defaultMinSize(minHeight = 128.dp).padding(horizontal = 20.dp, vertical = 16.dp)) {
+            Box(Modifier.fillMaxWidth().background(if (onInk) Theme.Surface else Theme.Ink, RoundedCornerShape(Theme.InsetRadius)).defaultMinSize(minHeight = 128.dp).padding(horizontal = 20.dp, vertical = 16.dp)) {
                 if (value.isEmpty()) T(placeholder, TypeStyle.Body, color = Theme.Muted)
                 field()
             }

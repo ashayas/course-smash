@@ -5,7 +5,7 @@ The native Android app. It is a Kotlin and Jetpack Compose port of the web app i
 | | |
 |---|---|
 | Application ID | `app.coursesmash.android` |
-| Version | `1.1.0`, version code `2` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
+| Version | `1.2.0`, version code `3` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
 | Runs on | Phones, Android 8.0 (API 26) or later, portrait. Targets API 36. |
 | Server | `https://coursesmash.app` (`API_BASE_URL` in `app/build.gradle.kts`) |
 | Libraries | Jetpack Compose (UI and Foundation), Activity Compose, kotlinx.serialization and coroutines. No Material library and no third-party SDKs. |
@@ -37,13 +37,17 @@ Sources are under `app/src/main/java/app/coursesmash/android`.
 
 | File or folder | What is in it |
 |---|---|
-| `MainActivity.kt`, `AppModel.kt` | The entry point, and the session, current section and navigation path |
+| `MainActivity.kt`, `AppModel.kt` | The entry point, and the session, current tab and navigation path |
 | `Auth.kt` | `Credential`, `AuthService`, `SessionStorage` and `SessionStore` |
-| `Api.kt`, `Models.kt` | `ApiClient` and the response types for `/api/` |
+| `Api.kt`, `Models.kt` | `ApiClient` and the response types for `/api/`. Every request sends the phone's time zone in `X-Time-Zone`, which is how the Worker knows where a day starts. |
 | `art/` | `CityEngine` runs the web app's `public/city.js`; `Svg.kt` and `SvgView.kt` draw what it returns |
 | `ui/` | The design kit from `DESIGN.md` (colours, type, buttons, cards), formulas and question diagrams |
-| `screens/` | Login, home, library, course and questions, building picker, stats |
+| `screens/` | Login, the shell with its tab bar, Today and the recall session, the city, library, course and questions, building picker, You, stats |
 | `app/src/androidTest` | A walkthrough of every flow, which also takes the screenshots |
+
+**Tabs and back.** The tab bar is drawn by the app (`screens/Shell.kt`): Today, City, Library and You, and the app opens on Today. A course, a library course page or Stats opens on top of the tab it came from, with a back control, and the bar stays. A recall session covers the whole screen and hides the bar. System back leaves a session or a pushed screen first, then goes to Today, and from Today it leaves the app.
+
+**Today and recall** are in `screens/RecallModel.kt`, which `AppModel` keeps for the whole sign-in, so Today shows what it last knew at once and then asks `GET /api/today` again. The Worker writes the lines of copy under the headings (`recall.lead`, `question.detail`, `streak.label` and the others), and the app shows them as they arrive.
 
 **The city art is shared with the web app.** A Gradle task copies `public/city.js` into the app's assets at build time. The app runs it in a web view that is never shown and can load nothing else, and draws the SVG it returns natively on a Compose canvas, with the same looping motion as `public/styles.css`. A new building on the web shows up in the app on the next build. If `city.js` starts using an SVG element, attribute or animation class that `art/Svg.kt` does not read, add it there.
 
@@ -136,19 +140,27 @@ Build the bundle with `./gradlew :app:bundleRelease`, then in Play Console choos
 | `changelogs/<versionCode>.txt` | What's new in each version code |
 | `images/icon.png` | 512 × 512 store icon |
 | `images/featureGraphic.png` | 1024 × 500 feature graphic |
-| `images/phoneScreenshots/` | Nine phone screenshots, 1080 × 1920 |
+| `images/phoneScreenshots/` | Phone screenshots, 1080 × 1920, led by Today |
 
 Category (Education), contact details and the privacy policy URL are set in Play Console.
 
 ## Screenshots and the walkthrough test
 
-`WalkthroughTest` logs in, walks every flow against a real Worker and saves a screenshot of each screen. It starts one library course and one planned course, and deletes both before it ends.
+`WalkthroughTest` logs in, walks every flow against a real Worker and saves a screenshot of each screen. It answers today's recall questions when the account has any, and passes without them. It starts one library course and one planned course, and deletes both before it ends. It changes the daily goal and the short answers setting, and puts both back.
 
 ```sh
 CS_USER=<username> CS_PW=<password> android/scripts/walkthrough.sh android/build/walkthrough
 ```
 
-It needs a running emulator or a connected device. Set `CS_BASE_URL=http://10.0.2.2:8787` to use a local `wrangler dev`. The login is passed to the test only, and nothing writes it to disk. The store screenshots are these, cropped to 9:16.
+It needs a running emulator or a connected device. Set `CS_BASE_URL=http://10.0.2.2:8787` to use a local `wrangler dev`. The login is passed to the test only, and nothing writes it to disk. The store screenshots are made from these:
+
+```sh
+android/scripts/store-screenshots.sh android/build/walkthrough
+```
+
+It crops each picture to 9:16 and keeps the tab bar, or the buttons under a recall question, at the bottom. It needs ImageMagick. Take them from a run against an account with a streak and questions to recall, such as the demo data from `scripts/demo.mjs`, so that Today leads with a live question.
+
+The script quotes its settings for the device's shell, so `CS_LIBRARY_COURSE` can be a title with spaces in it.
 
 ## Launcher icon and splash screen
 

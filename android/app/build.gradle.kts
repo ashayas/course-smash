@@ -23,8 +23,8 @@ android {
         minSdk = 26
         targetSdk = 36
         // Raise versionCode for every upload to Google Play, and versionName for every release.
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", "\"https://coursesmash.app\"")
     }
