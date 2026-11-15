@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<!-- For `xcodebuild -exportArchive`. The team comes from the archive, which is signed with DEVELOPMENT_TEAM. -->
+<!-- For `xcodebuild -exportArchive`. Manual App Store signing with the certificate and profile named in project.yml.
+     The team comes from the archive, which is signed with DEVELOPMENT_TEAM. -->
 <dict>
 	<key>method</key>
 	<string>app-store-connect</string>
 	<key>destination</key>
 	<string>export</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>app.coursesmash.ios</key>
+		<string>Course Smash App Store</string>
+	</dict>
 	<key>manageAppVersionAndBuildNumber</key>
 	<false/>
 	<key>uploadSymbols</key>

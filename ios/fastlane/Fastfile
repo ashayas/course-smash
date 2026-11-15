@@ -26,15 +26,26 @@ platform :ios do
 
   desc "Archive a signed App Store build into build/CourseSmash.ipa"
   lane :archive do
+    # Xcode 16 and 26 fail to export ("Copy failed", rsync errors) when Homebrew's rsync comes first on PATH.
+    ENV["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin:#{ENV["PATH"]}"
+    # Signing is manual and set on the app target in project.yml: the "Apple Distribution" certificate in the
+    # keychain and the "Course Smash App Store" profile. See "Signing" in ../README.md.
     build_app(
       project: "CourseSmash.xcodeproj", scheme: "CourseSmash", configuration: "Release",
-      export_method: "app-store-connect", output_directory: "build", output_name: "CourseSmash.ipa",
-      xcargs: "DEVELOPMENT_TEAM=#{team} -allowProvisioningUpdates",
-      export_options: { teamID: team, signingStyle: "automatic" }
+      output_directory: "build", output_name: "CourseSmash.ipa",
+      xcargs: "DEVELOPMENT_TEAM=#{team}",
+      # The same as ExportOptions.plist, which is for plain xcodebuild. fastlane wants "app-store", not "app-store-connect".
+      export_method: "app-store",
+      export_options: {
+        signingStyle: "manual",
+        signingCertificate: "Apple Distribution",
+        provisioningProfiles: { "app.coursesmash.ios" => "Course Smash App Store" },
+        uploadSymbols: true
+      }
     )
   end
 
-  desc "Upload a build to TestFlight"
+  desc "Upload a build to TestFlight. Internal testers in a group with access to all builds get it once it has processed"
   lane :beta do
     archive
     upload_to_testflight(api_key: connect_key, ipa: "build/CourseSmash.ipa", skip_waiting_for_build_processing: true)
