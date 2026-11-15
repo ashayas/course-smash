@@ -66,7 +66,26 @@ Put it in `Config/Signing.local.xcconfig`, which git ignores:
 DEVELOPMENT_TEAM = ABCDE12345
 ```
 
-Signing is automatic, so Xcode creates the App ID and provisioning profile the first time you archive while signed in to that team. If `app.coursesmash.ios` is taken, change `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml` and `app_identifier` in `fastlane/Appfile`.
+Debug builds sign automatically. Release archives, which are the ones you upload, sign **manually** for the App Store, with two things referenced by name in `project.yml` and `ExportOptions.plist`:
+
+| What | Name | Lives in |
+|---|---|---|
+| Distribution certificate | `Apple Distribution` (any "Apple Distribution: <team>" identity) | The login keychain of the Mac that archives |
+| App Store provisioning profile | `Course Smash App Store` | `~/Library/MobileDevice/Provisioning Profiles` and `~/Library/Developer/Xcode/UserData/Provisioning Profiles` |
+
+Manual signing avoids two problems with automatic signing: an archive needs a development profile, which Apple won't make until the team has a registered device, and an App Store Connect API key with the App Manager role isn't allowed to use Xcode's cloud signing.
+
+Make both once per Mac, at [developer.apple.com/account](https://developer.apple.com/account) → Certificates, IDs & Profiles:
+
+1. **Identifier:** register `app.coursesmash.ios` if it isn't listed.
+2. **Certificate:** + → Apple Distribution. Upload a certificate signing request (Keychain Access → Certificate Assistant → Request a Certificate From a Certificate Authority, saved to disk), download the certificate and double-click it, so it lands in the login keychain with its private key. `security find-identity -v -p codesigning` should list `Apple Distribution: <team> (<TEAM-ID>)`.
+3. **Profile:** + → App Store Connect → `app.coursesmash.ios` → that certificate → name it exactly `Course Smash App Store`. Download it and double-click it.
+
+An App Store Connect API key with the App Manager role can do steps 1 to 3 through the API as well (`POST /v1/bundleIds`, `/v1/certificates` and `/v1/profiles`). A profile expires with its certificate, after a year; make a new one with the same name and nothing in the repo changes.
+
+None of this goes in git: no certificate, private key, `.p12`, profile or API key.
+
+If `app.coursesmash.ios` is taken, change `PRODUCT_BUNDLE_IDENTIFIER` in `project.yml`, `app_identifier` in `fastlane/Appfile`, and the key in `ExportOptions.plist`.
 
 ## Before the first submission
 
@@ -74,12 +93,15 @@ These need you, once:
 
 0. **Xcode 26 or later** on the Mac that archives and uploads. An archive made with an older Xcode builds and exports, and is then refused at upload.
 1. **Apple Developer Program** membership, and your Team ID set as above.
-2. **An app record** in [App Store Connect](https://appstoreconnect.apple.com): New App, iOS, bundle ID `app.coursesmash.ios`, name "Course Smash", SKU of your choice.
+2. **An app record** in [App Store Connect](https://appstoreconnect.apple.com): New App, iOS, bundle ID `app.coursesmash.ios`, name "Course Smash", SKU of your choice. Or run `fastlane produce --app_identifier app.coursesmash.ios --app_name "Course Smash" --team_id <TEAM-ID> --sku coursesmash --language en-US --platform ios --skip_devcenter` and sign in when asked. If either says creation "is not available due to your provider's contract state", the Account Holder has to accept the pending agreement at developer.apple.com and in App Store Connect → Business first.
 3. **A demo account for App Review.** The app has no sign-up, so reviewers need a login. Create one with `scripts/add-user.mjs` (see the root README) and enter it under App Review Information. Do not commit it: `fastlane/metadata/review_information/demo_user.txt` and `demo_password.txt` are placeholders.
 4. **App Privacy answers** in App Store Connect, matching `CourseSmash/Resources/PrivacyInfo.xcprivacy`: User ID and Other User Content, both linked to the user, used for app functionality, not used for tracking.
 5. **Age rating and pricing**, which only App Store Connect can set.
 6. Read `public/privacy.html` (served at https://coursesmash.app/privacy) and `fastlane/metadata/copyright.txt`, and change anything that is not right for you.
-7. Optional: an App Store Connect API key, so uploads do not ask for a two-factor code. Set `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`.
+7. Optional: an App Store Connect API key, so uploads do not ask for a two-factor code. App Manager is enough. Keep the `.p8` in `~/.appstoreconnect/private_keys/` (where `altool` looks for it) and set `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_PATH`.
+8. **The distribution certificate and profile** from [Signing](#signing).
+9. **The iOS platform** for Xcode 26, which doesn't ship with it: `xcodebuild -downloadPlatform iOS` (about 8 GB). Without it, archiving fails with "iOS 26.x is not installed".
+10. **Testers.** In TestFlight, make an internal group with access to all builds and add team members. A team member who can't see every app must first be given access to Course Smash under Users and Access, or adding them fails with "Tester(s) cannot be assigned".
 
 ## Submit with fastlane
 
@@ -88,6 +110,7 @@ brew install fastlane
 cd ios
 export DEVELOPMENT_TEAM=ABCDE12345
 export FASTLANE_APPLE_ID=you@example.com     # not needed with an API key
+export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8  # fastlane fails with an encoding error ("Cr" on UTF-16) without a UTF-8 locale
 
 fastlane ios beta        # archive and upload to TestFlight
 fastlane ios metadata    # upload the text, URLs and screenshots only
@@ -102,12 +125,15 @@ fastlane ios release     # archive and upload the build with its metadata and sc
 cd ios && xcodegen
 xcodebuild -project CourseSmash.xcodeproj -scheme CourseSmash -configuration Release \
   -destination 'generic/platform=iOS' -archivePath build/CourseSmash.xcarchive \
-  DEVELOPMENT_TEAM=ABCDE12345 -allowProvisioningUpdates archive
-xcodebuild -exportArchive -archivePath build/CourseSmash.xcarchive \
-  -exportOptionsPlist ExportOptions.plist -exportPath build/export -allowProvisioningUpdates
+  DEVELOPMENT_TEAM=ABCDE12345 archive
+# /usr/bin first: the export fails with "Copy failed" if Homebrew's rsync comes first on PATH.
+PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH" xcodebuild -exportArchive -archivePath build/CourseSmash.xcarchive \
+  -exportOptionsPlist ExportOptions.plist -exportPath build/export
 xcrun altool --upload-app -f build/export/CourseSmash.ipa -t ios \
   --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 ```
+
+Don't pass signing settings such as `CODE_SIGN_STYLE` or `PROVISIONING_PROFILE_SPECIFIER` on the command line. They'd apply to the Swift package targets too, and those refuse a provisioning profile.
 
 Or open the archive in Xcode's Organizer and choose Distribute App.
 
