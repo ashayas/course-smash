@@ -18,6 +18,11 @@ final class WalkthroughTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         try XCTSkipIf(environment["CS_USER"] == nil || environment["CS_PW"] == nil, "Set TEST_RUNNER_CS_USER and TEST_RUNNER_CS_PW to run the walkthrough.")
+        // Keep a picture of where a failed run stopped.
+        addTeardownBlock { [weak self] in
+            guard let self, (self.testRun?.failureCount ?? 0) > 0 else { return }
+            self.shot("failure")
+        }
         app = XCUIApplication()
         if let base = environment["CS_BASE_URL"] { app.launchEnvironment["CS_API_BASE_URL"] = base }
         // Looping art keeps the app from ever going idle, which makes every tap wait. CS_MOTION=1 leaves it on.
@@ -90,8 +95,23 @@ final class WalkthroughTests: XCTestCase {
         // Library: browse, search, filter by track.
         app.buttons["nav-library"].tap()
         XCTAssertTrue(app.textFields["library-search"].waitForExistence(timeout: 30))
-        XCTAssertTrue(app.buttons["library-card"].firstMatch.waitForExistence(timeout: 20))
+        // By topic, the first card can be below the fold, so the count is the sign the library has loaded.
+        XCTAssertTrue(app.staticTexts["library-count"].waitForExistence(timeout: 20))
         shot("library")
+
+        // By topic: each topic is a learning path, with its courses in study order.
+        if app.buttons["group-topic"].exists {
+            if scrollTo(app.buttons["topic-path"].firstMatch, tries: 8) {
+                shot("library-topics")
+                app.buttons["topic-path"].firstMatch.tap()
+                scrollToTop()
+                settle(app.staticTexts["library-count"])
+                shot("library-path")
+            }
+            scrollToTop()
+            app.buttons["group-track"].tap()
+            settle(app.staticTexts["library-count"])
+        }
         let total = app.staticTexts["library-count"].label
         app.buttons["Cybersecurity"].tap()
         waitForChange(of: app.staticTexts["library-count"], from: total)
@@ -112,7 +132,13 @@ final class WalkthroughTests: XCTestCase {
         shot("library-course")
         app.swipeUp()
         shot("library-course-modules")
-        app.swipeDown()
+        // The learning path around the course, similar courses and where learners slip, when the course has them.
+        for (id, name) in [("slips", "where-learners-slip"), ("path-prerequisites", "take-these-first"), ("path-leads-to", "leads-to"), ("similar-courses", "similar-courses")] {
+            // These sit below a run of course cards, so allow a long scroll.
+            if scrollTo(app.staticTexts[id].firstMatch, tries: 30) { shot("library-course-\(name)") }
+        }
+        scrollToTop()
+        scrollTo(app.buttons["start-course"])
         app.buttons["start-course"].tap()
 
         // The course: the agent opens it and the first question arrives.
@@ -272,11 +298,12 @@ final class WalkthroughTests: XCTestCase {
     private func scrollTo(_ element: XCUIElement, tries: Int = 14) -> Bool {
         let window = app.windows.firstMatch.frame
         func visible() -> Bool {
-            element.exists && element.isHittable && element.frame.maxY < window.maxY - 40 && element.frame.minY > 110
+            // Clear of the header at the top, with room to spare so a heading is never half hidden.
+            element.exists && element.isHittable && element.frame.maxY < window.maxY - 40 && element.frame.minY > 150
         }
         if visible() { return true }
         for _ in 0..<tries {
-            if element.exists, !element.frame.minY.isFinite || element.frame.minY <= 110 {
+            if element.exists, !element.frame.minY.isFinite || element.frame.minY <= 150 {
                 app.swipeDown(velocity: .slow)
             } else {
                 // Drag in the page's right gutter, so the drag never lands on a control.

@@ -176,7 +176,7 @@ private fun Fatal(app: AppModel, model: CourseModel, message: String, modifier: 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(24.dp)) {
         ErrorText(message)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            PillButton("Try again", { model.start() })
+            PillButton("Try again", { model.start() }, tag = "try-again")
             PillButton("Back to courses", { app.show(Section.Courses) }, kind = Pill.Quiet)
         }
     }

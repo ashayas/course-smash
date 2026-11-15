@@ -71,6 +71,7 @@ For the iOS app, from `ios/`:
 - Build: `xcodebuild -project CourseSmash.xcodeproj -scheme CourseSmash -destination 'platform=iOS Simulator,name=iPhone 16 Pro' -derivedDataPath build build`
 - Walk every flow and take screenshots: `CS_USER=... CS_PW=... scripts/walkthrough.sh`
 - Upload to TestFlight or the App Store: `fastlane ios beta` or `fastlane ios release`. Signing and the one-time setup are in `ios/README.md`.
+- Submitting needs Xcode 26 or later. App Store Connect rejects uploads that were not built with the iOS 26 SDK, so build, test and archive with that Xcode before a release. Older Xcodes are fine for everyday builds and the simulator.
 
 For the Android app, from `android/`:
 

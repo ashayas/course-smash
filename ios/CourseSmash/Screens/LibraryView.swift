@@ -1,48 +1,97 @@
 import SwiftUI
 
-/// The library: ready-made courses, searched and filtered by the Worker.
+/// The library: ready-made courses, by track or by topic, searched by the Worker.
 struct LibraryView: View {
     @Environment(AppModel.self) private var model
-    @State private var tracks: [Catalog.Track] = []
-    @State private var shown: [CatalogCourse]?
+    @State private var catalog: Catalog?
+    /// Ids of the courses that match the search. Nil while nothing is typed, which means all of them.
+    @State private var matching: Set<String>?
     @State private var search = ""
     @State private var track = ""
+    /// Tracks are how the library was written. Topics are clusters by meaning, across tracks.
+    @State private var byTopic = false
+    @State private var topic = 0
     @State private var error: String?
 
     var body: some View {
         Page {
             if let error {
                 ErrorText(message: error).padding(.top, 20)
-            } else if let shown {
+            } else if let catalog {
                 PageHead(title: "Library", note: "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed.")
-                tools(count: shown.count)
-                LazyVStack(spacing: Theme.gap) {
-                    ForEach(shown) { course in
-                        Button { model.open(.libraryCourse(course.id)) } label: { LibraryCard(course: course) }
-                            .buttonStyle(LiftButtonStyle())
-                            .accessibilityIdentifier("library-card")
+                let topics = catalog.topics ?? []
+                let shown = shown(catalog)
+                tools(catalog, topics: topics, count: shown.count)
+                if byTopic, topic == 0 {
+                    // Every topic as its own learning path, in study order.
+                    ForEach(topics) { item in
+                        let list = courses(in: item, catalog)
+                        if !list.isEmpty {
+                            VStack(alignment: .leading, spacing: 20) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(item.name).type(.titleLarge).accessibilityAddTraits(.isHeader)
+                                    Text(item.summary).type(.small).foregroundStyle(Theme.muted)
+                                    Button("Path of \(list.count)") { topic = item.id }
+                                        .buttonStyle(LinkButtonStyle())
+                                        .accessibilityIdentifier("topic-path")
+                                }
+                                cards(list, catalog, path: true)
+                            }
+                            .padding(.bottom, 64)
+                        }
                     }
+                } else {
+                    cards(shown, catalog, path: byTopic)
                 }
             } else {
                 WorkingView(title: "Opening the library").padding(22).panel()
             }
         }
         .task {
-            if shown == nil { track = model.libraryTrack }
+            if catalog == nil { track = model.libraryTrack }
             await load()
         }
-        .onChange(of: model.libraryTrack) { _, new in track = new }
-        .task(id: Query(search: search, track: track)) {
-            guard shown != nil else { return }
+        .onChange(of: model.libraryTrack) { _, new in
+            track = new
+            if !new.isEmpty { byTopic = false }
+        }
+        .task(id: search) {
+            guard catalog != nil else { return }
             // Wait for a pause in typing before asking the Worker.
             try? await Task.sleep(for: .milliseconds(250))
-            if !Task.isCancelled { await load() }
+            if !Task.isCancelled { await find() }
         }
     }
 
-    private struct Query: Hashable { let search: String; let track: String }
+    /// A topic's courses in study order, so each one follows the courses it builds on.
+    private func courses(in topic: Catalog.Topic, _ catalog: Catalog) -> [CatalogCourse] {
+        let byId = Dictionary(catalog.courses.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return topic.courseIds.compactMap { byId[$0] }.filter { matching?.contains($0.id) ?? true }
+    }
 
-    private func tools(count: Int) -> some View {
+    private func shown(_ catalog: Catalog) -> [CatalogCourse] {
+        let topics = catalog.topics ?? []
+        if byTopic {
+            if let chosen = topics.first(where: { $0.id == topic }) { return courses(in: chosen, catalog) }
+            return topics.flatMap { courses(in: $0, catalog) }
+        }
+        return catalog.courses.filter { (track.isEmpty || $0.track == track) && (matching?.contains($0.id) ?? true) }
+    }
+
+    private func cards(_ list: [CatalogCourse], _ catalog: Catalog, path: Bool) -> some View {
+        let titles = Dictionary(catalog.courses.map { ($0.id, $0.title) }, uniquingKeysWith: { first, _ in first })
+        return LazyVStack(spacing: Theme.gap) {
+            ForEach(list) { course in
+                Button { model.open(.libraryCourse(course.id)) } label: {
+                    LibraryCard(course: course, after: path ? (course.requires ?? []).compactMap { titles[$0] } : [])
+                }
+                .buttonStyle(LiftButtonStyle())
+                .accessibilityIdentifier("library-card")
+            }
+        }
+    }
+
+    private func tools(_ catalog: Catalog, topics: [Catalog.Topic], count: Int) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             TextField("", text: $search, prompt: Text("Search by topic, like KV cache or HPA").foregroundStyle(Theme.muted))
                 .type(.body)
@@ -54,14 +103,30 @@ struct LibraryView: View {
                 .background(Theme.ink, in: Capsule())
                 .accessibilityLabel("Search the library")
                 .accessibilityIdentifier("library-search")
+            if !topics.isEmpty {
+                FlowLayout(spacing: 8) {
+                    chip("By track", on: !byTopic, id: "group-track") { byTopic = false }
+                    chip("By topic", on: byTopic, id: "group-topic") { byTopic = true }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Group the library")
+            }
             FlowLayout(spacing: 8) {
-                ForEach([Catalog.Track(id: "", title: "All tracks")] + tracks) { item in
-                    Button(item.title) { track = item.id }
-                        .buttonStyle(ChipButtonStyle(on: item.id == track))
-                        .accessibilityAddTraits(item.id == track ? .isSelected : [])
+                if byTopic {
+                    chip("All topics", on: topic == 0) { topic = 0 }
+                    ForEach(topics) { item in
+                        chip("\(item.name) · \(item.courses)", on: item.id == topic) { topic = item.id }
+                    }
+                } else {
+                    ForEach([Catalog.Track(id: "", title: "All tracks")] + catalog.trackList) { item in
+                        chip(item.title, on: item.id == track) { track = item.id }
+                    }
                 }
             }
-            Text(plural(count, "course")).type(.body).foregroundStyle(Theme.muted).accessibilityIdentifier("library-count")
+            let about = byTopic ? topics.first { $0.id == topic }?.summary : nil
+            Text(plural(count, "course") + (about.map { ". \($0)" } ?? ""))
+                .type(.body).foregroundStyle(Theme.muted)
+                .accessibilityIdentifier("library-count")
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -69,26 +134,41 @@ struct LibraryView: View {
         .padding(.bottom, 44)
     }
 
+    private func chip(_ title: String, on: Bool, id: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(title, action: action)
+            .buttonStyle(ChipButtonStyle(on: on))
+            .accessibilityAddTraits(on ? .isSelected : [])
+            .accessibilityIdentifier(id ?? "")
+    }
+
     private func load() async {
         do {
-            if search.isEmpty, track.isEmpty {
-                let catalog = try await model.loadCatalog()
-                tracks = catalog.trackList
-                shown = catalog.courses
-            } else {
-                let catalog: Catalog = try await model.api.get("/api/catalog", query: [URLQueryItem(name: "q", value: search), URLQueryItem(name: "track", value: track)])
-                tracks = catalog.trackList
-                shown = catalog.courses
+            let loaded = try await model.loadCatalog()
+            if catalog == nil {
+                // With topics, the library opens by topic, unless a track was asked for.
+                byTopic = !(loaded.topics ?? []).isEmpty && track.isEmpty
             }
+            catalog = loaded
             error = nil
         } catch is CancellationError {
         } catch {
-            if shown == nil { self.error = message(of: error) }
+            if catalog == nil { self.error = message(of: error) }
+        }
+    }
+
+    /// The search runs on the Worker, so every client matches the same way.
+    private func find() async {
+        guard !search.trimmingCharacters(in: .whitespaces).isEmpty else { matching = nil; return }
+        do {
+            let found: Catalog = try await model.api.get("/api/catalog", query: [URLQueryItem(name: "q", value: search)])
+            matching = Set(found.courses.map(\.id))
+        } catch {
+            // Keep what is on screen. The next keystroke asks again.
         }
     }
 }
 
-/// One library course: what it covers, and a place to say what you want out of it before starting.
+/// One library course: what it covers, where it sits on its learning path, and a place to say what you want out of it.
 struct LibraryCourseView: View {
     let id: String
     @Environment(AppModel.self) private var model
@@ -97,6 +177,8 @@ struct LibraryCourseView: View {
     @State private var goal = ""
     @State private var error: String?
     @State private var starting = false
+    @State private var similar: SimilarCourses?
+    @State private var misses: CourseMisses?
     @FocusState private var goalFocused: Bool
 
     var body: some View {
@@ -105,7 +187,7 @@ struct LibraryCourseView: View {
                 ErrorText(message: loadError).padding(.top, 20)
                 Button("Back to the library") { model.show(.library) }.buttonStyle(PillButtonStyle(kind: .quiet)).padding(.top, 16)
             } else if let course {
-                PageHead(title: course.title, eyebrow: "\(course.trackTitle) · \(course.level)", note: course.summary) {
+                PageHead(title: course.title, eyebrow: [course.trackTitle, course.topic, course.level].compactMap { $0 }.joined(separator: " · "), note: course.summary) {
                     Button("Back to the library") { model.show(.library, track: course.track) }.buttonStyle(LinkButtonStyle())
                 }
                 VStack(alignment: .leading, spacing: 14) {
@@ -129,6 +211,27 @@ struct LibraryCourseView: View {
                 }
                 .card()
                 .padding(.top, Theme.gap)
+
+                if let misses, !misses.concepts.isEmpty { slips(misses).padding(.top, Theme.gap) }
+
+                let before = course.prerequisites ?? []
+                let onward = course.leadsTo ?? []
+                if !before.isEmpty {
+                    path("Take these first", "This course builds on them. Skip any you already know.", before, id: "path-prerequisites")
+                }
+                if !onward.isEmpty {
+                    path("Leads to", "Courses that build on this one.", onward, id: "path-leads-to")
+                }
+                if let similar {
+                    // Courses already on the path above are not repeated here.
+                    let onPath = Set((before + onward).map(\.id))
+                    let others = similar.courses.filter { !onPath.contains($0.id) }
+                    if similar.pending || !others.isEmpty {
+                        path("Similar courses",
+                             similar.pending ? "Still reading this course. Courses that cover similar ground will show here in a few minutes." : "Courses that cover similar ground, closest first, from any track.",
+                             others, id: "similar-courses")
+                    }
+                }
             } else {
                 WorkingView(title: "Opening the course").padding(22).panel()
             }
@@ -141,6 +244,40 @@ struct LibraryCourseView: View {
                 loadError = message(of: error)
             }
         }
+        // Similar courses and where learners slip are optional: the page is complete without them.
+        .task { similar = try? await model.api.get("/api/catalog/\(id)/similar") }
+        .task { misses = try? await model.api.get("/api/catalog/\(id)/misses") }
+    }
+
+    private func path(_ title: String, _ lead: String, _ courses: [CatalogCourse], id: String) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHead(title: title, note: lead, identifier: id)
+            LazyVStack(spacing: Theme.gap) {
+                ForEach(courses) { course in
+                    Button { model.open(.libraryCourse(course.id)) } label: { LibraryCard(course: course) }
+                        .buttonStyle(LiftButtonStyle())
+                }
+            }
+        }
+        .padding(.top, 64)
+    }
+
+    /// The subtopics and the question learners miss most in this course.
+    private func slips(_ misses: CourseMisses) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Where learners slip").type(.titleSmall).padding(.bottom, 16).accessibilityAddTraits(.isHeader).accessibilityIdentifier("slips")
+            Text("Missed most often. Follow-ups pick questions close to the ones you get wrong.")
+                .type(.small).foregroundStyle(Theme.muted).padding(.bottom, 14)
+            ForEach(misses.concepts, id: \.self) { item in
+                let percent = Int((item.missRate * 100).rounded())
+                Meter(label: item.concept, value: "\(percent)% missed", fraction: Double(max(percent, 3)) / 100, colour: Theme.orange)
+                    .padding(.bottom, 14)
+            }
+            if let hardest = misses.questions.first {
+                Text("Hardest question: “\(RichText.plain(hardest.prompt))”").type(.small).foregroundStyle(Theme.muted)
+            }
+        }
+        .card()
     }
 
     private func start() {

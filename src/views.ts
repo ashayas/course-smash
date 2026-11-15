@@ -23,10 +23,10 @@ export const appConfig = () => ({
   buildings: { archetypes: labelled(ARCHETYPES), materials: labelled(MATERIALS), roofs: labelled(ROOFS), accents: labelled(ACCENTS) },
 });
 
-type CatalogEntry = { track: string; title: string; summary: string; tags: string[]; level: string };
+type CatalogEntry = { track: string; title: string; summary: string; tags: string[]; level: string; topic?: string | null };
 
 /**
- * The library search: every word must appear in the title, summary, tags or level. `track` narrows to one track.
+ * The library search: every word must appear in the title, summary, tags, level or topic. `track` narrows to one track.
  * Only `courses` is narrowed. Everything else the catalog carries is passed through as it is.
  */
 export function filterCatalog<T extends CatalogEntry, C extends { tracks: Record<string, string>; courses: T[] }>(catalog: C, query: string, track: string) {
@@ -36,7 +36,7 @@ export function filterCatalog<T extends CatalogEntry, C extends { tracks: Record
     // JSON object order is not something every client keeps, so the display order is also sent as a list.
     track_list: Object.entries(catalog.tracks).map(([id, title]) => ({ id, title })),
     courses: catalog.courses.filter((c) => (!track || c.track === track) &&
-      words.every((w) => `${c.title} ${c.summary} ${c.tags.join(" ")} ${c.level}`.toLowerCase().includes(w))),
+      words.every((w) => `${c.title} ${c.summary} ${c.tags.join(" ")} ${c.level} ${c.topic ?? ""}`.toLowerCase().includes(w))),
   };
 }
 

@@ -5,14 +5,14 @@ The native iPhone app. It is a SwiftUI port of the web app in `public/`, screen 
 | | |
 |---|---|
 | Bundle ID | `app.coursesmash.ios` |
-| Version | `1.0.0`, build `1` (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`) |
+| Version | `1.1.0`, build `2` (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`) |
 | Runs on | iPhone, iOS 17 or later, portrait |
 | Server | `https://coursesmash.app` (`CSAPIBaseURL` in `project.yml`) |
 | Dependencies | [SwiftMath](https://github.com/mgriebling/SwiftMath) 1.7.3, for formulas |
 
 ## Build and run
 
-You need Xcode 16 or later with an iOS simulator runtime, and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+You need Xcode with an iOS simulator runtime, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). Xcode 16 or later builds and runs the app. **Submitting needs Xcode 26 or later**: App Store Connect rejects uploads that were not built with the iOS 26 SDK (the upload fails with a 409).
 
 ```sh
 brew install xcodegen
@@ -72,6 +72,7 @@ Signing is automatic, so Xcode creates the App ID and provisioning profile the f
 
 These need you, once:
 
+0. **Xcode 26 or later** on the Mac that archives and uploads. An archive made with an older Xcode builds and exports, and is then refused at upload.
 1. **Apple Developer Program** membership, and your Team ID set as above.
 2. **An app record** in [App Store Connect](https://appstoreconnect.apple.com): New App, iOS, bundle ID `app.coursesmash.ios`, name "Course Smash", SKU of your choice.
 3. **A demo account for App Review.** The app has no sign-up, so reviewers need a login. Create one with `scripts/add-user.mjs` (see the root README) and enter it under App Review Information. Do not commit it: `fastlane/metadata/review_information/demo_user.txt` and `demo_password.txt` are placeholders.

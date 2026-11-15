@@ -19,6 +19,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -139,9 +140,24 @@ class WalkthroughTest {
         // Library: browse, filter by track, search.
         tap("nav-library")
         waitFor("library-search", 30)
-        waitFor("library-card", 20)
+        waitFor("library-count", 20) // by topic, the first card can be below the fold
         Thread.sleep(1500)
         shot("library")
+
+        // By topic: each topic is a learning path, with its courses in study order.
+        if (exists("group-topic")) {
+            if (runCatching { scrollTo("topic-path") }.isSuccess) {
+                Thread.sleep(1200)
+                shot("library-topics")
+                rule.onAllNodesWithTag("topic-path").onFirst().performClick()
+                scrollTo("library-count")
+                settle("library-count")
+                shot("library-path")
+            }
+            tap("group-track")
+            scrollTo("library-count")
+            settle("library-count")
+        }
         val total = text("library-count")
         rule.onNodeWithText("Cybersecurity").performClick()
         rule.waitUntil(20_000) { text("library-count") != total }
@@ -160,6 +176,13 @@ class WalkthroughTest {
         rule.onAllNodesWithTag("library-card").onFirst().performClick()
         waitFor("start-course", 30)
         shot("library-course")
+        // The learning path around the course, similar courses and where learners slip, when the course has them.
+        for ((tag, name) in listOf("slips" to "where-learners-slip", "path-prerequisites" to "take-these-first", "path-leads-to" to "leads-to", "similar-courses" to "similar-courses")) {
+            if (runCatching { scrollTo(tag) }.isSuccess) {
+                Thread.sleep(1200)
+                shot("library-course-$name")
+            }
+        }
         tap("start-course")
 
         // The course: the agent opens it and the first question arrives.
@@ -271,7 +294,17 @@ class WalkthroughTest {
 
     /** Scrolls the page until the element is on screen. Pages are lazy lists, so it may not exist until then. */
     private fun scrollTo(tag: String, matcher: SemanticsMatcher = hasTestTag(tag)) {
-        rule.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(matcher)
+        val page = rule.onAllNodes(hasScrollToNodeAction()).onFirst()
+        repeat(3) {
+            if (runCatching { page.performScrollToNode(matcher) }.isSuccess) {
+                rule.waitForIdle()
+                return
+            }
+            // The page may still have been loading when the search went past. Go back to the top and look again.
+            runCatching { page.performScrollToIndex(0) }
+            Thread.sleep(1500)
+        }
+        page.performScrollToNode(matcher)
         rule.waitForIdle()
     }
 
