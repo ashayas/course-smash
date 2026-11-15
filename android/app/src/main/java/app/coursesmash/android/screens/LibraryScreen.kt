@@ -149,7 +149,7 @@ fun LibraryScreen(model: AppModel) {
                     val list = inTopic(item)
                     if (list.isEmpty()) continue
                     item("topic-${item.id}") {
-                        Column(Modifier.padding(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(Modifier.padding(bottom = 20.dp).testTag("topic-head"), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             T(item.name, TypeStyle.TitleLarge, heading = true)
                             T(item.summary, TypeStyle.Small, color = Theme.Muted)
                             LinkButton("Path of ${list.size}", { topic = item.id }, tag = "topic-path")

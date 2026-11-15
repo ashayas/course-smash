@@ -94,7 +94,7 @@ fun Shell(model: AppModel) {
     }
 }
 
-/** The logo mark and the streak on a tab, or the way back on a screen opened from one. You has its own heading instead. */
+/** The logo mark on a tab, or the way back on a screen opened from one, and the streak on the right. You has its own heading instead. */
 @Composable
 private fun TopBar(model: AppModel, pushed: Boolean) {
     if (!pushed && model.tab == Tab.You) return
@@ -106,9 +106,10 @@ private fun TopBar(model: AppModel, pushed: Boolean) {
             RoundControl("Back", { model.back() }, tag = "back") { drawChevron(it) }
         } else {
             Art(model.city, model.city.mark, Modifier.size(38.dp, 28.dp).clearAndSetSemantics {})
-            Spacer(Modifier.weight(1f))
-            model.recall.streak?.takeIf { it.current > 0 }?.let { StreakChip(it) }
         }
+        Spacer(Modifier.weight(1f))
+        // The streak stays in the corner on a screen opened from Today, City or Library. Nothing under You shows it.
+        if (model.tab != Tab.You) model.recall.streak?.takeIf { it.current > 0 }?.let { StreakChip(it) }
     }
 }
 

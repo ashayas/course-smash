@@ -299,7 +299,7 @@ fun VerdictBlock(result: AnswerResult, isChoice: Boolean, grader: String?, note:
                     LinkButton(source.second, { links.openUri(source.first) }, color = LocalInk.current)
                 }
             }
-            if (note != null) T(note, TypeStyle(19, FontWeight.SemiBold), Modifier.padding(top = 10.dp))
+            if (note != null) T(note, TypeStyle(19, FontWeight.SemiBold), Modifier.padding(top = 10.dp).testTag("verdict-note"))
             if (grader != null) result.confidence?.let { T("Graded by $grader, ${Math.round(it * 100)}% sure.", TypeStyle.Small, Modifier.padding(top = 10.dp)) }
             if (next != null) PillButton("Keep going", { going = true; next() }, Modifier.padding(top = 18.dp), kind = Pill.Ink, enabled = !going, tag = "keep-going")
         }
