@@ -174,13 +174,15 @@ struct SiteFooter: View {
 
 /// The scrolling page every screen sits in: ink behind, the phone gutter at the sides, the footer at the end.
 struct Page<Content: View>: View {
+    /// Today and You end with their own last line, so they leave the footer out.
+    var footer = true
     @ViewBuilder var content: Content
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 content
-                SiteFooter()
+                if footer { SiteFooter() } else { Color.clear.frame(height: 24) }
             }
             .padding(.horizontal, Theme.gutter)
             .frame(maxWidth: .infinity, alignment: .leading)

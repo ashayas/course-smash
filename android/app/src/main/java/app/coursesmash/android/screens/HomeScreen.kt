@@ -35,7 +35,7 @@ import app.coursesmash.android.CourseList
 import app.coursesmash.android.CourseSummary
 import app.coursesmash.android.Created
 import app.coursesmash.android.Route
-import app.coursesmash.android.Section
+import app.coursesmash.android.Tab
 import app.coursesmash.android.art.SvgDocument
 import app.coursesmash.android.art.SvgView
 import app.coursesmash.android.art.art
@@ -158,7 +158,7 @@ fun HomeScreen(model: AppModel) {
                     "${library.courses.size} ready-made courses with a question bank behind each module. Start one and it adapts to you like any other.",
                     Modifier.padding(top = 48.dp),
                 ) {
-                    PillButton("Browse the library", { model.show(Section.Library) }, kind = Pill.Quiet, tag = "browse-library")
+                    PillButton("Browse the library", { model.show(Tab.Library) }, kind = Pill.Quiet, tag = "browse-library")
                 }
             }
             for (track in library.trackList) {
@@ -167,7 +167,7 @@ fun HomeScreen(model: AppModel) {
                 item("track-${track.id}") {
                     Row(Modifier.fillMaxWidth().padding(bottom = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                         T(track.title, TypeStyle.TitleLarge, Modifier.weight(1f), heading = true)
-                        LinkButton("All ${inTrack.size}", { model.show(Section.Library, track.id) })
+                        LinkButton("All ${inTrack.size}", { model.show(Tab.Library, track.id) })
                     }
                 }
                 items(inTrack.take(3), key = { "library-${it.id}" }) { course ->

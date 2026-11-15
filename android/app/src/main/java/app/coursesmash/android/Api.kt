@@ -6,10 +6,13 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.ZoneId
 
 /** A failure the learner can read. The message comes from the Worker when it sent one. */
 class ApiException(override val message: String, val status: Int = 0) : Exception(message) {
@@ -68,6 +71,8 @@ class ApiClient(val baseUrl: String) {
                 connection.readTimeout = 240_000 // the agent can take a few minutes to plan a course
                 connection.instanceFollowRedirects = false
                 connection.setRequestProperty("Accept", "application/json")
+                // The Worker counts days and streaks in the learner's own time zone.
+                connection.setRequestProperty("X-Time-Zone", ZoneId.systemDefault().id)
                 if (bearer != null) connection.setRequestProperty("Authorization", "Bearer $bearer")
                 if (body != null) {
                     connection.doOutput = true
@@ -89,6 +94,30 @@ class ApiClient(val baseUrl: String) {
         }
         return result
     }
+
+    // Daily recall, the streak and settings.
+
+    suspend fun today(): Today = get("/api/today")
+
+    /** `response` is the option's index as a string, or the short answer. */
+    suspend fun answerRecall(id: String, response: String): RecallAnswer =
+        send("POST", "/api/recall/$id/answer", buildJsonObject { put("response", response) }.toString())
+
+    suspend fun skipRecall(id: String): RecallUpdate = send("POST", "/api/recall/$id/skip")
+
+    /** Adds five questions to today's set. */
+    suspend fun moreRecall(): RecallUpdate = send("POST", "/api/recall/more")
+
+    suspend fun skipRecallDay(skipped: Boolean): RecallUpdate =
+        send("POST", "/api/recall/skip-day", buildJsonObject { put("skipped", skipped) }.toString())
+
+    suspend fun settings(): Settings = get("/api/settings")
+
+    suspend fun saveSettings(dailyGoal: Int? = null, shortAnswers: Boolean? = null): Settings =
+        send("PUT", "/api/settings", buildJsonObject {
+            if (dailyGoal != null) put("daily_goal", dailyGoal)
+            if (shortAnswers != null) put("short_answers", shortAnswers)
+        }.toString())
 
     @Serializable
     data class ErrorBody(val error: String? = null)

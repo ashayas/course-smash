@@ -48,7 +48,7 @@ import app.coursesmash.android.AnswerResult
 import app.coursesmash.android.AppModel
 import app.coursesmash.android.CourseDetail
 import app.coursesmash.android.Question
-import app.coursesmash.android.Section
+import app.coursesmash.android.Tab
 import app.coursesmash.android.art.Art
 import app.coursesmash.android.art.SvgDocument
 import app.coursesmash.android.art.SvgView
@@ -157,7 +157,7 @@ fun CourseScreen(app: AppModel, id: String) {
                         scope.launch {
                             try {
                                 model.delete()
-                                app.show(Section.Courses)
+                                app.show(Tab.City)
                             } catch (failure: Exception) {
                                 deleteError = messageOf(failure)
                             }
@@ -177,7 +177,7 @@ private fun Fatal(app: AppModel, model: CourseModel, message: String, modifier: 
         ErrorText(message)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             PillButton("Try again", { model.start() }, tag = "try-again")
-            PillButton("Back to courses", { app.show(Section.Courses) }, kind = Pill.Quiet)
+            PillButton("Back to courses", { app.show(Tab.City) }, kind = Pill.Quiet)
         }
     }
 }
@@ -225,38 +225,46 @@ private fun QuestionView(view: CourseDetail, question: Question, result: AnswerR
     }
 }
 
-private enum class OptionState { Open, Selected, Correct, Wrong, Locked }
+enum class OptionState { Open, Selected, Correct, Wrong, Locked }
 
+/**
+ * One multiple choice option. Recall uses the smaller size, and sits on ink during a session,
+ * where the option takes the surface colour instead.
+ */
 @Composable
-private fun OptionRow(index: Int, text: String, state: OptionState, choose: () -> Unit) {
+fun OptionRow(index: Int, text: String, state: OptionState, tag: String = "option-$index", small: Boolean = false, onInk: Boolean = false, choose: () -> Unit) {
     val onColour = state == OptionState.Selected || state == OptionState.Correct || state == OptionState.Wrong
     val background = when (state) {
         OptionState.Selected -> Theme.Blue
         OptionState.Correct -> Theme.Green
         OptionState.Wrong -> Theme.Orange
-        else -> Theme.Ink
+        else -> if (onInk) Theme.Surface else Theme.Ink
     }
     Row(
-        Modifier.tag("option-$index").fillMaxWidth().background(background, RoundedCornerShape(Theme.InsetRadius))
+        Modifier.tag(tag).fillMaxWidth().background(background, RoundedCornerShape(Theme.InsetRadius))
             .clickable(remember { MutableInteractionSource() }, indication = null, enabled = state == OptionState.Open || state == OptionState.Selected, role = Role.RadioButton, onClick = choose)
             .semantics {
                 selected = state == OptionState.Selected
                 if (state == OptionState.Correct) stateDescription = "Correct answer" else if (state == OptionState.Wrong) stateDescription = "Your answer, wrong"
             }
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = if (small) 14.dp else 20.dp, vertical = if (small) 12.dp else 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (small) 12.dp else 14.dp),
+        verticalAlignment = if (small) Alignment.CenterVertically else Alignment.Top,
     ) {
-        Box(Modifier.size(28.dp).background(if (onColour) Theme.Ink else Theme.Surface, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(28.dp).background(if (onColour || onInk) Theme.Ink else Theme.Surface, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
             T("ABCD".getOrElse(index) { 'D' }.toString(), TypeStyle(15, FontWeight.SemiBold), color = Theme.Paper)
         }
-        RichText(text, TypeStyle.Body, Modifier.weight(1f), color = if (onColour) Theme.Ink else Theme.Paper)
+        RichText(text, if (small) TypeStyle.Small else TypeStyle.Body, Modifier.weight(1f), color = if (onColour) Theme.Ink else Theme.Paper)
     }
 }
 
-/** The one full-colour block on the screen: what the grader decided, and why. */
+/**
+ * The one full-colour block on the screen: what the grader decided, and why.
+ * Recall adds `note`, the line that says when the subtopic comes back, and has its own button under the block.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun VerdictBlock(result: AnswerResult, isChoice: Boolean, grader: String, next: () -> Unit) {
+fun VerdictBlock(result: AnswerResult, isChoice: Boolean, grader: String?, note: String? = null, tag: String = "verdict", next: (() -> Unit)?) {
     var going by remember { mutableStateOf(false) }
     val links = LocalUriHandler.current
     val still = LocalStill.current
@@ -279,7 +287,7 @@ private fun VerdictBlock(result: AnswerResult, isChoice: Boolean, grader: String
                 .graphicsLayer { val s = 0.96f + 0.04f * pop.value; scaleX = s; scaleY = s; alpha = pop.value.coerceIn(0f, 1f) }
                 .fillMaxWidth().background(colour, RoundedCornerShape(Theme.CardRadius)).padding(26.dp),
         ) {
-            T(title, TypeStyle.TitleLarge, Modifier.padding(bottom = 10.dp).testTag("verdict"), heading = true)
+            T(title, TypeStyle.TitleLarge, Modifier.padding(bottom = 10.dp).testTag(tag), heading = true)
             RichText(result.feedback, TypeStyle.Body)
             val reference = result.reference
             if (result.verdict != "correct" && !isChoice && reference != null) {
@@ -291,8 +299,9 @@ private fun VerdictBlock(result: AnswerResult, isChoice: Boolean, grader: String
                     LinkButton(source.second, { links.openUri(source.first) }, color = LocalInk.current)
                 }
             }
-            result.confidence?.let { T("Graded by $grader, ${Math.round(it * 100)}% sure.", TypeStyle.Small, Modifier.padding(top = 10.dp)) }
-            PillButton("Keep going", { going = true; next() }, Modifier.padding(top = 18.dp), kind = Pill.Ink, enabled = !going, tag = "keep-going")
+            if (note != null) T(note, TypeStyle(19, FontWeight.SemiBold), Modifier.padding(top = 10.dp))
+            if (grader != null) result.confidence?.let { T("Graded by $grader, ${Math.round(it * 100)}% sure.", TypeStyle.Small, Modifier.padding(top = 10.dp)) }
+            if (next != null) PillButton("Keep going", { going = true; next() }, Modifier.padding(top = 18.dp), kind = Pill.Ink, enabled = !going, tag = "keep-going")
         }
     }
 }
@@ -309,7 +318,7 @@ private fun FinishedPanel(app: AppModel, view: CourseDetail) {
                 if (strongest != null) {
                     T("You're strongest on ${strongest.concept}." + if (weakest != null && weakest.mastery < 0.7) " Come back to ${weakest.concept} when you can." else "", TypeStyle.Body)
                 }
-                PillButton("Build another course", { app.show(Section.Courses) }, Modifier.padding(top = 10.dp), kind = Pill.Ink)
+                PillButton("Build another course", { app.show(Tab.City) }, Modifier.padding(top = 10.dp), kind = Pill.Ink)
             }
             val scene = rememberArt(app.city, app.city.finished(view.art))
             Box(Modifier.widthIn(max = 220.dp).fillMaxWidth().background(Theme.Ink, RoundedCornerShape(Theme.CardRadius)).padding(10.dp)) {

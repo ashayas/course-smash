@@ -64,6 +64,8 @@ Run these with the project's Wrangler through `npx`:
 - Update a secret: `npx wrangler secret put PW`, then enter the value at the prompt. This deploys immediately.
 - Check the connection: `opencode mcp list`
 - Check that `ios/` and `android/` stay out of the Worker build: `npm run check:isolation`
+- Run the tests: `npm test`. They cover the recall schedule, the streak and the recall endpoints on an in-memory SQLite, with no model calls.
+- Make demo data for local runs, walkthroughs and store screenshots: `node scripts/demo.mjs data/demo.db`, then start the Node server on it (see README, "Check your work").
 
 For the iOS app, from `ios/`:
 

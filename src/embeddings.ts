@@ -428,6 +428,34 @@ export async function closenessToMisses(env: Env, moduleId: string, misses: { pr
   }
 }
 
+/**
+ * How close each candidate bank question is to bank questions the learner missed: the best cosine against any miss,
+ * read from the vectors already stored in D1. It makes no model call, so daily recall can use it on every request.
+ * Empty when either side isn't embedded yet.
+ */
+export async function storedCloseness(env: Env, candidateIds: string[], missedIds: string[]): Promise<Map<string, number>> {
+  // D1 binds at most 100 values in one statement. Candidates past the cap get no score, which ranks them last;
+  // a subtopic has a handful of bank questions, so the cap is far from being reached.
+  const ids = [...new Set([...missedIds.slice(-10), ...candidateIds])].slice(0, 90);
+  if (!candidateIds.length || !missedIds.length) return new Map();
+  try {
+    const { results } = await env.DB.prepare(`SELECT question_id, vector FROM question_embeddings WHERE question_id IN (${ids.map(() => "?").join(", ")})`)
+      .bind(...ids).all<{ question_id: string; vector: number[] }>();
+    const vectors = new Map(results.map((r) => [r.question_id, fromBlob(r.vector)]));
+    const misses = missedIds.map((id) => vectors.get(id)).filter((v) => v !== undefined);
+    if (!misses.length) return new Map();
+    const scores = new Map<string, number>();
+    for (const id of candidateIds) {
+      const vector = vectors.get(id);
+      if (vector) scores.set(id, Math.max(...misses.map((m) => dot(m, vector))));
+    }
+    return scores;
+  } catch (error) {
+    console.error(JSON.stringify({ message: "stored closeness failed", error: String(error) }));
+    return new Map();
+  }
+}
+
 /** Reviewed library questions from other modules that are nearest to the learner's misses, as examples for writing new ones. */
 export async function libraryQuestionsLike(env: Env, misses: { prompt: string; concept: string }[], excludeModuleId: string | null, limit: number) {
   const index = bindings(env).VECTORS;

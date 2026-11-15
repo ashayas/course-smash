@@ -61,6 +61,19 @@ APIs: `GET /api/topics`, `GET /api/catalog` (each course has `topic` and `requir
 
 The library is generated with Claude by `scripts/catalog/generate.mjs` and loaded with `scripts/catalog/import.mjs`. See [Build the library](#build-the-library).
 
+### Daily recall and the streak
+
+The app opens on Today: about 10 questions from what you've already learned, your streak, and the course to carry on with.
+
+- **What comes back.** Each subtopic of a module you've passed is a recall item with its own schedule (`src/fsrs.ts`, FSRS-5 with its default weights). A miss comes back in a day or two, a right answer in about 3 days, then about 10 days, a month and 3 months. Nothing waits longer than 180 days.
+- **The day's set** (`src/recall.ts`) is the most overdue items, at most 4 from one course, plus up to 3 unanswered questions from courses in progress, then items that aren't due yet. "5 more questions" adds to it by the same rules.
+- **The question** for an item is a bank question on that subtopic you haven't had, reviewed ones first, and the one closest in meaning to what you missed. When the bank runs out, the question you answered longest ago comes back. No model writes recall questions.
+- **Grading** is by the answer key for multiple choice, with no model. Short answers are graded as in a course.
+- **The streak** (`src/days.ts`) counts days with 5 answers, recall or course. A day is your own calendar day, turning over at 3:00 am, in the time zone your device sends in `X-Time-Zone`. Every 7 days in a row bank a rest day, up to 2, and a missed day spends one.
+- **Continue and Up next.** Today offers the course you answered in last. On its last module, it also suggests the library course it leads to. The cron writes the next round for any course whose round is fully answered, so the question is there when you come back.
+
+APIs: `GET /api/today`, `POST /api/recall/:id/answer`, `POST /api/recall/:id/skip`, `POST /api/recall/more`, `POST /api/recall/skip-day`, and `GET` and `PUT /api/settings`. `GET /api/stats` carries the same `streak` object.
+
 ## Screenshots
 
 | | |
@@ -75,6 +88,10 @@ The library is generated with Claude by `scripts/catalog/generate.mjs` and loade
 | Rated by the decision model | The agent reads your answers |
 | ![Follow-up questions](docs/screenshots/09-follow-up.png) | ![Course finished](docs/screenshots/10-finished.png) |
 | Follow-ups aimed at your weak spots | Finish the course |
+| ![Today](docs/screenshots/11-today.png) | ![A recall answer](docs/screenshots/12-recall-result.png) |
+| Today: the day's recall, your streak and what's next | A recall answer |
+| ![Recall done](docs/screenshots/13-recall-done.png) | ![Today after recall](docs/screenshots/14-today-after-recall.png) |
+| Recall done, and when each idea comes back | Today after recall: continue, and what to take next |
 
 | | Cloudflare | Docker |
 |---|---|---|
@@ -189,8 +206,22 @@ Every response's token usage is logged to `catalog/.state/ledger.jsonl`. Before 
 
 ```sh
 npm run typecheck
+npm test
 node --experimental-strip-types evals/run_evals.mjs
 ```
+
+`npm test` runs the scheduler, streak and recall tests on an in-memory SQLite, with the real migrations and no model calls.
+
+To try the app with a learner who has something on every screen (a streak, questions to recall, a course to continue), make the demo data and start the Node server on it:
+
+```sh
+node scripts/demo.mjs data/demo.db
+npm run build:server
+set -a; source .env; set +a
+DATABASE_PATH=data/demo.db CLOUDFLARE_ACCOUNT_ID=<your account id> npm run start:server
+```
+
+The app walkthroughs can run against it: set `CS_BASE_URL` to `http://localhost:8787` for iOS or `http://10.0.2.2:8787` for Android.
 
 ## Evals
 

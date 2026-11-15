@@ -43,8 +43,10 @@ import java.io.File
  *   csUser, csPw        the login to use (never commit these)
  *   csBaseUrl           optional, a Worker other than the one the app is built for
  *   csLibraryCourse     optional, the library course to start (default "Kubernetes architecture")
- *   csQuick             optional, set to 1 to stop after login, home and the city
- * The test starts one library course and one planned course, and deletes both before it ends.
+ *   csQuick             optional, set to 1 to stop after login, Today and the city
+ * The test answers today's recall questions when the learner has any, and passes without them (`recall.status` of `empty`).
+ * It starts one library course and one planned course, and deletes both before it ends. It changes the daily goal and
+ * the short answers setting, and puts both back.
  * Screenshots go to the app's files/walkthrough folder.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -82,8 +84,10 @@ class WalkthroughTest {
         ActivityScenario.launch<MainActivity>(intent)
 
         // Start signed out, whatever an earlier run left behind.
-        waitForAny(listOf("log-in", "log-out"), 30)
-        if (exists("log-out")) tap("log-out")
+        if (waitForAny(listOf("log-in", "tab-you"), 30) == "tab-you") {
+            press("tab-you")
+            tap("log-out")
+        }
 
         // Login: a wrong password is refused, the right one gets in.
         waitFor("log-in", 15)
@@ -97,12 +101,16 @@ class WalkthroughTest {
         rule.onNodeWithTag("password").performTextReplacement(password!!)
         rule.onNodeWithTag("password").performImeAction()
 
-        // Home: the composer, the city and the learner's courses.
+        // The app opens on Today.
+        today()
+
+        // City: the composer, the city and the learner's courses.
+        press("tab-city")
         waitFor("build-course", 30)
         rule.waitUntilAtLeastOneExists(hasText("TCP well enough to debug slow APIs"), 20_000)
         Thread.sleep(2000)
         Espresso.closeSoftKeyboard()
-        shot("home")
+        shot("city")
         rule.onNodeWithText("TCP well enough to debug slow APIs").performClick()
         assertEquals("I want to learn TCP well enough to debug slow APIs.", text("prompt"))
         Espresso.closeSoftKeyboard()
@@ -111,21 +119,21 @@ class WalkthroughTest {
         // The city is a map: the front lot is the newest course, or the building site when there are none.
         scrollTo("city")
         Thread.sleep(1500)
-        shot("home-city")
+        shot("city-map")
         rule.onNodeWithTag("city").performTouchInput { click(Offset(width * 0.5f, height * 0.74f)) }
         // A course opens on its question, try-again or finished panel. The page scrolls there, so the title may be off screen.
         if (runCatching { waitForAny(listOf("check-answer", "try-again", "finished"), 12) }.isSuccess) {
             Thread.sleep(1000)
             shot("city-building-opens-course")
             if (exists("figure")) { scrollTo("figure"); Thread.sleep(1500); shot("question-diagram") }
-            tap("nav-courses")
+            press("tab-city")
         }
         Espresso.closeSoftKeyboard()
         waitFor("build-course", 20)
         if (arguments.getString("csQuick") != null) return
 
         scrollToFirst("course-card")
-        shot("home-courses")
+        shot("city-courses")
 
         // A finished course, when the learner has one: the lit building under confetti.
         val finished = hasTestTag("course-card") and hasText("Finished", substring = true)
@@ -134,11 +142,11 @@ class WalkthroughTest {
             waitFor("finished", 30)
             Thread.sleep(1500)
             shot("finished-course")
-            tap("nav-courses")
+            press("back")
         }
 
         // Library: browse, filter by track, search.
-        tap("nav-library")
+        press("tab-library")
         waitFor("library-search", 30)
         waitFor("library-count", 20) // by topic, the first card can be below the fold
         Thread.sleep(1500)
@@ -242,28 +250,14 @@ class WalkthroughTest {
         Thread.sleep(1500)
         shot("course-new-building")
 
-        // Stats.
-        tap("nav-stats")
-        waitFor("activity-chart", 30)
-        Thread.sleep(1500)
-        shot("stats")
-        scrollTo("activity-chart")
-        rule.onNodeWithTag("activity-chart").performTouchInput { click(Offset(width - 4f, height / 2f)) }
-        Thread.sleep(800)
-        shot("stats-activity")
-        scrollToFirst("stat-course")
-        Thread.sleep(1200)
-        shot("stats-by-course")
-
-        // Delete the library course started above. It is the most recently studied, so it is first.
-        rule.onAllNodesWithTag("stat-course").onFirst().performClick()
+        // Delete the library course started above, while it is the one on screen.
         deleteOpenCourse()
 
         // Plan a course from a sentence. With the planner available a question arrives. Without it, the app offers to try again.
         waitFor("build-course", 30)
         rule.onNodeWithTag("prompt").performTextInput("I want to learn how DNS resolution works so that I can debug slow lookups.")
         Espresso.closeSoftKeyboard()
-        shot("home-prompt")
+        shot("city-prompt")
         tap("build-course")
         waitForAny(listOf("delete-course", "check-answer", "try-again"), 30)
         shot("course-planning")
@@ -272,10 +266,223 @@ class WalkthroughTest {
         shot(if (planned == "check-answer") "planned-course-question" else "course-planner-unavailable")
         deleteOpenCourse()
 
-        // Log out.
-        waitFor("log-out", 20)
+        you()
+
+        // System back goes from a tab to Today. Log out is the last thing on You.
+        Espresso.pressBack()
+        waitFor("today-title", 20)
+        press("tab-you")
+        waitFor("you-title", 10)
         tap("log-out")
         waitFor("log-in", 15)
+    }
+
+    /** Today: the live question, a recall session from start to finish, then Continue and Up next. */
+    private fun today() {
+        // The heading is there once /api/today has answered, whatever the state of recall. The first answer of the day
+        // can take a while: the Worker picks the day's questions, and may have to read a course's question bank first.
+        waitFor("today-title", 240)
+        Thread.sleep(2000) // the buildings are drawn by city.js
+        shot("today")
+        // The "Then:" row under the question opens the course that follows recall.
+        if (exists("recall-question") && runCatching { scrollTo("then-course") }.isSuccess) {
+            tap("then-course")
+            waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
+            Thread.sleep(1000)
+            shot("then-course")
+            press("back")
+            waitFor("today-title", 20)
+            waitFor("recall-question", 20)
+        }
+        if (exists("recall-question")) recall() else if (exists("recall-soon")) shot("today-no-recall-yet")
+
+        if (exists("continue-card")) {
+            tap("continue-course")
+            // The course opens on a question, or the agent writes the next ones first.
+            waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
+            Thread.sleep(1000)
+            shot("continue-course")
+            press("back")
+            waitFor("today-title", 20)
+        }
+        if (runCatching { scrollTo("up-next") }.isSuccess) {
+            Thread.sleep(1200)
+            shot("today-up-next")
+            tap("up-next")
+            waitFor("start-course", 30)
+            shot("up-next-course")
+            press("back")
+            waitFor("today-title", 20)
+        }
+        if (exists("first-course")) {
+            tap("plan-course")
+            waitFor("build-course", 20)
+            press("tab-today")
+            waitFor("today-title", 20)
+        }
+    }
+
+    private fun recall() {
+        // Skipping for today swaps the question for the rest of Today, and "Do it anyway" brings it back.
+        tap("skip-today")
+        waitFor("do-it-anyway", 20)
+        Thread.sleep(1200)
+        shot("today-recall-skipped")
+        tap("do-it-anyway")
+        waitFor("recall-question", 20)
+
+        // The first answer is sent from Today, which starts the session. The tab bar steps aside.
+        if (exists("recall-option-1")) {
+            tap("recall-option-1")
+            shot("today-option-selected")
+            tap("recall-check")
+            waitFor("recall-verdict", 60)
+            assertTrue("The tab bar is hidden during a session", !exists("tab-today"))
+            Thread.sleep(1200)
+            noteVerdict()
+            press("recall-next")
+            rule.waitUntil(20_000) { !exists("recall-verdict") }
+        }
+
+        // Skip a question: nothing is recorded and the set moves on.
+        if (exists("recall-skip") && exists("recall-question")) {
+            Thread.sleep(800)
+            shot("recall-question")
+            val before = text("recall-count")
+            press("recall-skip")
+            rule.waitUntil(20_000) { exists("recall-done") || text("recall-count") != before }
+        }
+
+        // Close the session part of the way through. The rest waits on Today, and answering there carries on.
+        if (exists("recall-close")) {
+            press("recall-close")
+            waitFor("tab-today", 20)
+            waitFor("recall-question", 20)
+            Thread.sleep(1200)
+            shot("today-recall-in-progress")
+        }
+
+        answerUntilDone()
+        Thread.sleep(1200)
+        shot("recall-done")
+        if (exists("recall-more")) {
+            press("recall-more")
+            waitFor("recall-question", 30)
+            Thread.sleep(800)
+            shot("recall-more-questions")
+            answerUntilDone()
+        }
+        press("recall-finish")
+        waitFor("tab-today", 20)
+        waitFor("week-strip", 20)
+        Thread.sleep(1500)
+        shot("today-recall-done")
+    }
+
+    private var sawRight = false
+    private var sawWrong = false
+    private var sawShortRecall = false
+    private var recallAsked = 0
+
+    /** Answers whatever is asked, on Today or in the session, until the finished screen shows. */
+    private fun answerUntilDone() {
+        repeat(60) {
+            if (waitForAny(listOf("recall-done", "recall-question"), 60) == "recall-done") return
+            recallAsked += 1
+            if (exists("recall-option-0")) {
+                // Different options in turn, so that some answers are right and some are wrong.
+                val pick = (0..3).map { (recallAsked + it) % 4 }.first { exists("recall-option-$it") }
+                tap("recall-option-$pick")
+                if (recallAsked == 2) shot("recall-option-selected")
+                check()
+                waitFor("recall-verdict", 60)
+            } else {
+                scrollTo("recall-short-answer")
+                rule.onNodeWithTag("recall-short-answer").performTextInput("The control plane decides what should run and where, and each node's kubelet makes it so.")
+                Espresso.closeSoftKeyboard()
+                if (!sawShortRecall) shot("recall-short-answer")
+                check()
+                // Short answers are graded by a model. If it is unavailable the app says so, and the question can be skipped.
+                if (waitForAny(listOf("recall-verdict", "recall-error"), 120) == "recall-error") {
+                    shot("recall-short-answer-not-graded")
+                    val before = text("recall-count")
+                    press("recall-skip")
+                    rule.waitUntil(20_000) { exists("recall-done") || text("recall-count") != before }
+                    return@repeat
+                }
+            }
+            Thread.sleep(1000)
+            noteVerdict(short = !exists("recall-option-0"))
+            press("recall-next")
+            rule.waitUntil(20_000) { !exists("recall-verdict") }
+        }
+        waitFor("recall-done", 10)
+    }
+
+    /** "Check" is in the question's card on Today, and under the question in a session. */
+    private fun check() = if (exists("tab-today")) tap("recall-check") else press("recall-check")
+
+    /** Takes a picture of the first right answer, the first wrong one and the first short answer. */
+    private fun noteVerdict(short: Boolean = false) {
+        val right = text("recall-verdict") == "You got it"
+        if (short && !sawShortRecall) {
+            sawShortRecall = true
+            scrollTo("recall-verdict")
+            shot("recall-verdict-short-answer")
+        } else if (right && !sawRight) {
+            shot("recall-verdict-right")
+        } else if (!right && !sawWrong) {
+            shot("recall-verdict-wrong")
+        }
+        if (right) sawRight = true else sawWrong = true
+    }
+
+    /** You: the streak, Stats, and the settings, which are changed and then put back. */
+    private fun you() {
+        press("tab-you")
+        waitFor("daily-goal", 30)
+        Thread.sleep(1200)
+        shot("you")
+
+        tap("open-stats")
+        // The streak card sits above the chart, which may be below the fold until the page scrolls to it.
+        waitForAny(listOf("streak-card", "activity-chart"), 30)
+        Thread.sleep(1500)
+        shot("stats")
+        if (runCatching { scrollTo("streak-card") }.isSuccess) shot("stats-streak")
+        scrollTo("activity-chart")
+        rule.onNodeWithTag("activity-chart").performTouchInput { click(Offset(width - 4f, height / 2f)) }
+        Thread.sleep(800)
+        shot("stats-activity")
+        if (runCatching { scrollToFirst("stat-course") }.isSuccess) {
+            Thread.sleep(1200)
+            shot("stats-by-course")
+        }
+        press("back")
+        waitFor("you-title", 20)
+
+        // Daily goal: pick another one, then the one it was.
+        val goal = text("daily-goal-value")
+        val other = if (goal.startsWith("15 ")) 20 else 15
+        tap("daily-goal")
+        waitFor("goal-$other", 10)
+        shot("you-daily-goal")
+        tap("goal-$other")
+        rule.waitUntil(20_000) { text("daily-goal-value") == "$other questions" }
+        shot("you-daily-goal-changed")
+        tap("daily-goal")
+        tap("goal-${goal.substringBefore(' ')}")
+        rule.waitUntil(20_000) { text("daily-goal-value") == goal }
+
+        // Short answers in recall: off and on again, or the other way round.
+        val shortAnswers = isOn("short-answers")
+        tap("short-answers")
+        rule.waitUntil(20_000) { isOn("short-answers") != shortAnswers }
+        shot("you-short-answers-changed")
+        tap("short-answers")
+        rule.waitUntil(20_000) { isOn("short-answers") == shortAnswers }
+        scrollTo("log-out")
+        shot("you-log-out")
     }
 
     // Helpers
@@ -310,6 +517,15 @@ class WalkthroughTest {
 
     private fun scrollToFirst(tag: String) = scrollTo(tag)
 
+    /** Taps a control that sits outside the scrolling page: a tab, the back control, the buttons under a recall question. */
+    private fun press(tag: String) {
+        rule.onAllNodesWithTag(tag).onFirst().performClick()
+        rule.waitForIdle()
+    }
+
+    private fun isOn(tag: String) =
+        rule.onNodeWithTag(tag).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ToggleableState) == androidx.compose.ui.state.ToggleableState.On
+
     private fun tap(tag: String) {
         // Pages are lazy lists, so the element may not exist until the page has scrolled to it.
         runCatching { scrollTo(tag) }
@@ -324,7 +540,8 @@ class WalkthroughTest {
     }
 
     private fun text(tag: String): String {
-        val config = rule.onNodeWithTag(tag).fetchSemanticsNode().config
+        // Unmerged, so text inside a row that is one button, such as a setting's value, can be read on its own.
+        val config = rule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().config
         return config.getOrNull(SemanticsProperties.EditableText)?.text ?: config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
     }
 

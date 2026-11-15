@@ -34,6 +34,9 @@ object Theme {
     val Red = Color(0xFFC8402F)
     val Teal = Color(0xFF4FA39D)
 
+    /** A window with its light off: an open pip, a day not done. */
+    val Unlit = Color(0xFF27303F)
+
     // Chart rules.
     val GridLine = Color(0xFF2C2C29)
     val BaseLine = Color(0xFF3A3A37)
@@ -86,6 +89,8 @@ data class TypeStyle(val size: Int, val weight: FontWeight = FontWeight.Normal, 
         val TitleLarge = TypeStyle(35, FontWeight.SemiBold, -0.03f, 1.05f)
         val TitleSmall = TypeStyle(25, FontWeight.SemiBold, -0.03f, 1.05f)
         val Question = TypeStyle(25, FontWeight.SemiBold, -0.03f, 1.1f)
+        val CardTitle = TypeStyle(22, FontWeight.SemiBold, -0.03f, 1.1f)
+        val RecallQuestion = TypeStyle(20, FontWeight.SemiBold, -0.02f, 1.2f)
         val Lead = TypeStyle(22)
         val Body = TypeStyle(19)
         val Small = TypeStyle(16)

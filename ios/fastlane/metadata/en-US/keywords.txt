@@ -1,1 +1,1 @@
-learning,study,quiz,courses,questions,ai tutor,kubernetes,flashcards,adaptive,practice,engineering
+learning,study,quiz,courses,ai tutor,flashcards,spaced repetition,recall,streak,adaptive,practice

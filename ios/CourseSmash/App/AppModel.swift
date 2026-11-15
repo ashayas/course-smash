@@ -1,22 +1,24 @@
 import SwiftUI
 
-/// The three places in the header, matching the web app's nav.
-enum AppSection: String, CaseIterable, Identifiable {
-    case courses, library, stats
+/// The four tabs in the bar at the bottom.
+enum AppTab: String, CaseIterable, Identifiable {
+    case today, city, library, you
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .courses: return "Courses"
+        case .today: return "Today"
+        case .city: return "City"
         case .library: return "Library"
-        case .stats: return "Stats"
+        case .you: return "You"
         }
     }
 }
 
-/// Screens pushed on top of a section.
+/// Screens pushed on top of a tab.
 enum Route: Hashable {
     case course(String)
     case libraryCourse(String)
+    case stats
 }
 
 @MainActor
@@ -25,7 +27,10 @@ final class AppModel {
     let api: APIClient
     let session: SessionStore
 
-    var section: AppSection = .courses
+    /// Today's recall, the streak and the recall session. Shared, so every tab shows the same streak.
+    let today: TodayModel
+
+    var tab: AppTab = .today
     var path: [Route] = []
     /// The track the library opens on, as `#/library?track=` does on the web.
     var libraryTrack = ""
@@ -35,6 +40,7 @@ final class AppModel {
 
     init() {
         api = APIClient(baseURL: AppModel.baseURL)
+        today = TodayModel(api: api)
         session = SessionStore(storage: KeychainSessionStorage(), service: WorkerAuthService(api: api))
         api.token = { [weak self] in self?.session.token }
         api.onUnauthorized = { [weak self] in self?.signOut() }
@@ -49,10 +55,10 @@ final class AppModel {
         return URL(string: configured ?? "") ?? URL(string: "https://coursesmash.app")!
     }
 
-    func show(_ section: AppSection, track: String = "") {
+    func show(_ tab: AppTab, track: String = "") {
         libraryTrack = track
         path = []
-        self.section = section
+        self.tab = tab
     }
 
     func open(_ route: Route) {
@@ -62,8 +68,9 @@ final class AppModel {
     func signOut() {
         session.signOut()
         path = []
-        section = .courses
+        tab = .today
         catalog = nil
+        today.reset()
     }
 
     /// Starter ideas and the building picker's choices. Fetched once.

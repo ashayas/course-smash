@@ -1,1 +1,3 @@
-The library now groups courses into topics. Each topic is a learning path in study order, and a course page shows what to take first, what it leads to, similar courses and where learners slip most.
+Course Smash now opens on Today. A short daily recall brings back questions from what you have already learned, and answering 5 in a day keeps your streak. When recall is done, one tap carries on with your course.
+
+The app has four tabs: Today, City, Library and You. You has your streak, the last 4 weeks, your stats, your daily goal and Log out.

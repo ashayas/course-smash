@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import app.coursesmash.android.AppModel
 import app.coursesmash.android.Mastery
 import app.coursesmash.android.Route
-import app.coursesmash.android.Section
+import app.coursesmash.android.Tab
 import app.coursesmash.android.Stats
 import app.coursesmash.android.art.Art
 import app.coursesmash.android.art.art
@@ -104,10 +104,13 @@ fun StatsScreen(model: AppModel) {
                     }
                     Row(Modifier.height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Theme.Gap)) {
                         StatTile(t.modulesPassed.toString(), "modules passed", "${t.finished} of ${plural(t.courses, "course")} finished", Modifier.weight(1f))
-                        StatTile(t.streak.toString(), "day streak", if (t.streak > 0) "Answer today to keep it going" else "Answer a question to start one", Modifier.weight(1f))
+                        val streak = data.streak
+                        if (streak != null) StatTile(streak.current.toString(), "day streak", streak.label, Modifier.weight(1f))
+                        else StatTile(t.streak.toString(), "day streak", if (t.streak > 0) "Answer today to keep it going" else "Answer a question to start one", Modifier.weight(1f))
                     }
                 }
             }
+            data.streak?.let { streak -> item("streak") { StreakCard(streak, Modifier.padding(top = Theme.Gap)) } }
             item("activity") { ActivityPanel(data.days, data.chartMax, Modifier.padding(top = Theme.Gap)) }
             item("by-course") {
                 SectionHead(
@@ -120,7 +123,7 @@ fun StatsScreen(model: AppModel) {
                 item("empty") {
                     Column(Modifier.card(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         T("No courses yet.", TypeStyle.Body, color = Theme.Muted)
-                        LinkButton("Start one.", { model.show(Section.Courses) })
+                        LinkButton("Start one.", { model.show(Tab.City) })
                     }
                 }
             } else {

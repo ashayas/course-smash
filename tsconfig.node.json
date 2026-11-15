@@ -1,6 +1,18 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": { "types": ["node", "@cloudflare/workers-types"] },
-  "include": ["src", "worker-configuration.d.ts"],
-  "exclude": ["ios", "android"]
+  "compilerOptions": {
+    "types": [
+      "node",
+      "@cloudflare/workers-types"
+    ]
+  },
+  "include": [
+    "src",
+    "test",
+    "worker-configuration.d.ts"
+  ],
+  "exclude": [
+    "ios",
+    "android"
+  ]
 }

@@ -162,7 +162,7 @@ Or open the archive in Xcode's Organizer and choose Distribute App.
 
 ## Screenshots and the walkthrough test
 
-`CourseSmashUITests` logs in, walks every flow against a real Worker and saves a screenshot of each screen. It starts one library course and one planned course, and deletes both before it ends.
+`CourseSmashUITests` logs in, walks every flow against a real Worker and saves a screenshot of each screen: Today and daily recall, the four tabs, a library course, the building picker, You, stats and logging out. It answers today's recall set when there is one, so that set is used up for the day. It puts the settings it changes back, starts one library course and one planned course, and deletes both before it ends.
 
 ```sh
 CS_USER=<username> CS_PW=<password> ios/scripts/walkthrough.sh ios/build/walkthrough
@@ -171,6 +171,10 @@ CS_USER=<username> CS_PW=<password> ios/scripts/walkthrough.sh ios/build/walkthr
 It uses the iPhone 16 Pro Max simulator by default. Its 1320 × 2868 screenshots are the 6.9-inch size the App Store requires, and App Store Connect scales them for smaller iPhones. The ones chosen for the listing are in `fastlane/screenshots/en-US`.
 
 Set `CS_BASE_URL` to use another Worker, such as a local `wrangler dev`. The login is passed to the test runner only, and nothing writes it to disk.
+
+An account with nothing to recall yet, which is how every account starts, only gets its Today cards walked. To walk recall and take the store screenshots, run against a local server with demo data (`node scripts/demo.mjs data/demo.db` from the repo root, then the Node server; see the root README, "Check your work"). The demo learner already has two courses in progress, so start a third one with `CS_LIBRARY_COURSE="LLM inference"`. Make the demo data again before each run, because the run answers the day's questions.
+
+The You screen shows the username, so don't use a screenshot of it for the listing.
 
 ## App icon and launch screen
 

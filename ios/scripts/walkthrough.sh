@@ -5,7 +5,7 @@
 #
 # Optional: CS_BASE_URL (a Worker other than https://coursesmash.app, such as http://localhost:8787),
 # CS_DEVICE (default "iPhone 16 Pro Max", whose 1320 x 2868 screenshots are the size the App Store asks for)
-# CS_LIBRARY_COURSE (the library course to start) and CS_QUICK=1 (stop after login, home and the city).
+# CS_LIBRARY_COURSE (the library course to start) and CS_QUICK=1 (stop after login, Today and the city).
 # The login is only passed to the test runner. It is not written anywhere.
 set -euo pipefail
 cd "$(dirname "$0")/.."

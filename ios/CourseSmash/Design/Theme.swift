@@ -17,6 +17,8 @@ enum Theme {
     // Trim colours that only the buildings use.
     static let red = Color(hex: 0xC8402F)
     static let teal = Color(hex: 0x4FA39D)
+    /// An unlit window: a day not done, or a question not reached.
+    static let unlit = Color(hex: 0x27303F)
     // Chart rules.
     static let gridLine = Color(hex: 0x2C2C29)
     static let baseLine = Color(hex: 0x3A3A37)
@@ -86,6 +88,12 @@ struct TypeStyle {
     static let small = TypeStyle(size: 16, relativeTo: .callout)
     static let smallMedium = TypeStyle(size: 16, weight: .medium, relativeTo: .callout)
     static let button = TypeStyle(size: 16, weight: .medium, tracking: 0, relativeTo: .callout)
+    /// The phone screens' heading, question and secondary text, from the daily recall mockups.
+    static let heading = TypeStyle(size: 34, weight: .semibold, tracking: -0.04, leading: 1.02, relativeTo: .largeTitle)
+    static let cardTitle = TypeStyle(size: 22, weight: .semibold, tracking: -0.03, leading: 1.1, relativeTo: .title2)
+    static let recallQuestion = TypeStyle(size: 20, weight: .semibold, tracking: -0.02, leading: 1.2, relativeTo: .title3)
+    static let sub = TypeStyle(size: 15.5, leading: 1.3, relativeTo: .subheadline)
+    static let subMedium = TypeStyle(size: 15.5, weight: .medium, leading: 1.3, relativeTo: .subheadline)
     static let caption = TypeStyle(size: 14, relativeTo: .footnote)
     static let tiny = TypeStyle(size: 13, relativeTo: .caption)
 
@@ -212,6 +220,8 @@ struct TextArea: View {
     /// What VoiceOver calls the box, and the name UI tests find it by.
     var label: String
     var identifier: String = ""
+    /// Ink on a card, or surface when the box sits straight on the page.
+    var fill = Theme.ink
 
     var body: some View {
         // The placeholder is part of the layout while it shows, so a long one makes the box taller instead of being cut off.
@@ -240,7 +250,7 @@ struct TextArea: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         .contentShape(Rectangle())
         .onTapGesture { focused.wrappedValue = true }
-        .inset()
+        .background(fill, in: RoundedRectangle(cornerRadius: Theme.insetRadius, style: .continuous))
         .onChange(of: text) { _, new in
             if new.count > limit { text = String(new.prefix(limit)) }
         }

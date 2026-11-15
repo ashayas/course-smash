@@ -116,7 +116,7 @@ struct CourseScreen: View {
             ErrorText(message: text)
             FlowLayout(spacing: 14) {
                 Button("Try again") { model.start() }.buttonStyle(PillButtonStyle()).accessibilityIdentifier("try-again")
-                Button("Back to courses") { app.show(.courses) }.buttonStyle(PillButtonStyle(kind: .quiet))
+                Button("Back to courses") { app.show(.city) }.buttonStyle(PillButtonStyle(kind: .quiet))
             }
         }
     }
@@ -126,7 +126,7 @@ struct CourseScreen: View {
         Task {
             do {
                 try await model.delete()
-                app.show(.courses)
+                app.show(.city)
             } catch {
                 deleteError = message(of: error)
             }
@@ -188,7 +188,9 @@ private struct QuestionView: View {
             }
 
             if let result {
-                VerdictBlock(result: result, isChoice: question.options != nil, grader: view.models.grader) { model.start() }
+                VerdictBlock(result: result, isChoice: question.options != nil,
+                             note: result.confidence.map { "Graded by \(view.models.grader), \(Int(($0 * 100).rounded()))% sure." },
+                             action: .init(title: "Keep going", identifier: "keep-going") { model.start() })
                     .id("verdict")
             } else {
                 if let error = model.answerError { ErrorText(message: error).padding(.top, 16).accessibilityIdentifier("answer-error") }
@@ -213,16 +215,21 @@ private struct QuestionView: View {
     }
 }
 
-private struct OptionRow: View {
+/// One multiple choice option. It is picked first and sent with the check button.
+struct OptionRow: View {
     enum State { case open, selected, correct, wrong, locked }
     let index: Int
     let text: String
     let state: State
+    /// The row sits straight on the page, not on a card.
+    var onInk = false
+    /// The tighter row daily recall uses.
+    var compact = false
     let choose: () -> Void
 
     private var background: Color {
         switch state {
-        case .open, .locked: return Theme.ink
+        case .open, .locked: return onInk ? Theme.surface : Theme.ink
         case .selected: return Theme.blue
         case .correct: return Theme.green
         case .wrong: return Theme.orange
@@ -233,16 +240,17 @@ private struct OptionRow: View {
 
     var body: some View {
         Button(action: choose) {
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: .top, spacing: compact ? 12 : 14) {
                 Text(String(Array("ABCD")[min(index, 3)]))
-                    .font(.custom(InterTight.semibold.rawValue, size: 15))
+                    .font(.custom(InterTight.semibold.rawValue, size: compact ? 13 : 15))
                     .foregroundStyle(Theme.paper)
-                    .frame(width: 28, height: 28)
-                    .background(onColour ? Theme.ink : Theme.surface, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .frame(width: compact ? 26 : 28, height: compact ? 26 : 28)
+                    .background(onColour || onInk ? Theme.ink : Theme.surface, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
                     .accessibilityHidden(true)
-                RichText(text).multilineTextAlignment(.leading)
+                RichText(text, style: compact ? .small : .body).multilineTextAlignment(.leading)
+                    .padding(.top, compact ? 2 : 0)
             }
-            .padding(.horizontal, 20).padding(.vertical, 16)
+            .padding(.horizontal, compact ? 14 : 20).padding(.vertical, compact ? 12 : 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .foregroundStyle(onColour ? Theme.ink : Theme.paper)
             .background(background, in: RoundedRectangle(cornerRadius: Theme.insetRadius, style: .continuous))
@@ -255,11 +263,21 @@ private struct OptionRow: View {
 }
 
 /// The one full-colour block on the screen: what the grader decided, and why.
-private struct VerdictBlock: View {
+struct VerdictBlock: View {
+    /// The button inside the block. Daily recall leaves it out and puts "Next" under the question.
+    struct Action {
+        let title: String
+        let identifier: String
+        let run: () -> Void
+    }
+
     let result: AnswerResult
     let isChoice: Bool
-    let grader: String
-    let next: () -> Void
+    /// Who graded a short answer and how sure it was.
+    var note: String?
+    /// When the subtopic comes back, in daily recall. Shown in bold.
+    var schedule: String?
+    var action: Action?
     @State private var shown = false
     @State private var going = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -306,17 +324,20 @@ private struct VerdictBlock: View {
                 .type(.small)
                 .padding(.top, 10)
             }
-            if let confidence = result.confidence {
-                Text("Graded by \(grader), \(Int((confidence * 100).rounded()))% sure.").type(.small).padding(.top, 10)
+            if let note { Text(note).type(.small).padding(.top, 10) }
+            if let schedule {
+                Text(schedule).type(TypeStyle(size: 19, weight: .semibold)).padding(.top, 10).accessibilityIdentifier("comes-back")
             }
-            Button("Keep going") {
-                going = true
-                next()
+            if let action {
+                Button(action.title) {
+                    going = true
+                    action.run()
+                }
+                .buttonStyle(PillButtonStyle(kind: .ink))
+                .disabled(going)
+                .padding(.top, 18)
+                .accessibilityIdentifier(action.identifier)
             }
-            .buttonStyle(PillButtonStyle(kind: .ink))
-            .disabled(going)
-            .padding(.top, 18)
-            .accessibilityIdentifier("keep-going")
         }
         .padding(26)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -347,7 +368,7 @@ private struct FinishedPanel: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("You did it").type(.section).accessibilityAddTraits(.isHeader).accessibilityIdentifier("finished")
                 if let summary { Text(summary).type(.body) }
-                Button("Build another course") { app.show(.courses) }.buttonStyle(PillButtonStyle(kind: .ink)).padding(.top, 10)
+                Button("Build another course") { app.show(.city) }.buttonStyle(PillButtonStyle(kind: .ink)).padding(.top, 10)
             }
             let scene = CityEngine.shared.finished(view.art)
             SVGView(document: scene)

@@ -49,14 +49,14 @@ import app.coursesmash.android.ui.tag
 
 /** The scrolling page every screen sits in: ink behind, the phone gutter at the sides, the footer at the end. */
 @Composable
-fun Page(state: LazyListState = rememberLazyListState(), content: LazyListScope.() -> Unit) {
+fun Page(state: LazyListState = rememberLazyListState(), footer: Boolean = true, content: LazyListScope.() -> Unit) {
     LazyColumn(
         state = state,
         modifier = Modifier.fillMaxSize().background(Theme.Ink).imePadding(),
         contentPadding = PaddingValues(horizontal = Theme.Gutter),
     ) {
         content()
-        item("footer") { SiteFooter() }
+        if (footer) item("footer") { SiteFooter() } else item("end") { Gap(24) }
     }
 }
 
@@ -155,6 +155,18 @@ fun SectionHead(title: String, note: String, modifier: Modifier = Modifier, trai
         T(title, TypeStyle.Section, heading = true)
         T(note, TypeStyle.Body, color = Theme.Muted)
         trailing()
+    }
+}
+
+/** A course's building in a small square: ink on a card, surface on the page. The large one leads the Continue and Up next cards. */
+@Composable
+fun Thumb(model: AppModel, call: String, large: Boolean = false, onInk: Boolean = false) {
+    val size = if (large) 84.dp else 42.dp
+    Box(
+        Modifier.size(size).background(if (onInk) Theme.Surface else Theme.Ink, RoundedCornerShape(if (large) 20.dp else 13.dp)).padding(if (large) 6.dp else 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Art(model.city, call, Modifier.fillMaxSize().clearAndSetSemantics {})
     }
 }
 
