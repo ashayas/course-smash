@@ -18,7 +18,7 @@ struct LibraryView: View {
             if let error {
                 ErrorText(message: error).padding(.top, 20)
             } else if let catalog {
-                PageHead(title: "Library", note: "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed.")
+                PageHead(title: "Library", note: "Short courses on AI engineering, infrastructure, systems design, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed.")
                 let topics = catalog.topics ?? []
                 let shown = shown(catalog)
                 tools(catalog, topics: topics, count: shown.count)

@@ -28,6 +28,7 @@ const TOPICS = JSON.parse(readFileSync(join(ROOT, "scripts/catalog/topics.json")
 const TRACK_TITLES = {
   "ai-engineering": "AI engineering", kubernetes: "Kubernetes", inference: "Inference engineering",
   identity: "Identity and integrations", security: "Cybersecurity", robotics: "Robotics and hardware",
+  policy: "AI policy", systems: "Systems design",
 };
 
 const BANK_SIZE = 16;

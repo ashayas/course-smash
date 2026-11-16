@@ -161,6 +161,7 @@ export const TRACKS: Record<string, string> = {
   security: "Cybersecurity",
   robotics: "Robotics and hardware",
   policy: "AI policy",
+  systems: "Systems design",
 };
 
 type CatalogCard = CatalogCourse & { modules: number; questions: number; topic_id: number | null; topic: string | null };

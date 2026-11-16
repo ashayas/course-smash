@@ -124,6 +124,21 @@
       "coding-agents",
       "advanced",
       "Coding agents: sandboxes, test-driven loops, applying diffs, repository context and review"
+    ],
+    [
+      "agent-memory",
+      "advanced",
+      "You will be able to architect, operate, and evaluate short-term and long-term memory systems for LLM agents across working context, hierarchical compaction, episodic, semantic, and procedural stores, vector, key-value, and bi-temporal knowledge graph backends, conflict reconciliation, cascading privacy deletion, and long-horizon memory benchmarks."
+    ],
+    [
+      "rl-for-llms",
+      "advanced",
+      "You will be able to design, debug, and scale reinforcement learning post-training pipelines for LLMs and reasoning models across REINFORCE/RLOO, PPO, GRPO, verifiable reward environments, reward-hacking and KL regularization controls, disaggregated rollout infrastructure, and online RL versus offline DPO trade-offs."
+    ],
+    [
+      "voice-agents-realtime",
+      "advanced",
+      "You will be able to architect, build, and evaluate low-latency conversational voice agents: weigh cascaded VAD-ASR-LLM-TTS pipelines against native speech-to-speech models, budget end-to-end mouth-to-ear latency and time-to-first-audio, handle semantic turn detection and barge-in cancellation, select between WebRTC and WebSocket media transport, integrate SIP and PSTN telephony trunks, execute tool calls mid-conversation without dead air, and evaluate voice agent quality and reliability."
     ]
   ],
   "kubernetes": [
@@ -378,6 +393,11 @@
       "kernel-optimization",
       "advanced",
       "Kernel optimization: CUDA kernels, operator fusion, CUDA graphs, occupancy and profiling"
+    ],
+    [
+      "diffusion-serving",
+      "advanced",
+      "You will be able to serve, optimize, and capacity-plan diffusion and flow-matching image and video generators in production: reason about iterative denoising steps, ODE/SDE schedulers, and classifier-free guidance batch doubling, size latent spaces and spatial-temporal VAEs, accelerate generation with consistency and adversarial step distillation, manage GPU memory and multi-GPU sequence parallelism for Diffusion Transformers (DiTs), apply cross-attention and feature caching tricks, and calculate cost per image/video and GPU throughput."
     ]
   ],
   "identity": [
@@ -435,6 +455,16 @@
       "agent-auth",
       "advanced",
       "Auth for AI agents: delegated access, OAuth for MCP servers, token exchange, consent, scoping what an agent can do on a user's behalf"
+    ],
+    [
+      "passkeys-webauthn",
+      "intermediate",
+      "You will be able to design and verify phishing-resistant authentication with passkeys and the W3C WebAuthn API: configure Relying Party IDs and origin binding, implement registration and authentication ceremonies on client and server, distinguish attestation from assertion, enforce UP, UV, BE and BS authenticator flags, ship discoverable credentials with conditional UI and cross-device hybrid flows, weigh synced against device-bound passkeys, and build account recovery that does not downgrade security."
+    ],
+    [
+      "cloud-iam-policy",
+      "advanced",
+      "You will be able to write, audit and debug complex cloud IAM policies across AWS, Google Cloud and Azure: trace AWS policy evaluation across SCPs, RCPs (2024), permissions boundaries, session policies, identity policies and resource policies, avoid ForAllValues/ForAnyValue and NotAction traps, design cross-account access without confused-deputy holes, apply GCP IAM v2 deny policies (2022), CEL conditions and Organization Policies, configure Azure RBAC DataActions and ABAC conditions, block privilege escalation paths, and right-size permissions with Access Analyzer unused-access findings (2023)."
     ]
   ],
   "security": [
@@ -487,6 +517,16 @@
       "ai-security",
       "advanced",
       "Security for AI systems: prompt injection, data exfiltration through tools, model and dataset supply chain, data poisoning and red-teaming LLM apps"
+    ],
+    [
+      "threat-modeling",
+      "intermediate",
+      "You will be able to run threat models on real software changes: frame the work with the four questions, draw data flow diagrams with honest trust boundaries, apply STRIDE per element and per interaction, build attack trees, find privacy threats with LINDDUN, rate and prioritize threats without falling into DREAD and CVSS traps, model LLM and agent features, and keep threat models alive as code reviewed in CI."
+    ],
+    [
+      "zero-trust-architecture",
+      "intermediate",
+      "You will be able to design and roll out a production Zero Trust Architecture: apply the NIST SP 800-207 tenets and PDP/PEP components, build BeyondCorp-style access proxies with hardware-backed device trust and continuous verification, replace VPNs with ZTNA connectors, enforce east-west microsegmentation, combine SPIFFE mTLS with end-user context propagation between services, and navigate control-plane outages and brownfield migration pitfalls."
     ]
   ],
   "robotics": [
@@ -556,6 +596,138 @@
       "eu-ai-act",
       "advanced",
       "The EU AI Act (Regulation (EU) 2024/1689): scope, prohibited practices, high-risk systems, provider and deployer duties, general-purpose AI models, conformity assessment, governance, penalties and cross-border impact. Written from primary sources."
+    ]
+  ],
+  "systems": [
+    [
+      "data-models-query-languages",
+      "intermediate",
+      "You will be able to evaluate relational, document, and graph data models across real access patterns, normalize schemas and analyze join execution, weigh schema-on-read against schema-on-write during live migrations, write and reason about declarative queries in SQL, Cypher, SPARQL, and Datalog, and choose or combine models for production workloads."
+    ],
+    [
+      "storage-engines",
+      "intermediate",
+      "You will be able to analyze and tune database storage engines from disk pages up: compare append-only hash indexes, SSTables, LSM-trees, and B-trees across write, read, and space amplification, reason about compaction strategies, Bloom filters, write-ahead logs, and copy-on-write pages, and design OLAP schemas, compressed columnar layouts, vectorized execution plans, and materialized views."
+    ],
+    [
+      "encoding-schema-evolution",
+      "intermediate",
+      "You will be able to choose and evolve data encodings for real systems: spot JSON, XML and language-native serialization pitfalls, read Protocol Buffers, Thrift and Avro on the wire, reason about field tags and writer versus reader schemas, keep changes forward and backward compatible through rolling upgrades, and keep data flowing safely through databases, RPC services and message brokers."
+    ],
+    [
+      "networking-for-systems",
+      "intermediate",
+      "You will be able to diagnose TCP handshakes, flow control, Nagle plus delayed-ACK stalls and TIME_WAIT port exhaustion, size buffers from the bandwidth-delay product and compare CUBIC with BBR congestion control, budget TLS 1.3 1-RTT and 0-RTT replay hazards, trade off HTTP/1.1, HTTP/2 and HTTP/3 over QUIC against transport head-of-line blocking, tune connection pools and keep-alives, and prevent DNS resolution and TTL caching outages."
+    ],
+    [
+      "concurrency-fundamentals",
+      "intermediate",
+      "You will be able to choose between OS threads, processes and event loops, distinguish race conditions from data races, coordinate state with mutexes, reader-writer locks and condition variables without deadlocks or priority inversion, reason about atomic operations, acquire/release and sequential consistency memory orderings, diagnose ABA and memory-reclamation bugs in lock-free structures, and scale work-stealing schedulers and Linux epoll and io_uring pipelines."
+    ],
+    [
+      "replication",
+      "intermediate",
+      "You will be able to design, operate and debug replicated data systems: weigh synchronous, semi-synchronous and asynchronous leader-follower replication, handle follower bootstrapping and split-brain failovers, choose between statement, WAL-shipping and logical replication logs, prevent read-your-writes, monotonic-read and consistent-prefix anomalies under replication lag, resolve concurrent writes with version vectors and CRDTs instead of data-losing last-write-wins, and tune Dynamo-style leaderless quorums, sloppy quorums, hinted handoff, read repair and Merkle-tree anti-entropy."
+    ],
+    [
+      "partitioning-sharding",
+      "intermediate",
+      "You will be able to design partitioning schemes for high-throughput data systems, choose between key-range and hash partitioning, mitigate hot spots and skew, size consistent hashing rings with virtual nodes, weigh local against global secondary indexes, select safe rebalancing strategies, and architect partition-aware routing backed by consensus coordination."
+    ],
+    [
+      "transactions-isolation",
+      "advanced",
+      "You will be able to reason rigorously about database transactions and concurrency anomalies, trace MVCC visibility in PostgreSQL and MySQL InnoDB, diagnose dirty reads, read skew, lost updates, write skew, and phantoms, compare two-phase locking, actual serial execution, and Serializable Snapshot Isolation, and select the exact SQL isolation level and locking pattern required to preserve application invariants."
+    ],
+    [
+      "query-processing-optimization",
+      "advanced",
+      "You will be able to evaluate Volcano iterator, vectorized, and JIT-compiled query execution engines, determine when nested-loop, hash, and sort-merge joins win or spill to disk, trace cost-based plan enumeration and cardinality estimation, diagnose why row estimates fail on correlated or skewed data, read PostgreSQL EXPLAIN ANALYZE BUFFERS plans, and design queries and indexes the planner can actually use."
+    ],
+    [
+      "scaling-relational-databases",
+      "intermediate",
+      "You will be able to scale PostgreSQL and MySQL in production: multiplex thousands of client connections with PgBouncer and ProxySQL, tune autovacuum to prevent MVCC bloat and transaction ID wraparound, eliminate hot-row lock contention and DDL lock queues, run zero-downtime schema migrations with CONCURRENTLY, NOT VALID and gh-ost, route reads safely across lagging replicas, and shard horizontally with Citus and Vitess."
+    ],
+    [
+      "distributed-systems-faults",
+      "intermediate",
+      "You will be able to reason about what can go wrong between machines: partial failure, lost and delayed messages, network partitions, timeout and failure-detector tuning, time-of-day versus monotonic clocks, NTP drift and leap-second jumps, last-write-wins data loss, TrueTime and hybrid logical clocks, process pauses, leases and fencing tokens, crash versus Byzantine faults, and the synchronous, partially synchronous and asynchronous system models that algorithms are proven against."
+    ],
+    [
+      "consistency-consensus",
+      "advanced",
+      "You will be able to decide when a system truly needs linearizability and what it costs, state CAP and PACELC precisely, track causality with Lamport and vector clocks, explain why two-phase commit blocks, reason about total order broadcast and consensus in Raft, Paxos and Zab (leader election, terms and epochs, quorums, log commitment), and use ZooKeeper and etcd correctly for locks, leader election and configuration."
+    ],
+    [
+      "distributed-databases-in-practice",
+      "advanced",
+      "You will be able to compare how Dynamo, DynamoDB, Cassandra, Bigtable, HBase, Spanner, CockroachDB, FoundationDB, and Calvin-style deterministic databases combine partitioning, replication, concurrency control, and clock synchronization, evaluate their consistency and availability guarantees, and choose the right architecture for real production workloads."
+    ],
+    [
+      "distributed-storage",
+      "advanced",
+      "You will be able to analyze GFS and HDFS control/data plane separation and write pipelines, apply cloud object storage semantics including S3 strong read-after-write consistency, multipart uploads, and conditional writes, weigh replication against Reed-Solomon and LRC erasure coding across storage overhead and repair amplification, design placement across hierarchical failure domains and copysets, trace Ceph RADOS placement groups and the CRUSH algorithm, and calculate multi-nine durability and tiering trade-offs."
+    ],
+    [
+      "crdts-local-first",
+      "advanced",
+      "You will be able to prove strong eventual consistency using join-semilattices and commutative operations, design state-based, delta-state and operation-based CRDTs (G-Counter, PN-Counter, LWW-Register, MV-Register, 2P-Set, OR-Set and maps), trace how RGA, Yjs/YATA and Automerge order concurrent text edits and formatting marks without interleaving, enforce causal delivery and prune tombstones safely, and architect local-first sync engines."
+    ],
+    [
+      "multi-region-systems",
+      "advanced",
+      "You will be able to budget wide-area speed-of-light latency across regions, trade off active-passive and active-active topologies against RPO and RTO targets, configure global tables in Spanner, CockroachDB and DynamoDB for low latency and data residency, resolve cross-region write conflicts without silent loss, steer global traffic safely with anycast, DNS and health checks, and contain blast radius with cell-based architectures."
+    ],
+    [
+      "caching-strategies",
+      "advanced",
+      "You will be able to design, operate, and debug caching layers across web edges, application tiers, and databases: choose between cache-aside, read-through, write-through, and write-behind topologies, prevent cache stampedes and hot-key overload, resolve cache-database consistency races with leases and CDC, compare LRU, LFU, and W-TinyLFU eviction policies, configure HTTP and CDN caching semantics, and scale Memcached and Redis clusters using patterns from Facebook's Memcache architecture."
+    ],
+    [
+      "message-queues-delivery",
+      "intermediate",
+      "You will be able to design, tune and operate asynchronous messaging systems: compare SQS Standard and FIFO, RabbitMQ, Google Cloud Pub/Sub and NATS JetStream, combine visibility timeouts, acks, publisher confirms and deduplication for at-least-once and effectively-once delivery, isolate poison messages with dead-letter queues and redrive policies, preserve per-key ordering without head-of-line stalls, scale consumers with prefetch and backlog metrics, and choose between work queues and partitioned logs."
+    ],
+    [
+      "batch-processing",
+      "advanced",
+      "You will be able to design, optimize, and debug large-scale batch data pipelines across distributed filesystems, MapReduce, Spark and Flink dataflow engines, and ACID lakehouse table formats by reasoning about shuffle mechanics, join algorithms, skew mitigation, lineage-based fault recovery, and optimistic concurrency over object storage."
+    ],
+    [
+      "stream-processing",
+      "advanced",
+      "You will be able to design, operate, and troubleshoot distributed stream processing systems using partitioned log brokers, change data capture, event-time watermarks, windowed and temporal stream joins, Chandy-Lamport checkpointing, end-to-end exactly-once transactions, and credit-based backpressure control."
+    ],
+    [
+      "event-driven-architecture",
+      "advanced",
+      "You will be able to design event-driven backends that stay correct under crashes, retries and concurrency: diagnose dual-write bugs, publish reliably with a transactional outbox and change data capture, model state with event sourcing and CQRS, coordinate multi-service workflows with sagas and compensations, make consumers idempotent, and argue end to end that derived data stays correct."
+    ],
+    [
+      "data-warehousing-modeling",
+      "intermediate",
+      "You will be able to model, build and optimize cloud data warehouses: declare atomic fact grain and classify measure additivity, weigh star against snowflake and One Big Table schemas, track history with Slowly Changing Dimensions (Types 1, 2, 3 and 6), architect incremental dbt transformation pipelines and data tests, tune partitioning and clustering in BigQuery and Snowflake, and handle late-arriving data, data contracts and semantic layer metrics."
+    ],
+    [
+      "search-systems",
+      "advanced",
+      "You will be able to design, tune and troubleshoot full-text search systems from Lucene's on-disk data structures up to distributed Elasticsearch and OpenSearch clusters: reason about inverted indexes, FST term dictionaries and roaring bitmaps, build index-time and search-time analyzer pipelines, tune BM25 scoring and Block-Max WAND pruning, manage immutable segments, deletes, merge policies and near-real-time refresh, architect sharding, replication and query-then-fetch execution, and combine lexical retrieval with rescoring and hybrid vector search."
+    ],
+    [
+      "api-design-at-scale",
+      "intermediate",
+      "You will be able to design, scale and evolve production HTTP and gRPC APIs: choose between resource-oriented REST and HTTP/2 RPC streaming, replace slow offset pagination with keyset cursors and signed page tokens, implement Stripe-style idempotency keys with atomic recovery points, structure machine-readable error contracts and partial-failure semantics, model asynchronous work with long-running operations, and manage versioning, deprecations and rate-limit headers without breaking callers."
+    ],
+    [
+      "system-design-building-blocks",
+      "intermediate",
+      "You will be able to size distributed services with back-of-envelope math, choose and scale rate limiters and unique ID generators, bound overload with queues, backpressure, jittered retries, timeouts and circuit breakers, weigh fan-out on write against fan-out on read, and combine these building blocks to design a URL shortener and a multi-channel notification system."
+    ],
+    [
+      "reliability-slos",
+      "advanced",
+      "You will be able to define user-centric SLIs, set SLOs and error budgets backed by a working budget policy, build multiwindow multi-burn-rate alerts, measure tail latency without being fooled by averages or coordinated omission, design tail-tolerant fan-out services, and keep overloaded systems from collapsing through load shedding, retry budgets, deadlines, graceful degradation and cascading-failure defenses."
     ]
   ]
 }
