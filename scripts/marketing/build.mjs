@@ -47,12 +47,12 @@ const BASE = `${FACES}
 const work = mkdtempSync(join(tmpdir(), "cs-marketing-"));
 let pages = 0;
 
-/** Render a page to a PNG of exactly width x height. */
-function render(html, width, height, out) {
+/** Render a page to a PNG of exactly width x height. With `clear`, whatever the page doesn't paint stays transparent. */
+function render(html, width, height, out, clear = false) {
   const page = join(work, `page-${pages++}.html`);
   writeFileSync(page, `<!doctype html><html><head><meta charset="utf-8"><style>${BASE}</style></head><body>${html}</body></html>`);
   execFileSync(CHROME, [`--user-data-dir=${join(work, "chrome")}`, "--headless", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=1",
-    `--window-size=${width},${height}`, "--virtual-time-budget=4000", `--screenshot=${out}`, `file://${page}`], { stdio: ["ignore", "ignore", "ignore"] });
+    `--window-size=${width},${height}`, "--virtual-time-budget=4000", ...(clear ? ["--default-background-color=00000000"] : []), `--screenshot=${out}`, `file://${page}`], { stdio: ["ignore", "ignore", "ignore"] });
 }
 
 /** The pixels of an 8-bit RGB or RGBA PNG that isn't interlaced, which is what both walkthroughs save. */
@@ -84,15 +84,16 @@ function readPng(file) {
 }
 
 /**
- * The first row at or below `from` that sits in a gap between two blocks: a band of rows that are nothing but
- * the page's ink colour from side to side. A crop that starts there never cuts through a line of text or a card.
+ * The first row at or below `from` that sits in a gap between two blocks: a band of rows that are one plain
+ * colour from side to side, such as the page between two cards or the top of a sheet under its rounded corners.
+ * A crop that starts there never cuts through a line of text or the edge of a card.
  */
 function gapRow(png, from) {
-  const INK = [0x14, 0x14, 0x14];
   const blank = (y) => {
+    const first = [...png.at(Math.round(png.width * 0.03), y)];
     for (let x = Math.round(png.width * 0.03); x < png.width * 0.97; x += 3) {
       const pixel = png.at(x, y);
-      if (INK.some((value, i) => Math.abs(pixel[i] - value) > 5)) return false;
+      if (first.some((value, i) => Math.abs(pixel[i] - value) > 5)) return false;
     }
     return true;
   };
@@ -114,7 +115,7 @@ function capture(dir, name) {
  * light up one more per picture, the headline, a line under it, and the app screen in a plain frame that runs
  * off the bottom of the page.
  */
-function shotHtml(shot, index, image, width, height) {
+function shotHtml(shot, index, image, width, height, app) {
   const scale = width / 1320;
   // A 9:16 page is much shorter than a phone screen, so its words take less room and more of the screen shows.
   const short = height / width < 2;
@@ -124,7 +125,7 @@ function shotHtml(shot, index, image, width, height) {
   // round: the phone's bottom is on the page, with a margin under it, and its top is cut off under the words.
   // The cut is moved down to the nearest gap between two blocks, so it never goes through text.
   let frame;
-  if (shot.lower) {
+  if (shot.lower === true || shot.lower?.[app]) {
     const png = readPng(image);
     const perPixel = 1080 / png.width; // the screen is drawn 1080 units wide inside the frame
     const room = Math.floor(height / scale - type.top - type.words - 40 - 72);
@@ -165,7 +166,7 @@ for (const [app, dir] of Object.entries(captures)) {
       const image = capture(dir, shot.capture);
       if (!image) return console.log(`No ${shot.capture} capture in ${dir}, so ${app} has no "${shot.name}" picture.`);
       const file = join(out, `${size.id ? `${size.id}-` : ""}${String(index + 1).padStart(2, "0")}-${shot.name}.png`);
-      render(shotHtml(shot, index, image, size.width, size.height), size.width, size.height, file);
+      render(shotHtml(shot, index, image, size.width, size.height, app), size.width, size.height, file);
       made.push(file);
     });
   }
@@ -203,7 +204,7 @@ mkdirSync(press, { recursive: true });
 const mark = markSvg(512).replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ').replace(' aria-hidden="true"', "");
 writeFileSync(join(press, "course-smash-mark.svg"), `${mark}\n`);
 render(`<style>html, body { background: transparent; } .mark { width: 1024px; height: 1024px; display: grid; place-items: center; } .mark svg { width: 860px; height: auto; }</style><div class="mark">${markSvg(860)}</div>`,
-  1024, 1024, join(press, "course-smash-mark.png"));
+  1024, 1024, join(press, "course-smash-mark.png"), true);
 render(`<style>
     .logo { width: 1600px; height: 600px; display: flex; align-items: center; justify-content: center; gap: 48px; }
     .logo svg { display: block; width: 300px; height: auto; }
@@ -224,7 +225,7 @@ for (const [app, dir] of Object.entries(captures)) {
   for (const old of readdirSync(press).filter((f) => f.startsWith(`${web.prefix}-`))) rmSync(join(press, old));
   SHOTS.forEach((shot, index) => {
     const image = capture(dir, shot.capture);
-    if (image) render(shotHtml(shot, index, image, web.width, web.height), web.width, web.height, join(press, `${web.prefix}-${String(index + 1).padStart(2, "0")}-${shot.name}.png`));
+    if (image) render(shotHtml(shot, index, image, web.width, web.height, app), web.width, web.height, join(press, `${web.prefix}-${String(index + 1).padStart(2, "0")}-${shot.name}.png`));
   });
   const set = SETS[app];
   const full = readdirSync(join(ROOT, set.from)).filter((f) => f.endsWith(".png") && set.test(f)).sort();
