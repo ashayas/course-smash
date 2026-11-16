@@ -277,7 +277,7 @@ async function renderLibrary(params) {
   };
   search.addEventListener("input", draw);
   app.replaceChildren(
-    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
+    h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Library"), h("p", {}, "Short courses on AI engineering, infrastructure, systems design, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed."))),
     h("section", { class: "panel library-tools" }, search, modes, chips, count),
     h("section", { class: "section" }, grid, sections),
   );

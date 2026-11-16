@@ -117,7 +117,7 @@ fun LibraryScreen(model: AppModel) {
             val after = { course: CatalogCourse -> course.requires.mapNotNull { byId[it]?.title } }
 
             item("head") {
-                PageHead("Library", note = "Short courses on AI engineering, infrastructure, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed.")
+                PageHead("Library", note = "Short courses on AI engineering, infrastructure, systems design, security, identity, robotics and AI policy. Each module has a bank of questions, so follow-ups target exactly what you missed.")
             }
             item("tools") {
                 Column(Modifier.padding(bottom = 44.dp).fillMaxWidth().panel().padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
