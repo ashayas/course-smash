@@ -54,6 +54,7 @@ struct ShellView: View {
 /// The logo mark, or a back control on a pushed screen, and the streak on the right.
 private struct TopBar: View {
     @Environment(AppModel.self) private var model
+    @State private var showingStreak = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -73,12 +74,13 @@ private struct TopBar: View {
             }
             Spacer(minLength: 0)
             if model.tab != .you, let streak = model.today.streak, streak.current > 0 {
-                StreakChip(streak: streak)
+                StreakChip(streak: streak) { showingStreak = true }
             }
         }
         .padding(.horizontal, Theme.gutter + 4)
         .padding(.vertical, 2)
         .background(Theme.ink)
+        .sheet(isPresented: $showingStreak) { StreakSheet() }
     }
 }
 

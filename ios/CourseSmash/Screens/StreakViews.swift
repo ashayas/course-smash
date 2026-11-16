@@ -15,21 +15,60 @@ private func spoken(_ days: [Streak.Day]) -> String {
     return "\(done) of \(plural(days.count, "day")) done" + (rest > 0 ? ", \(plural(rest, "rest day"))" : "")
 }
 
-/// The streak in the corner: a lit window and the number of days.
+/// The streak in the corner: a lit window and the number of days. A tap opens the streak in full.
 struct StreakChip: View {
     let streak: Streak
+    let open: () -> Void
 
     var body: some View {
-        HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Theme.yellow).frame(width: 12, height: 12)
-            Text(String(streak.current)).font(.custom(InterTight.semibold.rawValue, size: 15, relativeTo: .subheadline))
+        Button(action: open) {
+            HStack(spacing: 7) {
+                RoundedRectangle(cornerRadius: 3, style: .continuous).fill(Theme.yellow).frame(width: 12, height: 12)
+                Text(String(streak.current)).font(.custom(InterTight.semibold.rawValue, size: 15, relativeTo: .subheadline))
+                    .foregroundStyle(Theme.paper)
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 36)
+            .background(Theme.surface, in: Capsule())
+            // The pill is 36 points tall. The part that takes a tap is 44.
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 14)
-        .frame(height: 36)
-        .background(Theme.surface, in: Capsule())
-        .accessibilityElement()
-        .accessibilityLabel("\(plural(streak.current, "day")) in a row")
+        .buttonStyle(LiftButtonStyle(lift: 2))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(plural(streak.current, "day")) in a row. Open your streak.")
+        .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("streak-chip")
+    }
+}
+
+/// The streak in full, on a sheet over whatever the learner was doing, so a course or a half-written answer stays put.
+struct StreakSheet: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(alignment: .top, spacing: 16) {
+                    Text("Your streak").type(.titleLarge).accessibilityAddTraits(.isHeader).accessibilityIdentifier("streak-sheet-title")
+                    Spacer(minLength: 0)
+                    Button("Close") { dismiss() }.buttonStyle(LinkButtonStyle()).accessibilityIdentifier("streak-close")
+                }
+                if let streak = app.today.streak {
+                    StreakCard(streak: streak, onSurface: true)
+                    if !streak.today.counted {
+                        Text(streak.label).type(.body).foregroundStyle(Theme.muted).accessibilityIdentifier("streak-sheet-label")
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .background(Theme.surface)
+        .foregroundStyle(Theme.paper)
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(Theme.panelRadius)
     }
 }
 
@@ -63,6 +102,8 @@ struct WeekStrip: View {
 /// The streak in full: the run, the longest run, rest days and the last four weeks.
 struct StreakCard: View {
     let streak: Streak
+    /// On a sheet the card is ink, so it still reads as a block on the sheet's surface.
+    var onSurface = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -93,7 +134,9 @@ struct StreakCard: View {
             .accessibilityLabel("The last 4 weeks")
             .accessibilityValue(spoken(streak.calendar))
         }
-        .card(padding: 18)
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(onSurface ? Theme.ink : Theme.surface, in: RoundedRectangle(cornerRadius: Theme.cardRadius, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("streak-card")
     }

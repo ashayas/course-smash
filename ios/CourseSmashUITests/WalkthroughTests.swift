@@ -9,12 +9,19 @@ import XCTest
 ///   TEST_RUNNER_CS_LIBRARY_COURSE            optional, the library course to start (default "Kubernetes architecture")
 ///   TEST_RUNNER_CS_MOTION                    optional, set to 1 to leave the looping art running (slower)
 ///   TEST_RUNNER_CS_QUICK                     optional, set to 1 to stop after login, Today and the city
+///   TEST_RUNNER_CS_KEY_URL                   optional, a local answer-key helper for demo data (scripts/demo-keys.mjs).
+///                                            With it the test answers correctly, apart from one recall question and one
+///                                            course question it gets wrong on purpose. Without it, or when the helper has
+///                                            no answer, the test picks options in turn, as it does against production.
+/// Captures whose names start with "store-" are the ones the store screenshots are made from.
 /// The test answers today's recall set when there is one, and puts the settings it changes back.
 /// It starts one library course and one planned course, and deletes both before it ends.
 final class WalkthroughTests: XCTestCase {
     private var app: XCUIApplication!
     private let environment = ProcessInfo.processInfo.environment
     private var counter = 0
+    /// How many recall questions have had a verdict, so the second one can be answered wrong on purpose.
+    private var recallAnswered = 0
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -54,6 +61,9 @@ final class WalkthroughTests: XCTestCase {
         XCTAssertTrue(app.buttons["tab-today"].isSelected, "Today is not the selected tab")
         sleep(1)
         shot("today")
+        if app.staticTexts["recall-question"].exists { shot("store-today") }
+        // The streak chip opens the streak on a sheet, over whatever is on screen.
+        walkStreakSheet(capture: "streak-sheet")
         let quick = environment["CS_QUICK"] != nil
         if !quick { walkToday() }
 
@@ -73,11 +83,16 @@ final class WalkthroughTests: XCTestCase {
         // The city is a map: the front lot is the newest course, or the building site when there are none.
         let city = app.images["city"]
         XCTAssertTrue(city.waitForExistence(timeout: 10))
+        bring(city, toY: 100, within: 6)
+        shot("store-city")
         city.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.74)).tap()
         if app.staticTexts["course-title"].waitForExistence(timeout: 8) {
             // A course opens on top of its tab: a back control at the top, and the bar still under it.
             XCTAssertTrue(app.buttons["tab-city"].isSelected)
             shot("city-building-opens-course")
+            // From a pushed screen too, and the course is still there when the sheet closes.
+            walkStreakSheet(capture: nil)
+            XCTAssertTrue(app.staticTexts["course-title"].exists, "Closing the streak sheet left the course")
             if app.buttons["check-answer"].waitForExistence(timeout: 60) {
                 shotFigureIfAny()
             }
@@ -114,12 +129,24 @@ final class WalkthroughTests: XCTestCase {
 
         // By topic: each topic is a learning path, with its courses in study order.
         if app.buttons["group-topic"].exists {
+            var path = false
             if scrollTo(app.buttons["topic-path"].firstMatch, tries: 8) {
                 shot("library-topics")
+                // For the store: one topic's path from its name down, then what it covers and its courses in study order.
+                bring(app.staticTexts["topic-name"].firstMatch, toY: 128, within: 6)
+                shot("store-library-path")
+                path = true
+                scrollTo(app.buttons["topic-path"].firstMatch)
                 app.buttons["topic-path"].firstMatch.tap()
                 scrollToTop()
                 settle(app.staticTexts["library-count"])
                 shot("library-path")
+            }
+            if !path {
+                // No path to open: the library by topic, from its count down.
+                scrollToTop()
+                bring(app.staticTexts["library-count"], toY: 106, within: 5)
+                shot("store-library-path")
             }
             scrollToTop()
             app.buttons["group-track"].tap()
@@ -166,30 +193,47 @@ final class WalkthroughTests: XCTestCase {
         shot("course-side-panels")
         scrollToTop()
 
-        // Answer until a short answer comes up, or five questions in.
-        var sawChoice = false, sawShort = false, asked = 0
+        // Answer until a short answer comes up, or five questions in. With an answer key every answer is right,
+        // apart from the second, which is wrong on purpose so the "Not quite" verdict is still walked.
+        var sawChoice = false, sawShort = false, asked = 0, storeQuestion = false
         for _ in 0..<5 where !(sawChoice && sawShort) {
             // A new question is on screen once its "Check my answer" button is.
             XCTAssertTrue(app.buttons["check-answer"].waitForExistence(timeout: 240), "The next question never arrived")
             asked += 1
             if asked > 1 { shot("question-\(asked)") }
             shotFigureIfAny()
+            let known = answerKey("/course", query: [URLQueryItem(name: "title", value: started)])
+            let miss = known != nil && asked == 2
             if app.buttons["option-1"].exists {
-                scrollTo(app.buttons["option-1"])
-                app.buttons["option-1"].tap()
+                if !storeQuestion {
+                    bring(app.staticTexts["question"], toY: 190)
+                    shot("store-question")
+                    storeQuestion = true
+                }
+                var option = app.buttons["option-1"]
+                if let known, known.kind == "mcq", let index = known.index {
+                    let count = (0..<6).filter { app.buttons["option-\($0)"].exists }.count
+                    let pick = app.buttons["option-\(miss ? (index + 1) % max(count, 1) : index)"]
+                    if pick.exists { option = pick }
+                }
+                scrollTo(option)
+                option.tap()
                 if !sawChoice { shot("option-selected") }
                 scrollTo(app.buttons["check-answer"])
                 app.buttons["check-answer"].tap()
                 XCTAssertTrue(app.staticTexts["verdict"].waitForExistence(timeout: 60), "No verdict for a multiple choice answer")
                 scrollTo(app.staticTexts["verdict"])
                 if !sawChoice { shot("verdict-multiple-choice") }
+                if miss { shot("verdict-wrong-on-purpose") }
                 sawChoice = true
             } else {
                 let answer = app.textViews["short-answer"]
                 XCTAssertTrue(answer.waitForExistence(timeout: 10))
                 scrollTo(answer)
                 answer.tap()
-                answer.typeText("The control plane decides what should run and where, and each node's kubelet makes it so.")
+                var text = "The control plane decides what should run and where, and each node's kubelet makes it so."
+                if let known, known.kind == "short", let reference = known.answer, !reference.isEmpty { text = miss ? "I don't know this one yet." : typed(reference) }
+                answer.typeText(text)
                 dismissKeyboard()
                 shot("short-answer")
                 scrollTo(app.buttons["check-answer"])
@@ -215,6 +259,7 @@ final class WalkthroughTests: XCTestCase {
         app.buttons["surprise-me"].tap()
         app.buttons["archetype-lighthouse"].tap()
         shot("building-picker-chosen")
+        shot("store-building")
         app.swipeUp()
         app.swipeUp()
         shot("building-picker-roof-and-trim")
@@ -231,6 +276,7 @@ final class WalkthroughTests: XCTestCase {
         XCTAssertTrue(app.buttons["short-answers"].waitForExistence(timeout: 20), "The settings did not load")
         sleep(1)
         shot("you")
+        shot("store-you")
         walkSettings()
 
         // Stats, from its row on You.
@@ -333,16 +379,38 @@ final class WalkthroughTests: XCTestCase {
         answerRecallSet(&seen, from: 1)
         sleep(1)
         shot("recall-done")
+        shot("store-recall-done")
         app.swipeUp()
         shot("recall-done-next-steps")
 
-        // "5 more questions" adds to the set, and the session carries on.
+        // "Done" goes back to Today, which now shows the week, the course to continue and what is up next.
+        scrollTo(app.buttons["recall-finish"])
+        app.buttons["recall-finish"].tap()
+        XCTAssertTrue(app.staticTexts["today-heading"].waitForExistence(timeout: 20), "Done did not return to Today")
+        XCTAssertTrue(app.otherElements["week-strip"].waitForExistence(timeout: 20), "Today does not show the week once recall is done")
+        sleep(1)
+        shot("today-recall-done")
+        shot("store-today-after")
+        walkTodayCards()
+
+        // "5 more recall" on the Continue card goes straight into the session.
+        scrollToTop()
+        guard scrollTo(app.buttons["more-recall"], tries: 4) else { return }
+        app.buttons["more-recall"].tap()
+        XCTAssertTrue(app.buttons["recall-close"].waitForExistence(timeout: 30), "5 more recall did not open the session")
+        XCTAssertTrue(app.staticTexts["recall-question"].waitForExistence(timeout: 10), "5 more recall did not add any")
+        XCTAssertFalse(app.buttons["tab-today"].exists, "The tab bar is showing during a recall session")
+        sleep(1)
+        shot("today-more-recall")
+        answerRecallSet(&seen, from: 2)
+        sleep(1)
+        shot("recall-done-after-more")
+
+        // "5 more questions" on the finished screen adds to the set, and the session carries on.
         if scrollTo(app.buttons["more-questions"], tries: 4) {
             app.buttons["more-questions"].tap()
             XCTAssertTrue(app.buttons["check-recall"].waitForExistence(timeout: 30), "5 more questions did not add any")
-            answerRecallSet(&seen, from: 2)
-            sleep(1)
-            shot("recall-done-after-more")
+            answerRecallSet(&seen, from: 3)
         }
 
         // From the finished screen: on to the course, or back to Today.
@@ -357,25 +425,6 @@ final class WalkthroughTests: XCTestCase {
             app.buttons["recall-finish"].tap()
         }
         XCTAssertTrue(app.staticTexts["today-heading"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.otherElements["week-strip"].waitForExistence(timeout: 20), "Today does not show the week once recall is done")
-        sleep(1)
-        shot("today-recall-done")
-        walkTodayCards()
-
-        // "5 more recall" on the Continue card goes straight into the session. Answer that set too, and leave by "Done".
-        scrollToTop()
-        if scrollTo(app.buttons["more-recall"], tries: 4) {
-            app.buttons["more-recall"].tap()
-            XCTAssertTrue(app.buttons["recall-close"].waitForExistence(timeout: 30), "5 more recall did not open the session")
-            XCTAssertTrue(app.staticTexts["recall-question"].waitForExistence(timeout: 10), "5 more recall did not add any")
-            XCTAssertFalse(app.buttons["tab-today"].exists, "The tab bar is showing during a recall session")
-            sleep(1)
-            shot("today-more-recall")
-            answerRecallSet(&seen, from: 3)
-            scrollTo(app.buttons["recall-finish"])
-            app.buttons["recall-finish"].tap()
-            XCTAssertTrue(app.staticTexts["today-heading"].waitForExistence(timeout: 20), "Done did not return to Today")
-        }
         scrollToTop()
     }
 
@@ -403,7 +452,7 @@ final class WalkthroughTests: XCTestCase {
 
     /// Which pictures of recall have been taken, so each is taken once.
     private struct Seen {
-        var right = false, wrong = false, short = false, picked = false
+        var right = false, wrong = false, short = false, picked = false, storeRight = false
     }
 
     /// Answers until the finished screen shows.
@@ -424,9 +473,17 @@ final class WalkthroughTests: XCTestCase {
         let kind = waitForAny([app.buttons["option-0"], answer, app.staticTexts["recall-done"]], timeout: 30)
         XCTAssertNotNil(kind, "No recall question on screen")
         if kind == 2 { return true }
+        // With an answer key every answer is right, apart from the second, which is wrong on purpose.
+        let known = answerKey("/recall")
+        let miss = known != nil && recallAnswered == 1
         if kind == 0 {
-            // A different option each time, so both right and wrong answers come up.
-            let option = app.buttons["option-\(turn % 4)"].exists ? app.buttons["option-\(turn % 4)"] : app.buttons["option-0"]
+            // Without a key: a different option each time, so both right and wrong answers come up.
+            var option = app.buttons["option-\(turn % 4)"].exists ? app.buttons["option-\(turn % 4)"] : app.buttons["option-0"]
+            if let known, known.kind == "mcq", let index = known.index {
+                let count = (0..<6).filter { app.buttons["option-\($0)"].exists }.count
+                let pick = app.buttons["option-\(miss ? (index + 1) % max(count, 1) : index)"]
+                if pick.exists { option = pick }
+            }
             scrollTo(option)
             option.tap()
             XCTAssertTrue(app.buttons["check-recall"].waitForExistence(timeout: 5), "Check did not show after picking an option")
@@ -435,7 +492,9 @@ final class WalkthroughTests: XCTestCase {
         } else {
             scrollTo(answer)
             answer.tap()
-            answer.typeText("I think the client keeps retrying with a growing wait, so I would set a short timeout and fewer retries for this call.")
+            var text = "I think the client keeps retrying with a growing wait, so I would set a short timeout and fewer retries for this call."
+            if let known, known.kind == "short", let reference = known.answer, !reference.isEmpty { text = miss ? "I don't know this one yet." : typed(reference) }
+            answer.typeText(text)
             dismissKeyboard()
             if !seen.short { shot("\(place)-short-answer") }
         }
@@ -451,7 +510,17 @@ final class WalkthroughTests: XCTestCase {
             return false
         }
         sleep(1) // the verdict scrolls into view
+        recallAnswered += 1
         let right = app.staticTexts["verdict"].label == "You got it"
+        // For the store: a right answer, with the line that says when the subtopic comes back. The capture is cropped
+        // from the top, so it starts at the answer when the line still fits under it, and at the verdict otherwise.
+        if right, kind == 0, !seen.storeRight, app.staticTexts["comes-back"].exists {
+            let line = app.staticTexts["comes-back"], window = app.windows.firstMatch.frame
+            if let index = known?.index, app.buttons["option-\(index)"].exists { bring(app.buttons["option-\(index)"], toY: 126, within: 6) }
+            if !(line.isHittable && line.frame.maxY < window.maxY - 110) { bring(app.staticTexts["verdict"], toY: 156, within: 6) }
+            shot("store-recall-right")
+            seen.storeRight = true
+        }
         if kind == 1, !seen.short {
             shot("recall-verdict-short-answer")
         } else if right, !seen.right {
@@ -497,13 +566,78 @@ final class WalkthroughTests: XCTestCase {
         XCTAssertTrue(waitUntil { (short.value as? String) == before }, "Short answers did not switch back")
     }
 
+    /// Taps the streak chip, looks at the sheet and closes it. An account with no streak has no chip.
+    private func walkStreakSheet(capture: String?) {
+        let chip = app.buttons["streak-chip"]
+        guard chip.waitForExistence(timeout: 3) else { return }
+        XCTAssertGreaterThanOrEqual(chip.frame.height, 44, "The streak chip's tap target is under 44 points")
+        chip.tap()
+        XCTAssertTrue(app.staticTexts["streak-sheet-title"].waitForExistence(timeout: 10), "Tapping the streak chip did not open the streak")
+        XCTAssertTrue(app.staticTexts["streak-current"].exists, "The streak sheet has no streak card")
+        sleep(1)
+        if let capture { shot(capture) }
+        app.buttons["streak-close"].tap()
+        XCTAssertTrue(waitForGone(app.staticTexts["streak-sheet-title"], timeout: 10), "The streak sheet did not close")
+    }
+
     private func logOut() {
         app.buttons["tab-you"].tap()
         XCTAssertTrue(scrollTo(app.buttons["log-out"]), "Log out is not on You")
         app.buttons["log-out"].tap()
     }
 
+    // MARK: Answer keys
+
+    private struct AnswerKey: Decodable {
+        let kind: String
+        let index: Int?
+        let answer: String?
+    }
+
+    /// The right answer to the question the demo learner is on, from the local helper named by CS_KEY_URL.
+    /// Nil without the setting, when the helper has nothing open, or when it can't be reached.
+    private func answerKey(_ path: String, query: [URLQueryItem] = []) -> AnswerKey? {
+        guard let base = environment["CS_KEY_URL"], !base.isEmpty, var components = URLComponents(string: base + path) else { return nil }
+        if !query.isEmpty { components.queryItems = query }
+        guard let url = components.url else { return nil }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5
+        let done = DispatchSemaphore(value: 0)
+        var found: AnswerKey?
+        URLSession.shared.dataTask(with: request) { data, response, _ in
+            if (response as? HTTPURLResponse)?.statusCode == 200, let data { found = try? JSONDecoder().decode(AnswerKey.self, from: data) }
+            done.signal()
+        }.resume()
+        _ = done.wait(timeout: .now() + 6)
+        return found
+    }
+
+    /// A reference answer as one line a keyboard can type.
+    private func typed(_ reference: String) -> String {
+        String(reference.replacingOccurrences(of: "\n", with: " ").prefix(600))
+    }
+
     // MARK: Helpers
+
+    /// Scrolls the page until the element's top edge is at `y`, or as near as the page allows. Used for the store
+    /// captures, which are cropped from the top.
+    private func bring(_ element: XCUIElement, toY target: CGFloat, within: CGFloat = 16) {
+        let window = app.windows.firstMatch.frame
+        var last = CGFloat.nan
+        for _ in 0..<8 {
+            guard element.exists, element.frame.minY.isFinite else { app.swipeUp(velocity: .slow); continue }
+            let top = element.frame.minY
+            let delta = top - target
+            if abs(delta) < within || top == last { return } // there, or the page can't scroll any further
+            last = top
+            let step = max(-window.height * 0.5, min(window.height * 0.5, delta))
+            let startY = step > 0 ? window.height * 0.78 : window.height * 0.25
+            // Drag in the page's right gutter and hold at the end, so the page stops where the finger does.
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: window.width - 5, dy: startY))
+                .press(forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: window.width - 5, dy: startY - step)), withVelocity: .slow, thenHoldForDuration: 0.5)
+        }
+    }
 
     /// Questions can carry a diagram. When the one on screen does, scroll to it and keep a picture.
     private func shotFigureIfAny() {
