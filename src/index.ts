@@ -8,7 +8,9 @@ import { getLearner, saveSettings, settingsView } from "./days";
 import { answerRecall, moreRecall, skipRecall, skipRecallDay, today } from "./recall";
 import { appConfig, filterCatalog, withInsights } from "./views";
 
-const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png", "/privacy", "/support"]);
+const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png", "/privacy", "/support", "/press"]);
+// The press kit's files, which the press page links to: the logo, the icon and a few pictures.
+const isPublic = (pathname: string) => PUBLIC_PATHS.has(pathname) || /^\/press-kit\/[\w.-]+$/.test(pathname);
 
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
@@ -191,7 +193,7 @@ export default {
       if (pathname === "/login" && request.method === "POST") return await handleLogin(request, env);
       if (pathname === "/api/login" && request.method === "POST") return await handleApiLogin(request, env);
       if (pathname === "/logout" && request.method === "POST") return redirect("/login", clearedSessionCookie(request));
-      if (PUBLIC_PATHS.has(pathname)) {
+      if (isPublic(pathname)) {
         if (pathname === "/login" && (await sessionUser(request, env))) return redirect("/");
         return await serveAsset(request, env);
       }
