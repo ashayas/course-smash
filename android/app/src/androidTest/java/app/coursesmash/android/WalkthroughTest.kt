@@ -323,12 +323,24 @@ class WalkthroughTest {
         Thread.sleep(2000) // the buildings are drawn by city.js
         shot("today")
         if (exists("recall-question")) storeShot("store-today")
+
+        // The streak chip opens the streak in a sheet over Today. "Close" puts it away.
+        if (exists("streak-chip")) {
+            press("streak-chip")
+            waitFor("streak-sheet", 10)
+            Thread.sleep(1000)
+            shot("streak-sheet")
+            rule.onNodeWithTag("streak-close").performClick()
+            rule.waitUntil(10_000) { !exists("streak-sheet") }
+            waitFor("today-title", 10)
+        }
         // The "Then:" row under the question opens the course that follows recall.
         if (exists("recall-question") && runCatching { scrollTo("then-course") }.isSuccess) {
             tap("then-course")
             waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
             Thread.sleep(1000)
             shot("then-course")
+            streakOverCourse()
             press("back")
             waitFor("today-title", 20)
             waitFor("recall-question", 20)
@@ -341,6 +353,7 @@ class WalkthroughTest {
             waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
             Thread.sleep(1000)
             shot("continue-course")
+            streakOverCourse()
             press("back")
             waitFor("today-title", 20)
         }
@@ -359,6 +372,21 @@ class WalkthroughTest {
             press("tab-today")
             waitFor("today-title", 20)
         }
+    }
+
+    private var sawStreakOverCourse = false
+
+    /** On a course opened from Today the chip is still there. Its sheet opens over the course, and system back closes only the sheet. */
+    private fun streakOverCourse() {
+        if (sawStreakOverCourse || !exists("streak-chip")) return
+        sawStreakOverCourse = true
+        press("streak-chip")
+        waitFor("streak-sheet", 10)
+        Thread.sleep(800)
+        shot("streak-sheet-over-course")
+        Espresso.pressBack()
+        rule.waitUntil(10_000) { !exists("streak-sheet") }
+        assertTrue("The course is still open under the streak sheet", exists("back"))
     }
 
     private fun recall() {
