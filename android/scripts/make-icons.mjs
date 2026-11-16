@@ -10,7 +10,6 @@ import { join } from "node:path";
 const ROOT = new URL("../../", import.meta.url).pathname;
 const RES = join(ROOT, "android/app/src/main/res");
 const PLAY = join(ROOT, "android/fastlane/metadata/android/en-US/images");
-const FONT = join(RES, "font/inter_tight_extrabold.ttf");
 const { markSvg } = await import(join(ROOT, "public/city.js"));
 const INK = "#141414";
 
@@ -51,9 +50,7 @@ for (const [name, scale] of Object.entries(densities)) {
   png(svg(splash, splash, placed(splash / 2, splash / 2, splash * 0.42)), join(drawable, "splash_mark.png"), false);
 }
 
-// Google Play: the 512 px icon and the 1024 x 500 feature graphic.
+// Google Play: the 512 px icon. The feature graphic has the city in it and comes from scripts/marketing/build.mjs.
 mkdirSync(PLAY, { recursive: true });
 png(svg(512, 512, placed(256, 256, 512 * 0.76), INK), join(PLAY, "icon.png"), true);
-png(svg(1024, 500, placed(240, 250, 300), INK), join(PLAY, "featureGraphic.png"), true,
-  ["-font", FONT, "-fill", "#fbfbfb", "-pointsize", "80", "-kerning", "-4", "-gravity", "West", "-annotate", "+440+0", "Course Smash"]);
-console.log(`Wrote launcher icons and the splash mark to ${RES}, and the Play graphics to ${PLAY}`);
+console.log(`Wrote launcher icons and the splash mark to ${RES}, and the Play icon to ${PLAY}`);

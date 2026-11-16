@@ -1,0 +1,1 @@
+Daily recall: the app opens on Today, with about 10 questions from what you have already learned. Answer 5 in a day to build a streak. Tabs for Today, City, Library and You. The streak now shows on course screens too, and a tap on it opens your last 4 weeks.

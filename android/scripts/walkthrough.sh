@@ -5,7 +5,8 @@
 #
 # Optional: CS_BASE_URL (a Worker other than https://coursesmash.app; http://10.0.2.2:8787 is a
 # `wrangler dev` on this computer, seen from the emulator), CS_LIBRARY_COURSE (the library course
-# to start) and CS_QUICK=1 (stop after login, Today and the city).
+# to start), CS_QUICK=1 (stop after login, Today and the city) and CS_KEY_URL (the answer-key helper for a local
+# demo database, scripts/demo-keys.mjs, so the run scores well: http://10.0.2.2:8790 from the emulator).
 # The login is only passed to the test. It is not written anywhere.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -33,6 +34,7 @@ q() { local value=${1//\'/\'\\\'\'}; printf "'%s'" "$value"; }
 ARGS=(-e class "$APP.WalkthroughTest" -e csUser "$(q "$CS_USER")" -e csPw "$(q "$CS_PW")")
 [ -n "${CS_BASE_URL:-}" ] && ARGS+=(-e csBaseUrl "$(q "$CS_BASE_URL")")
 [ -n "${CS_LIBRARY_COURSE:-}" ] && ARGS+=(-e csLibraryCourse "$(q "$CS_LIBRARY_COURSE")")
+[ -n "${CS_KEY_URL:-}" ] && ARGS+=(-e csKeyUrl "$(q "$CS_KEY_URL")")
 [ -n "${CS_QUICK:-}" ] && ARGS+=(-e csQuick "$CS_QUICK")
 RESULT=$("$ADB" shell am instrument -w "${ARGS[@]}" "$APP.test/androidx.test.runner.AndroidJUnitRunner" | tr -d '\r')
 demo -e command exit

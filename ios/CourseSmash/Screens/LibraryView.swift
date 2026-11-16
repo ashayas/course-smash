@@ -29,7 +29,7 @@ struct LibraryView: View {
                         if !list.isEmpty {
                             VStack(alignment: .leading, spacing: 20) {
                                 VStack(alignment: .leading, spacing: 6) {
-                                    Text(item.name).type(.titleLarge).accessibilityAddTraits(.isHeader)
+                                    Text(item.name).type(.titleLarge).accessibilityAddTraits(.isHeader).accessibilityIdentifier("topic-name")
                                     Text(item.summary).type(.small).foregroundStyle(Theme.muted)
                                     Button("Path of \(list.count)") { topic = item.id }
                                         .buttonStyle(LinkButtonStyle())

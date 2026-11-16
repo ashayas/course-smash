@@ -5,7 +5,7 @@ The native Android app. It is a Kotlin and Jetpack Compose port of the web app i
 | | |
 |---|---|
 | Application ID | `app.coursesmash.android` |
-| Version | `1.2.0`, version code `3` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
+| Version | `1.2.0`, version code `4` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
 | Runs on | Phones, Android 8.0 (API 26) or later, portrait. Targets API 36. |
 | Server | `https://coursesmash.app` (`API_BASE_URL` in `app/build.gradle.kts`) |
 | Libraries | Jetpack Compose (UI and Foundation), Activity Compose, kotlinx.serialization and coroutines. No Material library and no third-party SDKs. |
@@ -135,14 +135,14 @@ Build the bundle with `./gradlew :app:bundleRelease`, then in Play Console choos
 | File | Value |
 |---|---|
 | `title.txt` | Course Smash |
-| `short_description.txt` | Say what you want to learn, and build a city one course at a time. |
+| `short_description.txt` | A few questions a day, a streak, and a city that grows with every course. |
 | `full_description.txt` | The store description |
 | `changelogs/<versionCode>.txt` | What's new in each version code |
 | `images/icon.png` | 512 × 512 store icon |
-| `images/featureGraphic.png` | 1024 × 500 feature graphic |
-| `images/phoneScreenshots/` | Phone screenshots, 1080 × 1920, led by Today |
+| `images/featureGraphic.png` | 1024 × 500 feature graphic, with the city (`scripts/marketing/build.mjs`) |
+| `images/phoneScreenshots/` | Eight phone screenshots, 1080 × 1920, each a real screen under a headline (`scripts/marketing/build.mjs`) |
 
-Category (Education), contact details and the privacy policy URL are set in Play Console.
+Category (Education), contact details, the content rating and the privacy policy URL are set in Play Console. The answers are in [play/content-rating.md](play/content-rating.md) and [play/data-safety.md](play/data-safety.md). The app is phone-only and portrait, so there are no tablet screenshots.
 
 ## Screenshots and the walkthrough test
 
@@ -152,19 +152,26 @@ Category (Education), contact details and the privacy policy URL are set in Play
 CS_USER=<username> CS_PW=<password> android/scripts/walkthrough.sh android/build/walkthrough
 ```
 
-It needs a running emulator or a connected device. Set `CS_BASE_URL=http://10.0.2.2:8787` to use a local `wrangler dev`. The login is passed to the test only, and nothing writes it to disk. The store screenshots are made from these:
+It needs a running emulator or a connected device. Set `CS_BASE_URL=http://10.0.2.2:8787` to use a local server. The login is passed to the test only, and nothing writes it to disk. The script quotes its settings for the device's shell, so `CS_LIBRARY_COURSE` can be a title with spaces in it.
+
+**The store screenshots** are made from a demo run, not from a real account, so they show a believable score and no real username:
 
 ```sh
-android/scripts/store-screenshots.sh android/build/walkthrough
+# From the repo root: demo data, the server on it, and the answer-key helper
+node scripts/demo.mjs data/demo.db && npm run build:server
+set -a; source .env; set +a
+DATABASE_PATH=data/demo.db CLOUDFLARE_ACCOUNT_ID=<your account id> npm run start:server &
+node scripts/demo-keys.mjs data/demo.db &
+
+CS_USER=<username> CS_PW=<password> CS_BASE_URL=http://10.0.2.2:8787 CS_KEY_URL=http://10.0.2.2:8790 android/scripts/walkthrough.sh android/build/walkthrough
+node scripts/marketing/build.mjs --android android/build/walkthrough
 ```
 
-It crops each picture to 9:16 and keeps the tab bar, or the buttons under a recall question, at the bottom. It needs ImageMagick. Take them from a run against an account with a streak and questions to recall, such as the demo data from `scripts/demo.mjs`, so that Today leads with a live question.
-
-The script quotes its settings for the device's shell, so `CS_LIBRARY_COURSE` can be a title with spaces in it.
+With `CS_KEY_URL` set, the walkthrough asks the helper for the right answer to each question, and still gets one recall question and one course question wrong on purpose. The helper only reads the local demo database; the Worker has nothing like it. `scripts/marketing/build.mjs` puts each `store-…` capture under its headline at 1080 × 1920, and also draws the feature graphic. Use a throwaway `USER_NAME` for the demo server, since the You screen shows it.
 
 ## Launcher icon and splash screen
 
-`scripts/make-icons.mjs` draws them from the logo mark in `public/city.js`, so they match the web app and the iOS app: the adaptive icon's foreground, the legacy icons, the splash mark, and the Play store icon and feature graphic. It needs ImageMagick. The adaptive icon's background and the splash background are the ink colour in `res/values/colors.xml`.
+`scripts/make-icons.mjs` draws them from the logo mark in `public/city.js`, so they match the web app and the iOS app: the adaptive icon's foreground, the legacy icons, the splash mark, and the Play store icon. It needs ImageMagick. The adaptive icon's background and the splash background are the ink colour in `res/values/colors.xml`.
 
 ## The Worker never builds this folder
 

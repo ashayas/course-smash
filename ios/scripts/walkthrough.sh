@@ -6,6 +6,8 @@
 # Optional: CS_BASE_URL (a Worker other than https://coursesmash.app, such as http://localhost:8787),
 # CS_DEVICE (default "iPhone 16 Pro Max", whose 1320 x 2868 screenshots are the size the App Store asks for)
 # CS_LIBRARY_COURSE (the library course to start) and CS_QUICK=1 (stop after login, Today and the city).
+# CS_KEY_URL (demo data only: the answer-key helper from scripts/demo-keys.mjs, such as http://localhost:8790, so the
+# run scores well; captures named store-* are what the store screenshots are made from).
 # The login is only passed to the test runner. It is not written anywhere.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,6 +27,7 @@ export TEST_RUNNER_CS_USER="$CS_USER" TEST_RUNNER_CS_PW="$CS_PW" TEST_RUNNER_CS_
 [ -n "${CS_LIBRARY_COURSE:-}" ] && export TEST_RUNNER_CS_LIBRARY_COURSE="$CS_LIBRARY_COURSE"
 [ -n "${CS_MOTION:-}" ] && export TEST_RUNNER_CS_MOTION="$CS_MOTION"
 [ -n "${CS_QUICK:-}" ] && export TEST_RUNNER_CS_QUICK="$CS_QUICK"
+[ -n "${CS_KEY_URL:-}" ] && export TEST_RUNNER_CS_KEY_URL="$CS_KEY_URL"
 xcodebuild test -project CourseSmash.xcodeproj -scheme CourseSmash \
   -destination "platform=iOS Simulator,name=$DEVICE" -derivedDataPath build \
   -only-testing:CourseSmashUITests/WalkthroughTests/testWalkthrough ${CS_XCODEBUILD_FLAGS:--quiet}

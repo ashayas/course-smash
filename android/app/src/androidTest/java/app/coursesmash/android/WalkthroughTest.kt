@@ -3,6 +3,7 @@ package app.coursesmash.android
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
@@ -34,7 +36,12 @@ import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.json.JSONObject
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+import kotlin.math.abs
 
 /**
  * Walks every flow of the app against a real Worker and saves a screenshot of each screen.
@@ -44,6 +51,10 @@ import java.io.File
  *   csBaseUrl           optional, a Worker other than the one the app is built for
  *   csLibraryCourse     optional, the library course to start (default "Kubernetes architecture")
  *   csQuick             optional, set to 1 to stop after login, Today and the city
+ *   csKeyUrl            optional, the answer-key helper for a local demo database (scripts/demo-keys.mjs). With it the
+ *                       test answers correctly, apart from one recall question and one course question that it gets
+ *                       wrong on purpose. Without it, or when the helper has no answer, it answers as it always has.
+ * Pictures named store-... are the ones the store screenshots are made from, each with its subject at the top.
  * The test answers today's recall questions when the learner has any, and passes without them (`recall.status` of `empty`).
  * It starts one library course and one planned course, and deletes both before it ends. It changes the daily goal and
  * the short answers setting, and puts both back.
@@ -54,6 +65,11 @@ import java.io.File
 class WalkthroughTest {
     @get:Rule
     val rule = createEmptyComposeRule()
+
+    private companion object {
+        /** With the answer key, the one answer in recall and the one in the course that are wrong on purpose. */
+        const val WRONG_TURN = 2
+    }
 
     private val arguments = InstrumentationRegistry.getArguments()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -120,6 +136,9 @@ class WalkthroughTest {
         scrollTo("city")
         Thread.sleep(1500)
         shot("city-map")
+        toTop("city")
+        Thread.sleep(1200)
+        storeShot("store-city")
         rule.onNodeWithTag("city").performTouchInput { click(Offset(width * 0.5f, height * 0.74f)) }
         // A course opens on its question, try-again or finished panel. The page scrolls there, so the title may be off screen.
         if (runCatching { waitForAny(listOf("check-answer", "try-again", "finished"), 12) }.isSuccess) {
@@ -157,10 +176,17 @@ class WalkthroughTest {
             if (runCatching { scrollTo("topic-path") }.isSuccess) {
                 Thread.sleep(1200)
                 shot("library-topics")
+                // The store picture is the first topic as its own learning path: its name, what it covers, then its courses in study order.
+                toTop("topic-head", margin = 12)
+                Thread.sleep(1200)
+                storeShot("store-library-path")
                 rule.onAllNodesWithTag("topic-path").onFirst().performClick()
                 scrollTo("library-count")
                 settle("library-count")
                 shot("library-path")
+            } else {
+                // No topic has a path of its own, so the picture is the library by topic.
+                storeShot("store-library-path")
             }
             tap("group-track")
             scrollTo("library-count")
@@ -197,28 +223,37 @@ class WalkthroughTest {
         waitFor("check-answer", 240)
         Thread.sleep(1000)
         shot("question")
+        if (exists("option-0")) storeShot("store-question")
+        // The course's own title when it is on screen. The search may have put another course first, so the words
+        // searched for won't do; without a title the answer-key helper takes the learner's newest course, which is this one.
+        val courseTitle = if (exists("course-title")) text("course-title") else ""
 
         // Answer until a short answer comes up, or five questions in.
         var sawChoice = false
         var sawShort = false
         var asked = 0
+        var sawStoreQuestion = false
         while (asked < 5 && !(sawChoice && sawShort)) {
             // A new question is on screen once its "Check my answer" button is.
             waitFor("check-answer", 240)
             asked += 1
             if (asked > 1) { Thread.sleep(800); shot("question-$asked") }
             if (exists("figure")) { scrollTo("figure"); Thread.sleep(1500); shot("question-diagram") }
+            // With the answer key every answer is right, apart from the second, which is wrong on purpose.
+            val known = key("/course?title=" + URLEncoder.encode(courseTitle, "UTF-8"))
+            val miss = asked == WRONG_TURN
             if (exists("option-1")) {
-                tap("option-1")
+                if (!sawStoreQuestion && asked > 1) { sawStoreQuestion = true; if (!storeExists("store-question")) storeShot("store-question") }
+                tap("option-${option(known, "option", wrong = miss) ?: 1}")
                 if (!sawChoice) shot("option-selected")
                 tap("check-answer")
                 waitFor("verdict", 60)
                 Thread.sleep(1200)
-                if (!sawChoice) shot("verdict-multiple-choice")
+                if (!sawChoice) shot("verdict-multiple-choice") else if (known != null && miss) shot("verdict-wrong")
                 sawChoice = true
             } else {
                 scrollTo("short-answer")
-                rule.onNodeWithTag("short-answer").performTextInput("The control plane decides what should run and where, and each node's kubelet makes it so.")
+                rule.onNodeWithTag("short-answer").performTextInput(shortAnswer(known, wrong = miss))
                 Espresso.closeSoftKeyboard()
                 shot("short-answer")
                 tap("check-answer")
@@ -244,6 +279,9 @@ class WalkthroughTest {
         tapInDialog("archetype-lighthouse")
         Thread.sleep(2500)
         shot("building-picker-chosen")
+        rule.onNodeWithTag("surprise-me").performScrollTo()
+        Thread.sleep(800)
+        storeShot("store-building")
         tapInDialog("save-building")
         rule.waitUntil(20_000) { !exists("save-building") }
         scrollTo("change-building")
@@ -284,12 +322,25 @@ class WalkthroughTest {
         waitFor("today-title", 240)
         Thread.sleep(2000) // the buildings are drawn by city.js
         shot("today")
+        if (exists("recall-question")) storeShot("store-today")
+
+        // The streak chip opens the streak in a sheet over Today. "Close" puts it away.
+        if (exists("streak-chip")) {
+            press("streak-chip")
+            waitFor("streak-sheet", 10)
+            Thread.sleep(1000)
+            shot("streak-sheet")
+            rule.onNodeWithTag("streak-close").performClick()
+            rule.waitUntil(10_000) { !exists("streak-sheet") }
+            waitFor("today-title", 10)
+        }
         // The "Then:" row under the question opens the course that follows recall.
         if (exists("recall-question") && runCatching { scrollTo("then-course") }.isSuccess) {
             tap("then-course")
             waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
             Thread.sleep(1000)
             shot("then-course")
+            streakOverCourse()
             press("back")
             waitFor("today-title", 20)
             waitFor("recall-question", 20)
@@ -302,6 +353,7 @@ class WalkthroughTest {
             waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
             Thread.sleep(1000)
             shot("continue-course")
+            streakOverCourse()
             press("back")
             waitFor("today-title", 20)
         }
@@ -322,6 +374,21 @@ class WalkthroughTest {
         }
     }
 
+    private var sawStreakOverCourse = false
+
+    /** On a course opened from Today the chip is still there. Its sheet opens over the course, and system back closes only the sheet. */
+    private fun streakOverCourse() {
+        if (sawStreakOverCourse || !exists("streak-chip")) return
+        sawStreakOverCourse = true
+        press("streak-chip")
+        waitFor("streak-sheet", 10)
+        Thread.sleep(800)
+        shot("streak-sheet-over-course")
+        Espresso.pressBack()
+        rule.waitUntil(10_000) { !exists("streak-sheet") }
+        assertTrue("The course is still open under the streak sheet", exists("back"))
+    }
+
     private fun recall() {
         // Skipping for today swaps the question for the rest of Today, and "Do it anyway" brings it back.
         tap("skip-today")
@@ -333,7 +400,8 @@ class WalkthroughTest {
 
         // The first answer is sent from Today, which starts the session. The tab bar steps aside.
         if (exists("recall-option-1")) {
-            tap("recall-option-1")
+            val known = recallKey()
+            tap("recall-option-${recallOption(known, otherwise = 1)}")
             shot("today-option-selected")
             tap("recall-check")
             waitFor("recall-verdict", 60)
@@ -342,6 +410,21 @@ class WalkthroughTest {
             noteVerdict()
             press("recall-next")
             rule.waitUntil(20_000) { !exists("recall-verdict") }
+        } else if (exists("recall-short-answer")) {
+            // The first question can be a short answer. It starts the session the same way.
+            val known = recallKey()
+            scrollTo("recall-short-answer")
+            rule.onNodeWithTag("recall-short-answer").performTextInput(shortAnswer(known, wrong = false))
+            Espresso.closeSoftKeyboard()
+            shot("recall-short-answer")
+            tap("recall-check")
+            if (waitForAny(listOf("recall-verdict", "recall-error"), 120) == "recall-verdict") {
+                assertTrue("The tab bar is hidden during a session", !exists("tab-today"))
+                Thread.sleep(1200)
+                noteVerdict(short = true)
+                press("recall-next")
+                rule.waitUntil(20_000) { !exists("recall-verdict") }
+            }
         }
 
         // Skip a question: nothing is recorded and the set moves on.
@@ -365,6 +448,7 @@ class WalkthroughTest {
         answerUntilDone()
         Thread.sleep(1200)
         shot("recall-done")
+        storeShot("store-recall-done")
         if (exists("recall-more")) {
             press("recall-more")
             waitFor("recall-question", 30)
@@ -377,28 +461,31 @@ class WalkthroughTest {
         waitFor("week-strip", 20)
         Thread.sleep(1500)
         shot("today-recall-done")
+        storeShot("store-today-after")
     }
 
     private var sawRight = false
     private var sawWrong = false
     private var sawShortRecall = false
     private var recallAsked = 0
+    private var recallAnswered = 0
 
     /** Answers whatever is asked, on Today or in the session, until the finished screen shows. */
     private fun answerUntilDone() {
         repeat(60) {
             if (waitForAny(listOf("recall-done", "recall-question"), 60) == "recall-done") return
             recallAsked += 1
+            val known = recallKey()
             if (exists("recall-option-0")) {
-                // Different options in turn, so that some answers are right and some are wrong.
-                val pick = (0..3).map { (recallAsked + it) % 4 }.first { exists("recall-option-$it") }
+                // Without the answer key: different options in turn, so that some answers are right and some are wrong.
+                val pick = recallOption(known, otherwise = (0..3).map { (recallAsked + it) % 4 }.first { exists("recall-option-$it") })
                 tap("recall-option-$pick")
                 if (recallAsked == 2) shot("recall-option-selected")
                 check()
                 waitFor("recall-verdict", 60)
             } else {
                 scrollTo("recall-short-answer")
-                rule.onNodeWithTag("recall-short-answer").performTextInput("The control plane decides what should run and where, and each node's kubelet makes it so.")
+                rule.onNodeWithTag("recall-short-answer").performTextInput(shortAnswer(known, wrong = recallAnswered == WRONG_TURN))
                 Espresso.closeSoftKeyboard()
                 if (!sawShortRecall) shot("recall-short-answer")
                 check()
@@ -419,6 +506,24 @@ class WalkthroughTest {
         waitFor("recall-done", 10)
     }
 
+    /** The key to the open recall question, when there is a helper. Every call is one more recall answer. */
+    private fun recallKey(): Key? {
+        recallAnswered += 1
+        return key("/recall")
+    }
+
+    /** The option to tap: the right one, or a wrong one on the turn the test misses on purpose. Without a key, `otherwise`. */
+    private fun recallOption(known: Key?, otherwise: Int): Int = option(known, "recall-option", wrong = recallAnswered == WRONG_TURN) ?: otherwise
+
+    private fun option(known: Key?, prefix: String, wrong: Boolean): Int? {
+        val right = known?.index?.takeIf { exists("$prefix-$it") } ?: return null
+        return if (wrong) (1..3).map { (right + it) % 4 }.firstOrNull { exists("$prefix-$it") } ?: right else right
+    }
+
+    private fun shortAnswer(known: Key?, wrong: Boolean): String =
+        known?.takeIf { it.index == null && !wrong }?.answer?.takeIf { it.isNotBlank() }
+            ?: "The control plane decides what should run and where, and each node's kubelet makes it so."
+
     /** "Check" is in the question's card on Today, and under the question in a session. */
     private fun check() = if (exists("tab-today")) tap("recall-check") else press("recall-check")
 
@@ -430,12 +535,24 @@ class WalkthroughTest {
             scrollTo("recall-verdict")
             shot("recall-verdict-short-answer")
         } else if (right && !sawRight) {
+            sawRight = true
             shot("recall-verdict-right")
         } else if (!right && !sawWrong) {
+            sawWrong = true
             shot("recall-verdict-wrong")
         }
-        if (right) sawRight = true else sawWrong = true
+
+        // The store picture is a right answer with the line that says when the subtopic comes back.
+        // A later one replaces it when that line sits higher on the screen, so a crop from the top keeps it.
+        if (right && exists("verdict-note")) {
+            val bottom = rule.onAllNodesWithTag("verdict-note").onFirst().fetchSemanticsNode().boundsInRoot.bottom
+            if (bottom < storeVerdictBottom) {
+                storeVerdictBottom = bottom
+                storeShot("store-recall-right")
+            }
+        }
     }
+    private var storeVerdictBottom = Float.MAX_VALUE
 
     /** You: the streak, Stats, and the settings, which are changed and then put back. */
     private fun you() {
@@ -564,6 +681,48 @@ class WalkthroughTest {
         shot("delete-course")
         tap("confirm-delete")
         waitFor("build-course", 30)
+    }
+
+    /** A picture for the store set. There is one of each, so a later one with the same name replaces the earlier one. */
+    private fun storeShot(name: String) {
+        shots.listFiles { file -> file.name.endsWith("-$name.png") }?.forEach { it.delete() }
+        shot(name)
+    }
+
+    private fun storeExists(name: String) = shots.listFiles { file -> file.name.endsWith("-$name.png") }?.isNotEmpty() == true
+
+    /** Scrolls the page so the element sits at its top, `margin` dp down, since the store pictures are cropped from the top. */
+    private fun toTop(tag: String, margin: Int = 0) {
+        val gap = margin * instrumentation.targetContext.resources.displayMetrics.density
+        runCatching { scrollTo(tag) }
+        val page = rule.onAllNodes(hasScrollToNodeAction()).onFirst()
+        repeat(3) {
+            val top = rule.onAllNodesWithTag(tag, useUnmergedTree = true).onFirst().fetchSemanticsNode().boundsInRoot.top
+            val distance = top - page.fetchSemanticsNode().boundsInRoot.top - gap
+            if (abs(distance) < 4f) return
+            page.performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, distance) }
+            rule.waitForIdle()
+        }
+    }
+
+    /** What the answer-key helper says about the question the learner is on. `index` is null for a short answer. */
+    private class Key(val index: Int?, val answer: String)
+
+    /** Asks the helper. Null when there is none, when it has no answer (404) or when it can't be reached. */
+    private fun key(path: String): Key? {
+        val base = arguments.getString("csKeyUrl")?.trimEnd('/') ?: return null
+        return runCatching {
+            val connection = URL(base + path).openConnection() as HttpURLConnection
+            try {
+                connection.connectTimeout = 3000
+                connection.readTimeout = 5000
+                if (connection.responseCode != 200) return null
+                val json = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+                Key(if (json.optString("kind") == "mcq" && json.has("index")) json.getInt("index") else null, json.optString("answer"))
+            } finally {
+                connection.disconnect()
+            }
+        }.getOrNull()
     }
 
     private fun shot(name: String) {

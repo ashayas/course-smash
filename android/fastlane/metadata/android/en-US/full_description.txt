@@ -1,14 +1,16 @@
 Say what you want to learn. Course Smash builds a course of questions, reads how you answer, and changes what comes next.
 
-Every course goes up as a building in your city, one floor per module. Pass a module and its floor lights up.
+Every course goes up as a building in your city, one floor per module. Pass a module and its windows light up.
 
-EVERY DAY
-• The app opens on Today: about 10 questions from what you have already learned, ready to answer.
-• Each one says which course and subtopic it is from and when you last saw it. Miss one and it comes back sooner. Get it right and it comes back later.
-• Answer 5 questions in a day and the day counts. Days in a row make a streak, and a rest day saved up covers a day you miss.
-• When recall is done, your course is one tap away, with the next course lined up after it.
+DAILY RECALL
+• Once you have passed a module, the app opens on Today: about 10 questions from what you have already learned, a few minutes' worth.
+• Each one says which course and subtopic it is from and when you last saw it.
+• Ideas you got right come back after a longer gap. Ideas you missed come back sooner.
+• Answer 5 questions in a day, in recall or in a course, and the day counts toward your streak. A rest day is saved for every 7 days in a row, up to 2, and covers a day you miss.
+• After recall, one tap carries on with your course. On a course's last module, the course that builds on it is suggested next.
+• Set your daily goal to 5, 10, 15 or 20 questions, and choose whether recall includes short answers.
 
-HOW IT WORKS
+HOW A COURSE WORKS
 • Describe what you want to understand and why, in a sentence. An AI agent plans a short course around it.
 • Answer multiple choice and short answer questions. Short answers are graded on what you mean, not on matching words.
 • Get direct feedback on each answer, with the idea to remember.
@@ -22,13 +24,12 @@ YOUR CITY
 THE LIBRARY
 • Ready-made courses on AI engineering, Kubernetes, inference, identity, cybersecurity, robotics and AI policy.
 • Browse by track or by topic. Each topic is a learning path: its courses come in study order, and each one says which courses it builds on.
-• A course's page shows what to take first, what it leads to, courses that cover similar ground, and where learners slip most.
+• A course's page shows what to take first, what it leads to and courses that cover similar ground. Once enough people have taken it, it also shows where learners slip most.
 • Each module has a bank of questions behind it, so follow-ups target what you missed.
 • Tell a library course what you want out of it, and it sets how well you need to know each module.
 
 YOU AND YOUR STATS
-• Your streak, the longest one, and the last four weeks as lit windows.
-• Set how many questions a day you want, and whether recall asks short answer questions.
+• Your streak, your longest run and the last 4 weeks as lit windows.
 • Answers per day for the last 30 days and your average score.
 • For each course: the modules you passed, what you are strongest on and what needs work.
 
