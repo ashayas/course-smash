@@ -276,7 +276,6 @@ final class WalkthroughTests: XCTestCase {
         XCTAssertTrue(app.buttons["short-answers"].waitForExistence(timeout: 20), "The settings did not load")
         sleep(1)
         shot("you")
-        shot("store-you")
         walkSettings()
 
         // Stats, from its row on You.

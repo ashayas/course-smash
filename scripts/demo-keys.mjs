@@ -50,4 +50,4 @@ createServer((request, response) => {
   const found = url.pathname === "/recall" ? recall() : url.pathname === "/course" ? course(url.searchParams.get("title") ?? "") : null;
   response.writeHead(found ? 200 : 404, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   response.end(JSON.stringify(found ?? { error: "Nothing is open." }));
-}).listen(port, "0.0.0.0", () => console.log(`Answer keys for ${path} on http://localhost:${port}`));
+}).listen(port, "127.0.0.1", () => console.log(`Answer keys for ${path} on http://localhost:${port}`));

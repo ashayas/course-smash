@@ -5,9 +5,10 @@
 // The page links to the files where they are in this checkout, so open it from this machine.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { SHOTS } from "./shots.mjs";
 
-const ROOT = new URL("../../", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const out = resolve(process.argv[2] ?? join(ROOT, "data/marketing-gallery.html"));
 const escape = (text) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const read = (path) => (existsSync(join(ROOT, path)) ? readFileSync(join(ROOT, path), "utf8").trim() : "(missing)");

@@ -560,7 +560,6 @@ class WalkthroughTest {
         waitFor("daily-goal", 30)
         Thread.sleep(1200)
         shot("you")
-        storeShot("store-you")
 
         tap("open-stats")
         // The streak card sits above the chart, which may be below the fold until the page scrolls to it.

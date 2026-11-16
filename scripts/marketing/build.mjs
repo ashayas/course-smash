@@ -13,9 +13,10 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdir
 import { tmpdir } from "node:os";
 import { inflateSync } from "node:zlib";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { SHOTS } from "./shots.mjs";
 
-const ROOT = new URL("../../", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const { citySvg, markSvg } = await import(join(ROOT, "public/city.js"));
 const ICONS = JSON.parse(readFileSync(join(ROOT, "catalog/icons.json"), "utf8"));
 const FONTS = join(ROOT, "ios/CourseSmash/Resources/Fonts");
