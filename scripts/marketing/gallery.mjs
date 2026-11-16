@@ -67,8 +67,8 @@ ${row("wide", [`${play}/images/featureGraphic.png`, `${play}/images/icon.png`, "
 ${row("wide", ["public/og.png"])}
 
 <h2>Press kit <span class="muted">public/press-kit, offered at /press</span></h2>
-${row("small", files("public/press-kit", (f) => !/-(today|recall|city|library)\.png$/.test(f)))}
-${row("phone", files("public/press-kit", (f) => /-(today|recall|city|library)\.png$/.test(f)), "Made with the iOS set.")}
+${row("small", files("public/press-kit", (f) => f.startsWith("course-smash-")))}
+<p class="muted">The page also shows both store sets at a small size (app-store-… and play-…), with zips of the full-size sets.</p>
 
 <h2>App Store listing copy</h2>
 ${copy("Name", `ios/fastlane/metadata/en-US/name.txt`, 30)}

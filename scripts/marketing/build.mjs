@@ -197,7 +197,7 @@ render(`<style>
   1024, 500, join(play, "featureGraphic.png"));
 made.push(join(play, "featureGraphic.png"));
 
-/* The press kit: the logo, the icon, the link preview and four of the store pictures at half size. */
+/* The press kit: the logo, the icon, the link preview, the feature graphic and both store sets at a size for the web. */
 const press = join(ROOT, "public/press-kit");
 mkdirSync(press, { recursive: true });
 const mark = markSvg(512).replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ').replace(' aria-hidden="true"', "");
@@ -211,17 +211,32 @@ render(`<style>
   </style><div class="logo">${markSvg(300)}<h1>Course Smash</h1></div>`, 1600, 600, join(press, "course-smash-logo.png"));
 copyFileSync(join(ROOT, "ios/CourseSmash/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png"), join(press, "course-smash-icon.png"));
 copyFileSync(join(ROOT, "public/og.png"), join(press, "course-smash-preview.png"));
-if (captures.ios) {
-  for (const name of ["today", "recall", "city", "library"]) {
-    const index = SHOTS.findIndex((s) => s.name === name);
-    const image = capture(captures.ios, SHOTS[index].capture);
-    if (image) render(shotHtml(SHOTS[index], index, image, 660, 1434), 660, 1434, join(press, `course-smash-${name}.png`));
-  }
+copyFileSync(join(play, "featureGraphic.png"), join(press, "course-smash-feature-graphic.png"));
+// The press page shows each store's set at one small size. The full-size sets are zips beside them.
+const WEB = { ios: { prefix: "app-store", width: 660, height: 1434 }, android: { prefix: "play", width: 540, height: 960 } };
+const SETS = {
+  ios: { zip: "course-smash-app-store-screenshots.zip", from: "ios/fastlane/screenshots/en-US", test: (f) => f.startsWith("iphone69-") },
+  android: { zip: "course-smash-play-screenshots.zip", from: "android/fastlane/metadata/android/en-US/images/phoneScreenshots", test: () => true },
+};
+for (const [app, dir] of Object.entries(captures)) {
+  if (!dir) continue;
+  const web = WEB[app];
+  for (const old of readdirSync(press).filter((f) => f.startsWith(`${web.prefix}-`))) rmSync(join(press, old));
+  SHOTS.forEach((shot, index) => {
+    const image = capture(dir, shot.capture);
+    if (image) render(shotHtml(shot, index, image, web.width, web.height), web.width, web.height, join(press, `${web.prefix}-${String(index + 1).padStart(2, "0")}-${shot.name}.png`));
+  });
+  const set = SETS[app];
+  const full = readdirSync(join(ROOT, set.from)).filter((f) => f.endsWith(".png") && set.test(f)).sort();
+  rmSync(join(press, set.zip), { force: true });
+  if (full.length) execFileSync("zip", ["-q", "-X", "-j", join(press, set.zip), ...full.map((f) => join(ROOT, set.from, f))]);
 }
+// Pictures the page no longer uses, from an earlier layout of the kit.
+for (const old of ["today", "recall", "city", "library"]) rmSync(join(press, `course-smash-${old}.png`), { force: true });
 const kit = readdirSync(press).filter((f) => !f.endsWith(".zip")).sort();
 rmSync(join(press, "course-smash-press-kit.zip"), { force: true });
 execFileSync("zip", ["-q", "-X", "course-smash-press-kit.zip", ...kit], { cwd: press });
-made.push(...kit.map((f) => join(press, f)), join(press, "course-smash-press-kit.zip"));
+made.push(...readdirSync(press).sort().map((f) => join(press, f)));
 
 rmSync(work, { recursive: true, force: true });
 console.log(`Made ${made.length} files:\n${made.map((f) => `  ${f.replace(ROOT, "")}`).join("\n")}`);
