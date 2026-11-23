@@ -286,6 +286,7 @@ async function renderLibrary(params) {
 
 async function renderLibraryCourse(id) {
   const token = ++renderToken;
+  courseSession = null;
   app.replaceChildren(h("div", { class: "panel stage" }, workingView("Opening the course")));
   let course;
   try {
@@ -330,7 +331,7 @@ async function renderLibraryCourse(id) {
       h("div", {}, h("p", { class: "eyebrow" }, [course.track_title, course.topic, course.level].filter(Boolean).join(" · ")), h("h1", {}, course.title), h("p", {}, course.summary)),
       h("a", { class: "link-button", href: `#/library?track=${course.track}` }, "Back to the library")),
     h("div", { class: "course-layout" },
-      h("section", { class: "panel stage" }, h("h2", {}, "Make it yours"), form),
+      course.yours ? yoursView(course.yours, id) : h("section", { class: "panel stage" }, h("h2", {}, "Make it yours"), form),
       h("aside", { class: "side" }, h("section", { class: "card" }, h("h2", {}, "Modules"),
         course.modules.map((m) => h("div", { class: "module locked" },
           h("span", { class: "dot", "aria-hidden": "true" }),
@@ -339,6 +340,18 @@ async function renderLibraryCourse(id) {
     path,
     similar,
   );
+}
+
+/** On a library course the learner has started: their own course, to continue or recall. */
+function yoursView({ course, recall }, libraryId) {
+  const status = course.status === "complete" ? "Finished" : course.modules ? `${course.passed} of ${course.modules} modules done` : "The agent is planning this one";
+  return h("section", { class: "panel stage" },
+    h("h2", {}, "You've started this one"),
+    h("div", { class: "next-row yours-row" }, thumb(course, null, true),
+      h("div", {}, h("h3", { class: "card-title" }, course.title || course.prompt), h("p", { class: "muted" }, status))),
+    h("div", { class: "actions yours-actions" },
+      h("a", { class: "button", href: `#/course/${course.id}` }, "Continue"),
+      recall ? recallButton(course.id, recall, `#/library/${libraryId}`, "button-ink") : null));
 }
 
 function pathSection(title, lead, courses) {
@@ -392,6 +405,7 @@ async function loadSlips(id, card, token) {
 /* Course */
 async function renderCourse(id) {
   const token = ++renderToken;
+  courseSession = null;
   app.replaceChildren(h("div", { class: "panel stage" }, workingView("Opening your course")));
   try {
     await syncCourse(id, token);
@@ -463,6 +477,7 @@ function drawCourse(view, stage) {
       h("h1", {}, view.title || view.prompt),
       view.summary ? h("p", {}, view.summary) : null)),
     h("div", { class: "head-actions" },
+      view.modules.length && view.recall ? recallButton(view.id, view.recall, `#/course/${view.id}`) : null,
       view.modules.length ? h("button", { class: "button button-quiet", onclick: () => loadConfig().then(() => pickBuilding(view)).catch(() => {}) }, "Change building") : null,
       h("button", { class: "link-button", onclick: () => removeCourse(view) }, "Delete course")));
   const main = view.status === "complete"
@@ -784,7 +799,10 @@ function drawToday(data, token, view = {}) {
     main = h("div", { class: "today-main" },
       continueCard(data, token),
       upNextCard(data.up_next),
-      recall.status === "empty" && data.continue ? h("section", { class: "card" }, h("h2", { class: "card-title" }, "Recall starts soon"), h("p", { class: "muted" }, recall.lead)) : null,
+      recall.off
+        ? h("section", { class: "card" }, h("h2", { class: "card-title" }, "Daily recall is off"), h("p", { class: "muted" }, recall.lead),
+          h("div", { class: "actions" }, h("a", { class: "button", href: "#/settings?show=courses" }, "Choose courses")))
+        : recall.status === "empty" && data.continue ? h("section", { class: "card" }, h("h2", { class: "card-title" }, "Recall starts soon"), h("p", { class: "muted" }, recall.lead)) : null,
       data.continue ? null : h("section", { class: "card" },
         h("h2", { class: "card-title" }, "Start your first course"),
         h("p", { class: "muted" }, "Say what you want to learn, or pick a ready-made course. Questions you get right come back here a few days later."),
@@ -792,6 +810,65 @@ function drawToday(data, token, view = {}) {
       data.picks.length ? h("div", { class: "grid" }, data.picks.map((c) => libraryCard(c))) : null);
   }
   mount(app, head, h("div", { class: "course-layout" }, main, h("aside", { class: "side" }, side)));
+}
+
+/** Draw a recall screen after an action: Today's, or the "Recall this course" session's. */
+function drawRecall(data, token, view) {
+  (data.recall.scope === "course" ? drawCourseRecall : drawToday)(data, token, view);
+}
+
+/*
+ * "Recall this course": the same session screen as Today's, for one course. It is started from the course or its
+ * library page, and `data.back` is where closing and finishing go.
+ */
+let courseSession = null; // { id, data }: the session the #/course/:id/recall route shows. Kept in memory only.
+
+/**
+ * The Recall button for a course, with its note, or with why it can't start yet. A 409 shows under it.
+ * `tone` is the button style: quiet on the page, ink on a panel, so it never matches what it sits on.
+ */
+function recallButton(courseId, recall, back, tone = "button-quiet") {
+  const error = h("p", { class: "error-text", role: "alert", hidden: true });
+  const button = h("button", {
+    class: `button ${tone}`, type: "button", disabled: !recall.available,
+    onclick: async () => {
+      button.disabled = true;
+      error.hidden = true;
+      try {
+        const state = await api(`/api/courses/${courseId}/recall`, { method: "POST" });
+        courseSession = { id: courseId, data: { ...state, back } };
+        location.hash = `#/course/${courseId}/recall`;
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        button.disabled = false;
+      }
+    },
+  }, "Recall");
+  return h("div", { class: `recall-action${recall.available ? "" : " is-unavailable"}` },
+    button, h("p", { class: "muted small" }, recall.available ? recall.label : recall.reason), error);
+}
+
+function renderCourseRecall(id) {
+  const token = ++renderToken;
+  // There's no reading a session back, so a reload or a stale link goes to the course, where Recall carries on.
+  if (courseSession?.id !== id) return location.replace(`#/course/${id}`);
+  drawCourseRecall(courseSession.data, token, { session: true });
+}
+
+function drawCourseRecall(data, token, view = {}) {
+  hotkeys = null;
+  showStreak(data.streak);
+  const { recall, streak } = data;
+  const finished = !view.verdict && !recall.question;
+  const main = view.verdict ? recallVerdict(data, token, view.verdict)
+    : finished ? recallDone(data, token)
+    : recallQuestion(data, token, true);
+  mount(app,
+    h("header", { class: "course-head" },
+      h("div", {}, h("h1", {}, "Recall"), finished ? null : h("p", {}, recall.lead)),
+      h("a", { class: "link-button", href: data.back }, "Close")),
+    h("div", { class: "course-layout" }, main, h("aside", { class: "side" }, streakCard(streak))));
 }
 
 /** One pip per question of the set: its verdict, skipped, the one on screen, or still to come. */
@@ -827,7 +904,7 @@ function recallQuestion(data, token, session) {
         const answer = await api(`/api/recall/${q.id}/answer`, { method: "POST", body: JSON.stringify({ response: String(value) }) });
         if (token !== renderToken) return;
         Object.assign(data, { streak: answer.streak, recall: answer.recall });
-        drawToday(data, token, { session: true, verdict: { q, response: String(value), result: answer.result, schedule: answer.schedule } });
+        drawRecall(data, token, { session: true, verdict: { q, response: String(value), result: answer.result, schedule: answer.schedule } });
         live.textContent = VERDICTS[answer.result.verdict][0];
       } catch (e) {
         error.textContent = e.message;
@@ -858,9 +935,9 @@ function recallVerdict(data, token, { q, response, result, schedule }) {
   const last = !recall.question;
   const go = async () => {
     next.disabled = true;
-    // The set is finished, so read Today again: the course to continue may have moved on.
-    if (last) Object.assign(data, await api("/api/today").catch(() => data));
-    if (token === renderToken) drawToday(data, token, { session: true });
+    // Today's set is finished, so read Today again: the course to continue may have moved on.
+    if (last && recall.scope !== "course") Object.assign(data, await api("/api/today").catch(() => data));
+    if (token === renderToken) drawRecall(data, token, { session: true });
   };
   const next = h("button", { class: "button button-ink", type: "button", onclick: go }, last ? "Finish" : "Next");
   const shown = q.options
@@ -887,7 +964,8 @@ function recallVerdict(data, token, { q, response, result, schedule }) {
 
 function recallDone(data, token) {
   const { recall, streak } = data;
-  const next = data.continue;
+  const ofCourse = recall.scope === "course";
+  const next = ofCourse ? null : data.continue;
   return h("section", { class: "panel stage", "aria-label": "Recall done" },
     h("div", { class: "recall-top" }, marksView(recall, false)),
     h("h2", { class: "question" }, streak.today.counted ? `Day ${streak.current}` : "Recall done"),
@@ -898,8 +976,9 @@ function recallDone(data, token) {
     next ? h("div", { class: "recall-source" }, thumb(next.course), h("div", {}, h("strong", {}, next.course.title || next.course.prompt), h("span", { class: "muted" }, next.detail))) : null,
     h("div", { class: "actions" },
       next ? h("a", { class: "button", href: `#/course/${next.course.id}` }, "Continue your course") : null,
+      ofCourse ? h("a", { class: "button", href: data.back }, "Back to the course") : null,
       recall.more_available ? h("button", { class: "button button-ink", type: "button", onclick: (event) => moreRecall(data, token, event.currentTarget) }, "5 more questions") : null,
-      h("button", { class: "link-button", type: "button", onclick: () => drawToday(data, token) }, "Done")));
+      ofCourse ? null : h("button", { class: "link-button", type: "button", onclick: () => drawToday(data, token) }, "Done")));
 }
 
 /** A recall action that returns the streak and the state of the set. */
@@ -909,14 +988,15 @@ async function recallAction(data, token, path, body, button, view) {
     const state = await api(path, { method: "POST", body: JSON.stringify(body ?? {}) });
     if (token !== renderToken) return;
     Object.assign(data, state);
-    drawToday(data, token, view);
+    drawRecall(data, token, view);
   } catch (e) {
     if (button) button.disabled = false;
     live.textContent = e.message;
   }
 }
 const skipDay = (data, token, skipped, button) => recallAction(data, token, "/api/recall/skip-day", { skipped }, button, {});
-const moreRecall = (data, token, button) => recallAction(data, token, "/api/recall/more", {}, button, { session: true });
+// In a course session, "5 more" adds to that session; otherwise to today's set.
+const moreRecall = (data, token, button) => recallAction(data, token, "/api/recall/more", data.recall.session ? { session: data.recall.session } : {}, button, { session: true });
 function skipQuestion(data, token, q, controls) {
   // Nothing happens while an answer or another skip is on its way.
   if (controls.buttons.some((b) => b.disabled)) return;
@@ -925,7 +1005,7 @@ function skipQuestion(data, token, q, controls) {
 }
 
 /* Settings */
-async function renderSettings() {
+async function renderSettings(params) {
   const token = ++renderToken;
   app.replaceChildren(h("div", { class: "panel stage" }, workingView("Opening your settings")));
   let settings;
@@ -937,19 +1017,31 @@ async function renderSettings() {
   }
   if (token !== renderToken) return;
   const error = h("p", { class: "error-text", role: "alert", hidden: true });
-  const save = async (change) => {
+  const save = async (change, button) => {
     error.hidden = true;
+    if (button) button.disabled = true;
+    // The screen is drawn again from the response, so focus goes back to the control that was used.
+    const focused = button?.dataset.key;
     try {
       settings = await api("/api/settings", { method: "PUT", body: JSON.stringify(change) });
       if (token !== renderToken) return;
       draw();
+      if (focused) app.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus();
       live.textContent = "Saved.";
     } catch (e) {
       error.textContent = e.message;
       error.hidden = false;
+      if (button) button.disabled = false;
     }
   };
-  const chip = (label, on, change) => h("button", { class: `chip${on ? " chip-on" : ""}`, type: "button", "aria-pressed": String(on), onclick: () => save(change) }, label);
+  const chip = (label, on, change) => h("button", { class: `chip${on ? " chip-on" : ""}`, type: "button", "aria-pressed": String(on), "data-key": JSON.stringify(change), onclick: (event) => save(change, event.currentTarget) }, label);
+  const courseRow = (c) => h("div", { class: "recall-course" },
+    thumb(c.course),
+    h("div", {}, h("strong", {}, c.title), h("span", { class: "muted" }, c.detail)),
+    h("button", {
+      class: `chip toggle${c.included ? " chip-on" : ""}`, type: "button", "aria-pressed": String(c.included), "aria-label": `${c.title} in daily recall`, "data-key": `course:${c.id}`,
+      onclick: (event) => save({ recall_courses: { [c.id]: !c.included } }, event.currentTarget),
+    }, c.included ? "On" : "Off"));
   const group = (title, note, ...content) => h("div", { class: "setting" }, h("h2", {}, title), h("p", { class: "muted" }, note), content);
   const draw = () => mount(app,
     h("header", { class: "course-head" }, h("div", {}, h("h1", {}, "Settings"), h("p", {}, "How daily recall works for you."))),
@@ -958,9 +1050,15 @@ async function renderSettings() {
         h("div", { class: "chips", role: "group", "aria-label": "Daily goal" }, settings.goals.map((g) => chip(`${g} questions`, g === settings.daily_goal, { daily_goal: g })))),
       group("Short answers in recall", "A couple of questions a day that you answer in your own words. They take a few seconds to grade.",
         h("div", { class: "chips", role: "group", "aria-label": "Short answers in recall" }, chip("On", settings.short_answers, { short_answers: true }), chip("Off", !settings.short_answers, { short_answers: false }))),
+      settings.recall_courses?.length ? h("div", { class: "setting", id: "recall-courses" },
+        h("h2", {}, "Courses in daily recall"),
+        h("p", { class: "muted" }, "Daily recall draws from the courses you leave on. You can still recall any course from its page."),
+        h("div", { class: "recall-courses" }, settings.recall_courses.map(courseRow))) : null,
       group("Time zone", "Your days and your streak follow this zone. It comes from your device.", h("p", {}, settings.time_zone)),
       error));
   draw();
+  // "Choose courses" on Today opens the settings at this group.
+  if (params?.get("show") === "courses") app.querySelector("#recall-courses")?.scrollIntoView({ block: "start" });
 }
 
 /* Stats */
@@ -1092,6 +1190,7 @@ async function renderStats() {
 function route() {
   const [path, query = ""] = location.hash.split("?");
   const course = path.match(/^#\/course\/([\w-]+)$/);
+  const courseRecall = path.match(/^#\/course\/([\w-]+)\/recall$/);
   const library = path.match(/^#\/library(?:\/([\w-]+))?$/);
   window.scrollTo(0, 0);
   hotkeys = null;
@@ -1099,8 +1198,9 @@ function route() {
   for (const link of document.querySelectorAll(".nav a")) link.toggleAttribute("aria-current", link.getAttribute("href") === (path || "#/"));
   if (path === "#/stats") renderStats();
   else if (path === "#/courses") renderHome();
-  else if (path === "#/settings") renderSettings();
+  else if (path === "#/settings") renderSettings(new URLSearchParams(query));
   else if (course) renderCourse(course[1]);
+  else if (courseRecall) renderCourseRecall(courseRecall[1]);
   else if (library?.[1]) renderLibraryCourse(library[1]);
   else if (library) renderLibrary(new URLSearchParams(query));
   else renderToday();

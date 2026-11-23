@@ -362,6 +362,25 @@ input[type=search] { width: 100%; background: var(--bio-ink); border: 0; border-
 .setting h2 { font-size: 25px; letter-spacing: -.03em; margin-bottom: 6px; }
 .setting p { font-size: 16px; }
 .setting .chips, .setting > p + p { margin-top: 14px; }
+.recall-courses { display: grid; gap: 10px; margin-top: 18px; }
+.recall-course { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 10px 12px 10px 10px; border-radius: 20px; background: var(--bio-ink); }
+.recall-course strong { display: block; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+.recall-course span { display: block; font-size: 16px; }
+.recall-course .thumb { background: var(--bio-surface); }
+/* The switch is a chip on the ink row, so it sits on the surface colour to stay visible when off. */
+.recall-course .toggle { min-width: 72px; text-align: center; justify-content: center; background: var(--bio-surface); }
+.recall-course .toggle.chip-on { background: var(--bio-yellow); }
+.recall-action { display: grid; gap: 8px; justify-items: start; max-width: 30ch; }
+.recall-action .muted { font-size: 16px; }
+.recall-action .error-text { margin-top: 0; }
+.recall-action.is-unavailable .button:disabled { cursor: not-allowed; }
+/* In the course header, Recall sits in the row of buttons, and its note and any error wrap onto the line below. */
+.head-actions { max-width: 520px; justify-content: flex-end; }
+.head-actions .recall-action { display: contents; }
+.head-actions .recall-action p { order: 1; flex-basis: 100%; margin-top: 0; }
+.course-head .recall-action .error-text { color: var(--bio-ink); }
+.yours-row { margin-top: 22px; }
+.yours-actions { align-items: start; }
 .menu { position: relative; }
 .menu summary { list-style: none; cursor: pointer; }
 .menu summary::-webkit-details-marker { display: none; }
@@ -402,6 +421,9 @@ input[type=search] { width: 100%; background: var(--bio-ink); border: 0; border-
   .stat-tile strong { font-size: 40px; }
   .concept-cols { grid-template-columns: minmax(0, 1fr); }
   .picker-side { grid-template-columns: 120px auto; }
+  /* On phones, Recall takes its own line with its note under it, then the other course actions. */
+  .head-actions { justify-content: flex-start; }
+  .head-actions .recall-action { display: grid; flex-basis: 100%; max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
