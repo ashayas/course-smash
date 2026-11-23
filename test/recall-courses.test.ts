@@ -269,3 +269,25 @@ test("a session from another day can't be extended", async () => {
   await rejects(moreRecall(env, null, ZONE, now + DAY, started.recall.session), 409, /another day/);
   await rejects(moreRecall(env, "someone", ZONE, now, started.recall.session), 404);
 });
+
+test("when a course session holds every idea, Today and Recall on another course say why", async () => {
+  const env = makeEnv();
+  const now = Date.now();
+  await usualLearner(env, now - 10 * DAY);
+  await newCourse(env, now - 10 * DAY);
+  await env.DB.prepare("UPDATE courses SET status = 'complete' WHERE id = 'c1'").run(); // no new questions to fill Today
+  await startCourseRecall(env, null, "c1", ZONE, now);
+  const day = await today(env, null, ZONE, now + 1000);
+  assert.equal(day.recall.status, "empty");
+  assert.match(day.recall.lead, /in the course recall you started/);
+  // A course whose own ideas aren't in any set gets its own reason, not "they're in today's daily recall".
+  await env.DB.prepare("UPDATE modules SET status = 'passed' WHERE course_id = 'fresh'").run();
+  await env.DB.prepare("UPDATE modules SET concepts = '[]' WHERE course_id = 'fresh'").run();
+  await rejects(startCourseRecall(env, null, "fresh", ZONE, now + 2000), 409, /^(?!.*today's daily recall)/);
+});
+
+test("the course list in settings is capped below D1's bound-parameter limit", async () => {
+  const env = makeEnv();
+  const change = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`c${i}`, true]));
+  assert.equal(await checkRecallCourses(env, null, change), null);
+});

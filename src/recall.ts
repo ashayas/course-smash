@@ -309,7 +309,7 @@ type CourseCard = Awaited<ReturnType<typeof listCourses>>[number];
  * The recall part of Today, or of a course session when `session` is given. The same shape either way, so every
  * client draws both with the same screens. Never includes an answer key.
  */
-async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: CourseCard[], skipped: boolean, now: number, session: Session | null = null) {
+async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: CourseCard[], skipped: boolean, now: number, session: Session | null = null, inSession = false) {
   const day = session?.day ?? rows[0]?.day;
   const courseIds = rows.filter((r) => r.course_question_id).map((r) => r.course_question_id!);
   const [attempts, courseAnswers, unused] = await Promise.all([
@@ -355,7 +355,9 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
   const lead = {
     empty: off
       ? "Every course is turned off for daily recall. Choose the courses it draws from in Settings."
-      : "When you pass a module, its ideas come back here a few days later as new questions.",
+      : inSession
+        ? "Your ideas due today are in the course recall you started. Finish it there, and anything left comes back here."
+        : "When you pass a module, its ideas come back here a few days later as new questions.",
     skipped: "Recall is skipped for today.",
     done: answered ? `Recall done, ${correct} of ${answered} right.` : "Recall done for today.",
     ready: left < rows.length
@@ -480,7 +482,9 @@ async function state(env: Env, learner: Learner, owner: string | null, now: numb
   const day = await currentDay(env, learner, now);
   const rows = await daySet(env, learner, owner, day, now);
   const streak = await streakView(env, learner, now);
-  return { streak, recall: await recallView(env, learner, rows, courses ?? (await listCourses(env, owner)), streak.recall_skipped, now) };
+  // An empty day can mean the ideas due are all open in a course session started first, so Today says so.
+  const inSession = !rows.length && (await openToday(env, learner.owner, day)).size > 0;
+  return { streak, recall: await recallView(env, learner, rows, courses ?? (await listCourses(env, owner)), streak.recall_skipped, now, null, inSession) };
 }
 
 /** Everything the Today screen needs, in one call. */
@@ -697,7 +701,9 @@ export async function startCourseRecall(env: Env, owner: string | null, courseId
 
   const drafts = await pick(env, learner, owner, day, now, learner.daily_goal, [], { course: courseId });
   if (!drafts.length) {
-    const inToday = (await openToday(env, learner.owner, day)).size > 0;
+    const open = await openToday(env, learner.owner, day);
+    const { results: mine } = await env.DB.prepare("SELECT id FROM recall_items WHERE owner = ? AND course_id = ?").bind(learner.owner, courseId).all<{ id: string }>();
+    const inToday = mine.some((item) => open.has(item.id));
     throw new AnswerError(inToday
       ? "This course's ideas are in today's daily recall. Answer them on Today first."
       : "There are no questions to ask on this course's ideas yet.", 409);
@@ -747,7 +753,7 @@ type CourseChoice = [id: string, included: boolean];
 export async function checkRecallCourses(env: Env, owner: string | null, change: unknown): Promise<CourseChoice[] | null> {
   if (!change || typeof change !== "object" || Array.isArray(change)) return null;
   const entries = Object.entries(change as Record<string, unknown>);
-  if (entries.length > 100 || entries.some(([, on]) => typeof on !== "boolean")) return null;
+  if (entries.length > 99 || entries.some(([, on]) => typeof on !== "boolean")) return null;
   if (!entries.length) return [];
   const ids = entries.map(([id]) => id);
   const { results } = await env.DB.prepare(`SELECT id FROM courses WHERE owner IS ? AND id IN (${ids.map(() => "?").join(", ")})`)
