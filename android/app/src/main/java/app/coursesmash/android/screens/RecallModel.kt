@@ -157,6 +157,10 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
      * and the rest of the set waits there.
      */
     fun close() {
+        // A result still on its way is for the session being closed, so it is dropped, as on sign-out. The Worker has
+        // kept the answer, and Today asks again once the session is gone.
+        changes += 1
+        busy = false
         next()
         error = null
         inSession = false
@@ -164,11 +168,9 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
     }
 
     fun reset() {
-        changes += 1
         close()
         today = null
         loadError = null
-        busy = false
     }
 
     private fun clearAnswer() {
@@ -177,13 +179,10 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
         error = null
     }
 
+    /** A course session's set never becomes Today's, even if it arrives after the session has gone. */
     private fun take(streak: Streak, recall: Recall) {
-        if (courseSession != null) {
-            courseSession = RecallUpdate(streak, recall)
-            today = today?.copy(streak = streak)
-        } else {
-            today = today?.copy(streak = streak, recall = recall)
-        }
+        if (courseSession != null) courseSession = RecallUpdate(streak, recall)
+        today = today?.let { it.copy(streak = streak, recall = if (recall.scope == "course") it.recall else recall) }
     }
 
     /** One change at a time. Its result is dropped if the learner signed out while it was on its way. */
