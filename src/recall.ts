@@ -7,6 +7,9 @@
 // - The question for an item is a bank question on that subtopic the learner hasn't had. When the bank has
 //   run out, it is the question they answered longest ago. No model writes anything here.
 // - Multiple choice is graded by the key. Short answers are graded as in a course (Clef, then gpt-oss).
+// - Only courses with `in_recall` on feed the day's set. The learner turns courses on and off in Settings.
+// - "Recall this course" is a session of questions from one course's passed modules, outside the day's set
+//   (recall_sessions). It is graded, scheduled and counted toward the day the same way.
 import { type Answer, type BankQuestion, AnswerError, SCORE, answerQuestion, catalogCards, concept, gradeShort, listCourses, placeOptions, privateBankId, shuffled } from "./agent";
 import { DAY_MS, type Learner, countDay, currentDay, getLearner, localDay, recordAnswer, setRecallSkipped, streakView } from "./days";
 import { nearestCourses, storedCloseness } from "./embeddings";
@@ -29,13 +32,17 @@ type SetRow = {
   correct_index: number | null; reference: string | null; concept: string; why: string | null;
   figure: string | null; figure_alt: string | null; source_url: string | null;
   status: "ready" | "set" | "answered" | "skipped"; day: string; position: number; created_at: number;
-  last_reviewed_at: number | null;
+  last_reviewed_at: number | null; session_id: string | null;
 };
+type Session = { id: string; owner: string; course_id: string; day: string; created_at: number };
 type Attempt = {
   id: string; question_id: string; response: string; verdict: Answer["verdict"]; score: number; confidence: number | null;
   error_type: string | null; feedback: string; concept: string; due_in_days: number | null;
 };
-type Draft = Omit<SetRow, "id" | "owner" | "status" | "day" | "position" | "created_at" | "last_reviewed_at">;
+type Draft = Omit<SetRow, "id" | "owner" | "status" | "day" | "position" | "created_at" | "last_reviewed_at" | "session_id">;
+/** What a set is drawn from: the courses in daily recall, or one course for a "Recall this course" session. */
+type Scope = { course: string | null };
+const DAILY: Scope = { course: null };
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 /** "tomorrow", "in 3 days", "in 3 weeks": the same words on every client. */
@@ -49,11 +56,11 @@ function when(days: number) {
 /* Items */
 
 /** Make recall items for the learner's passed modules that have none yet, starting each from how the course went. */
-async function seedItems(env: Env, owner: string | null, key: string, now: number) {
+async function seedItems(env: Env, owner: string | null, key: string, now: number, courseId: string | null = null) {
   const { results: modules } = await env.DB.prepare(
     `SELECT m.id, m.course_id, m.concepts, m.catalog_module_id FROM modules m JOIN courses c ON c.id = m.course_id
-     WHERE c.owner IS ? AND m.status = 'passed' AND NOT EXISTS (SELECT 1 FROM recall_items i WHERE i.module_id = m.id)`,
-  ).bind(owner).all<{ id: string; course_id: string; concepts: string; catalog_module_id: string | null }>();
+     WHERE c.owner IS ? AND (? IS NULL OR c.id = ?) AND m.status = 'passed' AND NOT EXISTS (SELECT 1 FROM recall_items i WHERE i.module_id = m.id)`,
+  ).bind(owner, courseId, courseId).all<{ id: string; course_id: string; concepts: string; catalog_module_id: string | null }>();
   for (const module of modules) {
     const { results: answers } = await env.DB.prepare(
       "SELECT q.concept, a.verdict, a.created_at FROM answers a JOIN questions q ON q.id = a.question_id WHERE q.module_id = ? ORDER BY a.created_at",
@@ -99,19 +106,31 @@ type History = {
   verdict: Answer["verdict"]; asked_at: number;
 };
 
+/** Items waiting in an open question today, in the day's set or a course session, so no two sets ask the same one at once. */
+async function openToday(env: Env, key: string, day: string) {
+  const { results } = await env.DB.prepare("SELECT item_id FROM recall_questions WHERE owner = ? AND day = ? AND status = 'set' AND item_id IS NOT NULL")
+    .bind(key, day).all<{ item_id: string }>();
+  return new Set(results.map((r) => r.item_id));
+}
+
 /**
  * Choose up to `size` questions for the learner: recall items first, then new questions from courses in progress.
- * `taken` is what today's set already holds. Returns nothing unless one or more recall items can be asked.
+ * `taken` is what the set already holds. Returns nothing unless one or more recall items can be asked.
+ * The day's set draws from the courses in daily recall; a course session draws only from its course's passed
+ * modules, with no new course questions.
  */
-async function pick(env: Env, learner: Learner, owner: string | null, day: string, now: number, size: number, taken: SetRow[]): Promise<Draft[]> {
-  const takenItems = new Set(taken.map((r) => r.item_id));
+async function pick(env: Env, learner: Learner, owner: string | null, day: string, now: number, size: number, taken: SetRow[], scope: Scope = DAILY): Promise<Draft[]> {
+  const takenItems = new Set([...taken.map((r) => r.item_id), ...(await openToday(env, learner.owner, day))]);
   const takenCourse = new Set(taken.map((r) => r.course_question_id));
   const [{ results: allItems }, { results: waiting }, { results: seenRows }] = await Promise.all([
-    env.DB.prepare("SELECT i.*, m.catalog_module_id FROM recall_items i JOIN modules m ON m.id = i.module_id WHERE i.owner = ?").bind(learner.owner).all<Item>(),
     env.DB.prepare(
+      `SELECT i.*, m.catalog_module_id FROM recall_items i JOIN modules m ON m.id = i.module_id JOIN courses c ON c.id = i.course_id
+       WHERE i.owner = ? AND (CASE WHEN ? IS NULL THEN c.in_recall = 1 ELSE c.id = ? END)`,
+    ).bind(learner.owner, scope.course, scope.course).all<Item>(),
+    scope.course ? Promise.resolve({ results: [] as never[] }) : env.DB.prepare(
       `SELECT q.id, q.course_id, q.kind, q.prompt, q.options, q.concept, q.why, q.figure, q.figure_alt, q.bank_id FROM questions q
        JOIN modules m ON m.id = q.module_id AND m.status = 'active' JOIN courses c ON c.id = q.course_id
-       WHERE c.owner IS ? AND c.status = 'active' AND NOT EXISTS (SELECT 1 FROM answers a WHERE a.question_id = q.id)
+       WHERE c.owner IS ? AND c.status = 'active' AND c.in_recall = 1 AND NOT EXISTS (SELECT 1 FROM answers a WHERE a.question_id = q.id)
        ORDER BY (SELECT COALESCE(MAX(a.created_at), c.created_at) FROM answers a WHERE a.course_id = c.id) DESC, q.round, q.position LIMIT 12`,
     ).bind(owner).all<{ id: string; course_id: string; kind: "mcq" | "short"; prompt: string; options: string | null; concept: string; why: string | null; figure: string | null; figure_alt: string | null; bank_id: string | null }>(),
     env.DB.prepare(
@@ -234,19 +253,23 @@ async function pick(env: Env, learner: Learner, owner: string | null, day: strin
   return shuffled(drafts);
 }
 
+const SET_ROW = "SELECT r.*, i.last_reviewed_at FROM recall_questions r LEFT JOIN recall_items i ON i.id = r.item_id";
 const loadSet = async (env: Env, key: string, day: string) =>
-  (await env.DB.prepare(
-    "SELECT r.*, i.last_reviewed_at FROM recall_questions r LEFT JOIN recall_items i ON i.id = r.item_id WHERE r.owner = ? AND r.day = ? ORDER BY r.position",
-  ).bind(key, day).all<SetRow>()).results;
+  (await env.DB.prepare(`${SET_ROW} WHERE r.owner = ? AND r.day = ? AND r.session_id IS NULL ORDER BY r.position`).bind(key, day).all<SetRow>()).results;
+const loadSession = async (env: Env, session: Session) =>
+  (await env.DB.prepare(`${SET_ROW} WHERE r.session_id = ? ORDER BY r.position`).bind(session.id).all<SetRow>()).results;
 
-/** Add questions to the day's set. If another request added the same positions first, this one's batch fails and theirs stands. */
-async function addToSet(env: Env, key: string, day: string, start: number, drafts: Draft[], now: number) {
+/**
+ * Add questions to the day's set, or to a course session. If another request added the same positions first,
+ * this one's batch fails and theirs stands.
+ */
+async function addToSet(env: Env, key: string, day: string, start: number, drafts: Draft[], now: number, sessionId: string | null = null) {
   if (!drafts.length) return;
   try {
     await env.DB.batch(drafts.map((d, i) => env.DB.prepare(
-      `INSERT INTO recall_questions (id, owner, course_id, item_id, course_question_id, bank_id, origin, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, source_url, status, day, position, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'set', ?, ?, ?)`,
-    ).bind(crypto.randomUUID(), key, d.course_id, d.item_id, d.course_question_id, d.bank_id, d.origin, d.kind, d.prompt, d.options, d.correct_index, d.reference, d.concept, d.why, d.figure, d.figure_alt, d.source_url, day, start + i, now)));
+      `INSERT INTO recall_questions (id, owner, course_id, item_id, course_question_id, bank_id, origin, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, source_url, status, day, position, created_at, session_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'set', ?, ?, ?, ?)`,
+    ).bind(crypto.randomUUID(), key, d.course_id, d.item_id, d.course_question_id, d.bank_id, d.origin, d.kind, d.prompt, d.options, d.correct_index, d.reference, d.concept, d.why, d.figure, d.figure_alt, d.source_url, day, start + i, now, sessionId)));
   } catch (error) {
     console.log(JSON.stringify({ message: "the day's recall set was already being built", error: String(error) }));
   }
@@ -279,9 +302,12 @@ async function daySet(env: Env, learner: Learner, owner: string | null, day: str
 
 type CourseCard = Awaited<ReturnType<typeof listCourses>>[number];
 
-/** The recall part of Today. Never includes an answer key. */
-async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: CourseCard[], skipped: boolean, now: number) {
-  const day = rows[0]?.day;
+/**
+ * The recall part of Today, or of a course session when `session` is given. The same shape either way, so every
+ * client draws both with the same screens. Never includes an answer key.
+ */
+async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: CourseCard[], skipped: boolean, now: number, session: Session | null = null) {
+  const day = session?.day ?? rows[0]?.day;
   const courseIds = rows.filter((r) => r.course_question_id).map((r) => r.course_question_id!);
   const [attempts, courseAnswers, unused] = await Promise.all([
     day
@@ -292,10 +318,18 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
       ? env.DB.prepare(`SELECT question_id, verdict FROM answers WHERE question_id IN (${courseIds.map(() => "?").join(", ")})`)
         .bind(...courseIds).all<{ question_id: string; verdict: Answer["verdict"] }>().then((r) => r.results)
       : [],
-    day
-      ? env.DB.prepare("SELECT COUNT(*) AS n FROM recall_items i WHERE i.owner = ? AND NOT EXISTS (SELECT 1 FROM recall_questions r WHERE r.item_id = i.id AND r.day = ?)")
-        .bind(learner.owner, day).first<{ n: number }>()
-      : null,
+    // Items another "5 more" could still ask: in this set's courses, not in this set, and not open in another set today.
+    session
+      ? env.DB.prepare(
+        `SELECT COUNT(*) AS n FROM recall_items i WHERE i.owner = ? AND i.course_id = ?
+         AND NOT EXISTS (SELECT 1 FROM recall_questions r WHERE r.item_id = i.id AND (r.session_id = ? OR (r.day = ? AND r.status = 'set')))`,
+      ).bind(learner.owner, session.course_id, session.id, session.day).first<{ n: number }>()
+      : day
+        ? env.DB.prepare(
+          `SELECT COUNT(*) AS n FROM recall_items i JOIN courses c ON c.id = i.course_id AND c.in_recall = 1 WHERE i.owner = ?
+           AND NOT EXISTS (SELECT 1 FROM recall_questions r WHERE r.item_id = i.id AND r.day = ? AND (r.session_id IS NULL OR r.status = 'set'))`,
+        ).bind(learner.owner, day).first<{ n: number }>()
+        : null,
   ]);
   const verdicts = new Map<string, Answer["verdict"]>([
     ...attempts.map((a) => [a.question_id, a.verdict] as const),
@@ -306,25 +340,36 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
   ]);
   const next = rows.find((r) => r.status === "set") ?? null;
   const byCourse = new Map(courses.map((c) => [c.id, c]));
+  const course = session ? byCourse.get(session.course_id) : undefined;
+  // Every course is turned off for daily recall, so the day's set has nothing to draw from.
+  const off = !session && courses.length > 0 && courses.every((c) => !c.in_recall);
   const answered = rows.filter((r) => r.status === "answered").length;
   const correct = [...verdicts.values()].filter((v) => v === "correct").length;
   const left = rows.filter((r) => r.status === "set").length;
-  const status = !rows.length ? "empty" : !next ? "done" : skipped ? "skipped" : "ready";
+  const status = !rows.length ? "empty" : !next ? "done" : skipped && !session ? "skipped" : "ready";
   const seenConcepts = new Set<string>();
   // The words under the heading are written here, so the web app and both phone apps say the same thing.
   const lead = {
-    empty: "When you pass a module, its ideas come back here a few days later as new questions.",
+    empty: off
+      ? "Every course is turned off for daily recall. Choose the courses it draws from in Settings."
+      : "When you pass a module, its ideas come back here a few days later as new questions.",
     skipped: "Recall is skipped for today.",
     done: answered ? `Recall done, ${correct} of ${answered} right.` : "Recall done for today.",
     ready: left < rows.length
       ? `${left} of ${rows.length} left.`
-      : `${plural(rows.length, "question")} from your courses. About ${plural(Math.max(1, Math.round(rows.length * 0.4)), "minute")}.`,
+      : `${plural(rows.length, "question")} from ${session ? (course?.title ?? course?.prompt ?? "this course") : "your courses"}. About ${plural(Math.max(1, Math.round(rows.length * 0.4)), "minute")}.`,
   }[status];
   const seen = (days: number | null) => (days === null ? "" : days === 0 ? " · last seen today" : days === 1 ? " · last seen yesterday" : ` · last seen ${days} days ago`);
   const lastSeen = next?.last_reviewed_at == null ? null : Math.max(0, Math.floor((now - next.last_reviewed_at) / DAY_MS));
   return {
     status,
     lead,
+    /** "day" for the day's set, "course" for a "Recall this course" session. */
+    scope: session ? "course" : "day",
+    /** The session to send with "5 more", or null for the day's set. */
+    session: session?.id ?? null,
+    course_id: session?.course_id ?? null,
+    off,
     total: rows.length,
     answered,
     correct,
@@ -335,7 +380,8 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
       ? {
           id: next.id, kind: next.kind, prompt: next.prompt, options: next.options ? (JSON.parse(next.options) as string[]) : null,
           concept: next.concept, why: next.why, figure: next.figure, figure_alt: next.figure_alt,
-          new: next.origin === "course", number: next.position + 1, last_seen_days: lastSeen,
+          // Counted in the set rather than from the stored position, which has gaps once a course is turned off.
+          new: next.origin === "course", number: rows.indexOf(next) + 1, last_seen_days: lastSeen,
           // "taints and tolerations · last seen 9 days ago", under the course's name. Subtopic names are stored in
           // lower case and shown that way everywhere, since capitalising them would turn "sdk" into "Sdk".
           detail: next.origin === "course" ? `${next.concept} · new in your course` : `${next.concept}${seen(lastSeen)}`,
@@ -422,8 +468,12 @@ async function starterPicks(env: Env) {
   return ids.length ? catalogCards(env, ids) : [];
 }
 
-/** The streak and the recall part of Today: what every recall action returns. */
-async function state(env: Env, learner: Learner, owner: string | null, now: number, courses?: CourseCard[]) {
+/** The streak and the recall part of Today, or of a course session: what every recall action returns. */
+async function state(env: Env, learner: Learner, owner: string | null, now: number, courses?: CourseCard[], session: Session | null = null) {
+  if (session) {
+    const streak = await streakView(env, learner, now);
+    return { streak, recall: await recallView(env, learner, await loadSession(env, session), courses ?? (await listCourses(env, owner)), false, now, session) };
+  }
   const day = await currentDay(env, learner, now);
   const rows = await daySet(env, learner, owner, day, now);
   const streak = await streakView(env, learner, now);
@@ -457,6 +507,9 @@ async function findRow(env: Env, key: string, id: string) {
   return row;
 }
 
+const findSession = (env: Env, key: string, id: string | null) =>
+  id ? env.DB.prepare("SELECT * FROM recall_sessions WHERE id = ? AND owner = ?").bind(id, key).first<Session>() : Promise.resolve(null);
+
 const revealAttempt = (row: SetRow, attempt: Attempt) => ({
   question_id: row.id, response: attempt.response, verdict: attempt.verdict, score: attempt.score, confidence: attempt.confidence,
   error_type: attempt.error_type, feedback: attempt.feedback, correct_index: row.correct_index, reference: row.reference, source_url: row.source_url,
@@ -469,6 +522,7 @@ const revealAttempt = (row: SetRow, attempt: Attempt) => ({
 export async function answerRecall(env: Env, owner: string | null, id: string, rawResponse: string, zone?: string | null, now = Date.now()) {
   const learner = await getLearner(env, owner, zone, now);
   const row = await findRow(env, learner.owner, id);
+  const session = await findSession(env, learner.owner, row.session_id);
   // A skip is final for the day: the subtopic stays due, so a late or repeated answer must not move its schedule.
   if (row.status === "skipped") throw new AnswerError(SKIPPED, 409);
 
@@ -530,7 +584,7 @@ export async function answerRecall(env: Env, owner: string | null, id: string, r
   return {
     result: revealAttempt(row, attempt),
     schedule: { days, label: `You'll see ${row.concept} again ${when(days)}.` },
-    ...(await state(env, learner, owner, now)),
+    ...(await state(env, learner, owner, now, undefined, session)),
   };
 }
 
@@ -540,12 +594,21 @@ export async function skipRecall(env: Env, owner: string | null, id: string, zon
   const row = await findRow(env, learner.owner, id);
   await env.DB.prepare("UPDATE recall_questions SET status = 'skipped' WHERE id = ? AND status = 'set'").bind(row.id).run();
   await countDay(env, learner, row.day);
-  return state(env, learner, owner, now);
+  return state(env, learner, owner, now, undefined, await findSession(env, learner.owner, row.session_id));
 }
 
-/** "5 more questions": add to today's set by the same rules. */
-export async function moreRecall(env: Env, owner: string | null, zone?: string | null, now = Date.now()) {
+/** "5 more questions": add to today's set by the same rules, or to a course session when `sessionId` is given. */
+export async function moreRecall(env: Env, owner: string | null, zone?: string | null, now = Date.now(), sessionId: string | null = null) {
   const learner = await getLearner(env, owner, zone, now);
+  if (sessionId) {
+    const session = await findSession(env, learner.owner, sessionId);
+    if (!session) throw new AnswerError("That recall session doesn't exist.", 404);
+    const rows = await loadSession(env, session);
+    const start = rows.length ? Math.max(...rows.map((r) => r.position)) + 1 : 0;
+    const day = await currentDay(env, learner, now);
+    await addToSet(env, learner.owner, session.day, start, await pick(env, learner, owner, day, now, MORE, rows, { course: session.course_id }), now, session.id);
+    return state(env, learner, owner, now, undefined, session);
+  }
   const day = await currentDay(env, learner, now);
   const rows = await daySet(env, learner, owner, day, now);
   if (rows.length) {
@@ -561,4 +624,140 @@ export async function skipRecallDay(env: Env, owner: string | null, skipped: boo
   const learner = await getLearner(env, owner, zone, now);
   await setRecallSkipped(env, learner, await currentDay(env, learner, now), skipped);
   return state(env, learner, owner, now);
+}
+
+/* Recall this course */
+
+type Availability = { available: boolean; ideas: number; due: number; label: string; reason: string | null };
+
+/** Recall items per course for this learner, and how many of them are due today. */
+async function itemCounts(env: Env, learner: Learner, day: string, courseId: string | null = null) {
+  const { results } = await env.DB.prepare(
+    "SELECT course_id, due_at FROM recall_items WHERE owner = ? AND (? IS NULL OR course_id = ?)",
+  ).bind(learner.owner, courseId, courseId).all<{ course_id: string; due_at: number }>();
+  const counts = new Map<string, { ideas: number; due: number }>();
+  for (const row of results) {
+    const entry = counts.get(row.course_id) ?? { ideas: 0, due: 0 };
+    entry.ideas++;
+    if (localDay(row.due_at, learner.time_zone) <= day) entry.due++;
+    counts.set(row.course_id, entry);
+  }
+  return counts;
+}
+
+const NOTHING_PASSED = "Pass a module first. Its ideas can be recalled here once it's done.";
+
+function availability(passed: number, counts: { ideas: number; due: number } | undefined): Availability {
+  const ideas = counts?.ideas ?? 0;
+  const due = counts?.due ?? 0;
+  if (!passed) return { available: false, ideas: 0, due: 0, label: "Nothing to recall yet", reason: NOTHING_PASSED };
+  if (!ideas) return { available: false, ideas, due, label: "Nothing to recall yet", reason: "This course's passed modules have no ideas to ask about yet." };
+  return { available: true, ideas, due, label: `${plural(ideas, "idea")} from ${plural(passed, "passed module")}${due ? ` · ${due} due` : ""}`, reason: null };
+}
+
+/**
+ * Whether "Recall this course" can start, with the words to show either way. `null` when the course isn't the
+ * learner's. Makes the recall items for newly passed modules, as Today does.
+ */
+export async function courseRecall(env: Env, owner: string | null, courseId: string, zone?: string | null, now = Date.now()): Promise<Availability | null> {
+  const course = await env.DB.prepare(
+    "SELECT c.id, (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id AND m.status = 'passed') AS passed FROM courses c WHERE c.id = ? AND c.owner IS ?",
+  ).bind(courseId, owner).first<{ id: string; passed: number }>();
+  if (!course) return null;
+  const learner = await getLearner(env, owner, zone, now);
+  if (course.passed) await seedItems(env, owner, learner.owner, now, courseId);
+  const counts = await itemCounts(env, learner, await currentDay(env, learner, now), courseId);
+  return availability(course.passed, counts.get(courseId));
+}
+
+/**
+ * Start a "Recall this course" session, or carry on with today's open one for the course. Draws from the course's
+ * passed modules only, due ideas first, then the ones fading fastest. Throws with the reason when there is
+ * nothing to ask.
+ */
+export async function startCourseRecall(env: Env, owner: string | null, courseId: string, zone?: string | null, now = Date.now()) {
+  const found = await courseRecall(env, owner, courseId, zone, now);
+  if (!found) throw new AnswerError("Course not found.", 404);
+  if (!found.available) throw new AnswerError(found.reason!, 409);
+  const learner = await getLearner(env, owner, zone, now);
+  const day = await currentDay(env, learner, now);
+  const open = await env.DB.prepare(
+    `SELECT s.* FROM recall_sessions s WHERE s.owner = ? AND s.course_id = ? AND s.day = ?
+     AND EXISTS (SELECT 1 FROM recall_questions r WHERE r.session_id = s.id AND r.status = 'set') ORDER BY s.created_at DESC LIMIT 1`,
+  ).bind(learner.owner, courseId, day).first<Session>();
+  if (open) return state(env, learner, owner, now, undefined, open);
+
+  const drafts = await pick(env, learner, owner, day, now, learner.daily_goal, [], { course: courseId });
+  if (!drafts.length) {
+    const inToday = (await openToday(env, learner.owner, day)).size > 0;
+    throw new AnswerError(inToday
+      ? "This course's ideas are in today's daily recall. Answer them on Today first."
+      : "There are no questions to ask on this course's ideas yet.", 409);
+  }
+  const session: Session = { id: crypto.randomUUID(), owner: learner.owner, course_id: courseId, day, created_at: now };
+  await env.DB.prepare("INSERT INTO recall_sessions (id, owner, course_id, day, created_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(session.id, session.owner, session.course_id, session.day, session.created_at).run();
+  await addToSet(env, learner.owner, day, 0, drafts, now, session.id);
+  return state(env, learner, owner, now, undefined, session);
+}
+
+/* Which courses feed daily recall */
+
+/** The learner's courses with whether each is in daily recall, for the settings screen. */
+export async function recallCourses(env: Env, owner: string | null, zone?: string | null, now = Date.now()) {
+  const learner = await getLearner(env, owner, zone, now);
+  await seedItems(env, owner, learner.owner, now);
+  const [courses, counts] = await Promise.all([listCourses(env, owner), itemCounts(env, learner, await currentDay(env, learner, now))]);
+  return courses.map((course) => {
+    const found = availability(course.passed, counts.get(course.id));
+    return {
+      id: course.id,
+      title: course.title ?? course.prompt,
+      included: course.in_recall,
+      detail: found.available ? `${plural(found.ideas, "idea")} to recall` : found.label,
+      course,
+    };
+  });
+}
+
+type CourseChoice = [id: string, included: boolean];
+
+/**
+ * Check a change to which courses feed daily recall: `{ "<course id>": true | false }`. Null if any id isn't one
+ * of the learner's courses or a value isn't true or false, so a bad request changes nothing.
+ */
+export async function checkRecallCourses(env: Env, owner: string | null, change: unknown): Promise<CourseChoice[] | null> {
+  if (!change || typeof change !== "object" || Array.isArray(change)) return null;
+  const entries = Object.entries(change as Record<string, unknown>);
+  if (entries.length > 100 || entries.some(([, on]) => typeof on !== "boolean")) return null;
+  if (!entries.length) return [];
+  const ids = entries.map(([id]) => id);
+  const { results } = await env.DB.prepare(`SELECT id FROM courses WHERE owner IS ? AND id IN (${ids.map(() => "?").join(", ")})`)
+    .bind(owner, ...ids).all<{ id: string }>();
+  return results.length === ids.length ? (entries as CourseChoice[]) : null;
+}
+
+/**
+ * Turn courses on or off for daily recall. A course turned off leaves today's set at once: its unanswered
+ * questions there are removed, and what was answered stays. A course turned back on comes up from the next set,
+ * or with "5 more" today.
+ */
+export async function setRecallCourses(env: Env, owner: string | null, choices: CourseChoice[], zone?: string | null, now = Date.now()) {
+  if (!choices.length) return;
+  const learner = await getLearner(env, owner, zone, now);
+  const day = await currentDay(env, learner, now);
+  await env.DB.batch(choices.flatMap(([id, on]) => [
+    env.DB.prepare("UPDATE courses SET in_recall = ? WHERE id = ? AND owner IS ?").bind(on ? 1 : 0, id, owner),
+    ...(on ? [] : [env.DB.prepare("DELETE FROM recall_questions WHERE owner = ? AND course_id = ? AND day = ? AND session_id IS NULL AND status = 'set'").bind(learner.owner, id, day)]),
+  ]));
+}
+
+/**
+ * The learner's own course started from a library course, newest first, with whether it can be recalled.
+ * Null if they haven't started it. Shown on the library course's page.
+ */
+export async function yourCatalogCourse(env: Env, owner: string | null, catalogId: string, zone?: string | null, now = Date.now()) {
+  const course = (await listCourses(env, owner)).find((c) => c.catalog_id === catalogId);
+  if (!course) return null;
+  return { course, recall: (await courseRecall(env, owner, course.id, zone, now))! };
 }
