@@ -19,6 +19,9 @@ final class TodayModel {
     private(set) var courseRecall: Recall?
     /// The streak from the last response, for a course session started before Today has loaded.
     private var latestStreak: Streak?
+    /// Goes up whenever a session closes or a course session starts. A request sent in an earlier generation
+    /// is answered too late to change what is on screen, so its response is dropped.
+    private var generation = 0
     private(set) var stage: Stage = .question
     /// The question on screen. During a verdict this is the one just answered, not the next one.
     private(set) var question: RecallQuestion?
@@ -47,6 +50,9 @@ final class TodayModel {
     }
 
     func reset() {
+        generation += 1
+        checking = false
+        working = false
         today = nil
         loadError = nil
         inSession = false
@@ -87,18 +93,17 @@ final class TodayModel {
         inSession = true
         checking = true
         error = nil
+        let sent = generation
         Task {
             do {
                 struct Body: Encodable { let response: String }
                 let answer: RecallAnswer = try await api.send("POST", "/api/recall/\(question.id)/answer", body: Body(response: response))
+                guard sent == generation else { return lateResponse() }
                 apply(answer.streak, answer.recall)
-                if inSession {
-                    self.answer = answer
-                    stage = .result
-                } else {
-                    show(answer.recall.question)
-                }
+                self.answer = answer
+                stage = .result
             } catch {
+                guard sent == generation else { return }
                 self.error = message(of: error)
             }
             checking = false
@@ -138,10 +143,13 @@ final class TodayModel {
     /// and opens it over the whole screen. Returns the reason when there is nothing to ask, for the page to show.
     func startCourse(_ id: String) async -> String? {
         guard !working, !checking else { return nil }
+        generation += 1
+        let sent = generation
         working = true
-        defer { working = false }
+        defer { if sent == generation { working = false } }
         do {
             let state: RecallState = try await api.send("POST", "/api/courses/\(id)/recall")
+            guard sent == generation else { lateResponse(); return nil }
             courseRecall = state.recall
             latestStreak = state.streak
             today?.streak = state.streak
@@ -165,6 +173,10 @@ final class TodayModel {
 
     /// Back to Today, or to the course a course session was started from. Answers so far are kept.
     func close() {
+        // Anything still on its way belongs to the session being closed.
+        generation += 1
+        checking = false
+        working = false
         courseRecall = nil
         inSession = false
         answer = nil
@@ -199,21 +211,35 @@ final class TodayModel {
     private func apply(_ streak: Streak, _ recall: Recall) {
         today?.streak = streak
         latestStreak = streak
-        // A course session's answers come back with that session's set. Today's set is read again when it closes.
-        if recall.isCourseSession || inCourseSession { courseRecall = recall } else { today?.recall = recall }
+        // A course session's answers come back with that session's set, which only matters while it is open.
+        // Today's set is read again when it closes.
+        if inCourseSession {
+            courseRecall = recall
+        } else if !recall.isCourseSession {
+            today?.recall = recall
+        }
+    }
+
+    /// A response to a session that has since closed. What it changed on the Worker is read again rather than shown,
+    /// so a course session's question never lands on Today's card.
+    private func lateResponse() {
+        Task { await load() }
     }
 
     private func act(_ path: String, body: (any Encodable)? = nil, then: @escaping () -> Void) {
         guard !working else { return }
         working = true
         error = nil
+        let sent = generation
         Task {
             do {
                 let state: RecallState
                 if let body { state = try await api.send("POST", path, body: body) } else { state = try await api.send("POST", path) }
+                guard sent == generation else { return lateResponse() }
                 apply(state.streak, state.recall)
                 then()
             } catch {
+                guard sent == generation else { return }
                 self.error = message(of: error)
             }
             working = false
