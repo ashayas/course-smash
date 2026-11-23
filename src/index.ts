@@ -5,7 +5,7 @@ import { type EmbedMessage, consume, sweep } from "./embeddings";
 import { IconSchema } from "./icon";
 import { createMcpServer } from "./mcp";
 import { getLearner, saveSettings, settingsView } from "./days";
-import { answerRecall, moreRecall, skipRecall, skipRecallDay, today } from "./recall";
+import { answerRecall, checkRecallCourses, courseRecall, moreRecall, recallCourses, setRecallCourses, skipRecall, skipRecallDay, startCourseRecall, today, yourCatalogCourse } from "./recall";
 import { appConfig, filterCatalog, withInsights } from "./views";
 
 const PUBLIC_PATHS = new Set(["/login", "/styles.css", "/favicon.svg", "/login.js", "/login-city.js", "/city.js", "/og.png", "/privacy", "/support", "/press"]);
@@ -91,13 +91,30 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
   if (path === "/api/stats" && method === "GET") return json(withInsights(await learnerStats(env, owner, zone)));
 
   if (path === "/api/today" && method === "GET") return json(await today(env, owner, zone));
-  if (path === "/api/settings" && method === "GET") return json(settingsView(await getLearner(env, owner, zone)));
-  if (path === "/api/settings" && method === "PUT") {
-    const body = (await request.json().catch(() => null)) as { daily_goal?: unknown; short_answers?: unknown } | null;
-    const saved = await saveSettings(env, await getLearner(env, owner, zone), body ?? {});
-    return saved ? json(saved) : json({ error: "Pick one of the choices on the screen." }, 400);
+  // recall_courses: the learner's courses, each with whether it feeds daily recall. See src/recall.ts.
+  if (path === "/api/settings" && method === "GET") {
+    return json({ ...settingsView(await getLearner(env, owner, zone)), recall_courses: await recallCourses(env, owner, zone) });
   }
-  if (path === "/api/recall/more" && method === "POST") return json(await moreRecall(env, owner, zone));
+  if (path === "/api/settings" && method === "PUT") {
+    const body = (await request.json().catch(() => null)) as { daily_goal?: unknown; short_answers?: unknown; recall_courses?: unknown } | null;
+    // Checked before anything is saved, so a bad request changes nothing.
+    const choices = body?.recall_courses === undefined ? [] : await checkRecallCourses(env, owner, body.recall_courses);
+    if (!choices) return json({ error: "Pick from your own courses." }, 400);
+    const saved = await saveSettings(env, await getLearner(env, owner, zone), body ?? {});
+    if (!saved) return json({ error: "Pick one of the choices on the screen." }, 400);
+    await setRecallCourses(env, owner, choices, zone);
+    return json({ ...saved, recall_courses: await recallCourses(env, owner, zone) });
+  }
+  if (path === "/api/recall/more" && method === "POST") {
+    // `session` adds to a "Recall this course" session; without it, to today's set.
+    const body = (await request.json().catch(() => null)) as { session?: unknown } | null;
+    try {
+      return json(await moreRecall(env, owner, zone, Date.now(), typeof body?.session === "string" ? body.session : null));
+    } catch (error) {
+      if (error instanceof AnswerError) return json({ error: error.message }, error.status);
+      throw error;
+    }
+  }
   if (path === "/api/recall/skip-day" && method === "POST") {
     const body = (await request.json().catch(() => null)) as { skipped?: unknown } | null;
     return json(await skipRecallDay(env, owner, body?.skipped !== false, zone));
@@ -132,7 +149,8 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
   if (library) {
     if (!library[2] && method === "GET") {
       const view = await catalogCourse(env, library[1]!);
-      return view ? json(view) : json({ error: "That course isn't in the library." }, 404);
+      // yours: the learner's own course from this one, if they started it, with whether it can be recalled.
+      return view ? json({ ...view, yours: await yourCatalogCourse(env, owner, library[1]!, zone) }) : json({ error: "That course isn't in the library." }, 404);
     }
     if (library[2] && method === "POST") {
       const body = (await request.json().catch(() => null)) as { goal?: unknown } | null;
@@ -150,12 +168,23 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext, path
     return (await setCourseIcon(env, iconPath[1]!, parsed.data, owner)) ? json({ icon: parsed.data }) : json({ error: "Course not found." }, 404);
   }
 
+  const courseRecallPath = path.match(/^\/api\/courses\/([\w-]+)\/recall$/);
+  if (courseRecallPath && method === "POST") {
+    try {
+      return json(await startCourseRecall(env, owner, courseRecallPath[1]!, zone));
+    } catch (error) {
+      if (error instanceof AnswerError) return json({ error: error.message }, error.status);
+      throw error;
+    }
+  }
+
   const course = path.match(/^\/api\/courses\/([\w-]+)(\/advance)?$/);
   if (course) {
     const id = course[1]!;
     if (!course[2] && method === "GET") {
       const view = await courseView(env, id, owner);
-      return view ? json(view) : json({ error: "Course not found." }, 404);
+      // recall: whether "Recall this course" can start, and why not when it can't.
+      return view ? json({ ...view, recall: await courseRecall(env, owner, id, zone) }) : json({ error: "Course not found." }, 404);
     }
     if (!course[2] && method === "DELETE") {
       await deleteCourse(env, id, owner);

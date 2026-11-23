@@ -143,7 +143,7 @@ export async function countDay(env: Env, learner: Learner, day: string) {
   let met = answered >= DAY_GOAL;
   if (!met && answered > 0) {
     // A short recall set, finished, is a full day for a learner who doesn't have five questions to answer yet.
-    const set = await env.DB.prepare("SELECT COUNT(*) AS total, COALESCE(SUM(status = 'set'), 0) AS open FROM recall_questions WHERE owner = ? AND day = ?")
+    const set = await env.DB.prepare("SELECT COUNT(*) AS total, COALESCE(SUM(status = 'set'), 0) AS open FROM recall_questions WHERE owner = ? AND day = ? AND session_id IS NULL")
       .bind(learner.owner, day).first<{ total: number; open: number }>();
     met = Boolean(set && set.total > 0 && set.total < DAY_GOAL && !set.open);
   }

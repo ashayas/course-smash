@@ -190,18 +190,11 @@ struct LibraryCourseView: View {
                 PageHead(title: course.title, eyebrow: [course.trackTitle, course.topic, course.level].compactMap { $0 }.joined(separator: " · "), note: course.summary) {
                     Button("Back to the library") { model.show(.library, track: course.track) }.buttonStyle(LinkButtonStyle())
                 }
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Make it yours").type(.titleLarge).accessibilityAddTraits(.isHeader)
-                    TextArea(text: $goal, placeholder: "Optional: what you want out of it, like \"I'm on call for our GPU cluster\". It sets how well you need to know each module.", limit: 1000, focused: $goalFocused, label: "What you want out of this course")
-                    if let error { ErrorText(message: error) }
-                    Button(starting ? "Starting..." : "Start this course", action: start)
-                        .buttonStyle(PillButtonStyle(fullWidth: true))
-                        .disabled(starting)
-                        .accessibilityIdentifier("start-course")
+                if let yours = course.yours {
+                    yoursPanel(yours)
+                } else {
+                    startPanel
                 }
-                .padding(22)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .panel()
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Modules").type(.titleSmall).padding(.bottom, 16).accessibilityAddTraits(.isHeader)
@@ -247,6 +240,51 @@ struct LibraryCourseView: View {
         // Similar courses and where learners slip are optional: the page is complete without them.
         .task { similar = try? await model.api.get("/api/catalog/\(id)/similar") }
         .task { misses = try? await model.api.get("/api/catalog/\(id)/misses") }
+    }
+
+    /// Not started yet: say what you want out of it, then start it.
+    private var startPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Make it yours").type(.titleLarge).accessibilityAddTraits(.isHeader)
+            TextArea(text: $goal, placeholder: "Optional: what you want out of it, like \"I'm on call for our GPU cluster\". It sets how well you need to know each module.", limit: 1000, focused: $goalFocused, label: "What you want out of this course")
+            if let error { ErrorText(message: error) }
+            Button(starting ? "Starting..." : "Start this course", action: start)
+                .buttonStyle(PillButtonStyle(fullWidth: true))
+                .disabled(starting)
+                .accessibilityIdentifier("start-course")
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .panel()
+    }
+
+    /// Already started: carry on with your course, or recall what it has taught so far.
+    private func yoursPanel(_ yours: CatalogCourseDetail.Yours) -> some View {
+        let mine = yours.course
+        let progress = mine.status == "complete" ? "Finished" : mine.modules > 0 ? "\(mine.passed) of \(mine.modules) modules done" : "The agent is planning this one"
+        return VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                CourseThumb(subject: mine.art, large: true)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Your course").type(.sub).foregroundStyle(Theme.muted)
+                    Text(RichText.plain(mine.name)).type(.cardTitle).accessibilityAddTraits(.isHeader)
+                    Text(progress).type(.sub).foregroundStyle(Theme.muted)
+                }
+                Spacer(minLength: 0)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("library-yours")
+            if let recall = yours.recall {
+                RecallCourseAction(courseId: mine.id, recall: recall, onSurface: true) { model.open(.course(mine.id)) }
+            } else {
+                Button("Continue") { model.open(.course(mine.id)) }
+                    .buttonStyle(PillButtonStyle())
+                    .accessibilityIdentifier("library-continue")
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .panel()
     }
 
     private func path(_ title: String, _ lead: String, _ courses: [CatalogCourse], id: String) -> some View {

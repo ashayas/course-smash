@@ -89,7 +89,7 @@ struct RecallSessionView: View {
                         .frame(width: 36, height: 36).background(Theme.surface, in: Circle())
                         .frame(width: 44, height: 44).contentShape(Rectangle())
                 }
-                .accessibilityLabel("Close recall")
+                .accessibilityLabel(model.inCourseSession ? "Close recall and go back to the course" : "Close recall")
                 .accessibilityIdentifier("recall-close")
                 RecallPips(marks: recall.marks, current: question.number - 1)
                 Text("\(question.number) of \(recall.total)").type(.sub).foregroundStyle(Theme.muted).fixedSize()
@@ -190,7 +190,12 @@ private struct RecallDoneView: View {
                     if let error = model.error { ErrorText(message: error) }
 
                     VStack(spacing: 10) {
-                        if let resume = model.today?.resume {
+                        if model.inCourseSession {
+                            // A course session goes back to where it was started from, the course or its library page.
+                            Button("Back to the course") { model.close() }
+                                .buttonStyle(PillButtonStyle(fullWidth: true))
+                                .accessibilityIdentifier("back-to-course")
+                        } else if let resume = model.today?.resume {
                             SourceRow(subject: resume.course.art, title: resume.course.name, detail: resume.detail, onInk: true)
                                 .padding(.bottom, 2)
                             Button("Continue your course") {
@@ -207,9 +212,11 @@ private struct RecallDoneView: View {
                                 .disabled(model.working)
                                 .accessibilityIdentifier("more-questions")
                         }
-                        Button("Done") { model.close() }
-                            .buttonStyle(LinkButtonStyle())
-                            .accessibilityIdentifier("recall-finish")
+                        if !model.inCourseSession {
+                            Button("Done") { model.close() }
+                                .buttonStyle(LinkButtonStyle())
+                                .accessibilityIdentifier("recall-finish")
+                        }
                     }
                     .padding(.top, 10)
                 }
@@ -217,6 +224,66 @@ private struct RecallDoneView: View {
                 .padding(.bottom, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+        }
+    }
+}
+
+/// "Recall" on a course's page or its library page: a quiet pill that starts a session on that course's passed modules.
+/// With `resume`, a "Continue" button leads the row, as on a library course the learner has started.
+struct RecallCourseAction: View {
+    let courseId: String
+    let recall: CourseRecall
+    /// The row sits on a surface panel, where the quiet pill would vanish, so it is ink there.
+    var onSurface = false
+    var resume: (() -> Void)?
+    @Environment(AppModel.self) private var app
+    @State private var starting = false
+    @State private var error: String?
+
+    /// What there is to recall, or why there is nothing yet.
+    private var note: String? { recall.available ? recall.label : recall.reason }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                if let resume {
+                    Button("Continue", action: resume)
+                        .buttonStyle(PillButtonStyle())
+                        .accessibilityIdentifier("library-continue")
+                }
+                recallButton
+                if resume == nil, let note { noteText(note) }
+                Spacer(minLength: 0)
+            }
+            if resume != nil, let note { noteText(note) }
+            if let error { ErrorText(message: error).accessibilityIdentifier("course-recall-error") }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var recallButton: some View {
+        let button = Button(starting ? "Opening..." : "Recall", action: start)
+            .disabled(!recall.available || starting)
+            .accessibilityHint(note ?? "")
+            .accessibilityIdentifier("course-recall")
+        if onSurface { button.buttonStyle(InkPillButtonStyle()) } else { button.buttonStyle(PillButtonStyle(kind: .quiet)).fixedSize() }
+    }
+
+    private func noteText(_ text: String) -> some View {
+        Text(text).type(.small).foregroundStyle(Theme.muted)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityHidden(true) // read as the button's hint
+    }
+
+    private func start() {
+        guard !starting else { return }
+        starting = true
+        error = nil
+        Task {
+            // On success the session covers the screen, and closing it comes back here.
+            error = await app.today.startCourse(courseId)
+            starting = false
         }
     }
 }

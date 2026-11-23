@@ -105,18 +105,24 @@ class ApiClient(val baseUrl: String) {
 
     suspend fun skipRecall(id: String): RecallUpdate = send("POST", "/api/recall/$id/skip")
 
-    /** Adds five questions to today's set. */
-    suspend fun moreRecall(): RecallUpdate = send("POST", "/api/recall/more")
+    /** Adds five questions to today's set, or to a course's session when `session` is its id. */
+    suspend fun moreRecall(session: String? = null): RecallUpdate =
+        send("POST", "/api/recall/more", session?.let { buildJsonObject { put("session", it) }.toString() })
+
+    /** Starts "Recall this course", or carries on with today's open session for it. 409 with the reason when there is nothing to ask. */
+    suspend fun startCourseRecall(courseId: String): RecallUpdate = send("POST", "/api/courses/$courseId/recall")
 
     suspend fun skipRecallDay(skipped: Boolean): RecallUpdate =
         send("POST", "/api/recall/skip-day", buildJsonObject { put("skipped", skipped) }.toString())
 
     suspend fun settings(): Settings = get("/api/settings")
 
-    suspend fun saveSettings(dailyGoal: Int? = null, shortAnswers: Boolean? = null): Settings =
+    /** `recallCourses` turns courses on or off for daily recall, by id. */
+    suspend fun saveSettings(dailyGoal: Int? = null, shortAnswers: Boolean? = null, recallCourses: Map<String, Boolean>? = null): Settings =
         send("PUT", "/api/settings", buildJsonObject {
             if (dailyGoal != null) put("daily_goal", dailyGoal)
             if (shortAnswers != null) put("short_answers", shortAnswers)
+            if (recallCourses != null) put("recall_courses", buildJsonObject { recallCourses.forEach { (id, on) -> put(id, on) } })
         }.toString())
 
     @Serializable

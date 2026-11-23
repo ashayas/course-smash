@@ -73,6 +73,10 @@ struct CourseScreen: View {
                     if let summary = view.summary { Text(RichText.plain(summary)).type(.body).foregroundStyle(Theme.muted) }
                 }
             }
+            // Recall this course on its own, from the modules passed so far. Not while the agent is still planning it.
+            if let recall = view.recall, !view.modules.isEmpty {
+                RecallCourseAction(courseId: view.id, recall: recall)
+            }
             HStack(spacing: 14) {
                 if !view.modules.isEmpty {
                     Button("Change building") { picking = true }

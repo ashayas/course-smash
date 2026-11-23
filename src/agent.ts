@@ -960,18 +960,20 @@ export async function answerQuestion(env: Env, questionId: string, rawResponse: 
 type CourseRow = {
   id: string; prompt: string; title: string | null; summary: string | null; status: Course["status"]; icon: string | null;
   catalog_id: string | null; created_at: number; modules: number; passed: number; answered: number; average: number | null;
+  in_recall: number;
 };
 
 export async function listCourses(env: Env, owner: string | null) {
   const { results } = await env.DB.prepare(
-    `SELECT c.id, c.prompt, c.title, c.summary, c.status, c.icon, c.catalog_id, c.created_at,
+    `SELECT c.id, c.prompt, c.title, c.summary, c.status, c.icon, c.catalog_id, c.created_at, c.in_recall,
        (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id) AS modules,
        (SELECT COUNT(*) FROM modules m WHERE m.course_id = c.id AND m.status = 'passed') AS passed,
        (SELECT COUNT(*) FROM answers a WHERE a.course_id = c.id) AS answered,
        (SELECT AVG(a.score) FROM answers a WHERE a.course_id = c.id) AS average
      FROM courses c WHERE c.owner IS ? ORDER BY c.created_at DESC LIMIT 100`,
   ).bind(owner).all<CourseRow>();
-  return results.map((c) => ({ ...c, icon: parseIcon(c.icon) }));
+  // in_recall: whether the course feeds daily recall (src/recall.ts, recallCourses).
+  return results.map((c) => ({ ...c, icon: parseIcon(c.icon), in_recall: Boolean(c.in_recall) }));
 }
 
 /** Everything a client needs to show a course. Unanswered questions never include the answer key. */

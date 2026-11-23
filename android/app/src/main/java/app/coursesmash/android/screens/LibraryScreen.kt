@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -32,8 +34,9 @@ import app.coursesmash.android.CatalogCourseDetail
 import app.coursesmash.android.CourseMisses
 import app.coursesmash.android.Created
 import app.coursesmash.android.Route
-import app.coursesmash.android.Tab
 import app.coursesmash.android.SimilarCourses
+import app.coursesmash.android.Tab
+import app.coursesmash.android.art.art
 import app.coursesmash.android.messageOf
 import app.coursesmash.android.ui.CardColumn
 import app.coursesmash.android.ui.Chip
@@ -232,7 +235,18 @@ fun LibraryCourseScreen(model: AppModel, id: String) {
                     LinkButton("Back to the library", { model.show(Tab.Library, detail.track) })
                 }
             }
-            item("start") {
+            val yours = detail.yours
+            if (yours != null) item("yours") {
+                // Already in the learner's city: carry on with it, or recall what its passed modules covered.
+                Column(Modifier.fillMaxWidth().panel().padding(22.dp).testTag("library-yours"), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    SourceRow(model, model.city.building(yours.course.art), plain(yours.course.name), "In your city · ${yours.course.passed} of ${yours.course.modules} modules passed", onInk = false)
+                    val continueButton: @Composable RowScope.() -> Unit = {
+                        PillButton("Continue", { model.open(Route.Course(yours.course.id)) }, tag = "library-continue")
+                    }
+                    val recall = yours.recall
+                    if (recall != null) RecallAction(model, yours.course.id, recall, kind = Pill.Ink, before = continueButton) else Row(content = continueButton)
+                }
+            } else item("start") {
                 Column(Modifier.fillMaxWidth().panel().padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     T("Make it yours", TypeStyle.TitleLarge, heading = true)
                     TextArea(goal, { goal = it }, "Optional: what you want out of it, like \"I'm on call for our GPU cluster\". It sets how well you need to know each module.", label = "What you want out of this course", limit = 1000)

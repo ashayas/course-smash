@@ -6,7 +6,11 @@ import XCTest
 ///   TEST_RUNNER_CS_USER, TEST_RUNNER_CS_PW   the login to use (never commit these)
 ///   TEST_RUNNER_CS_BASE_URL                  optional, a Worker other than the one in Info.plist
 ///   TEST_RUNNER_CS_SHOTS                     optional, a folder for the PNGs
-///   TEST_RUNNER_CS_LIBRARY_COURSE            optional, the library course to start (default "Kubernetes architecture")
+///   TEST_RUNNER_CS_LIBRARY_COURSE            optional, the library course to open (default "Kubernetes architecture"). When the
+///                                            learner has already started it, as on demo data, its page offers Continue and
+///                                            Recall, and those are walked: the course, then "Recall this course".
+///   TEST_RUNNER_CS_LIBRARY_START             optional, the library course to start when that one is already started
+///                                            (default "LLM inference fundamentals")
 ///   TEST_RUNNER_CS_MOTION                    optional, set to 1 to leave the looping art running (slower)
 ///   TEST_RUNNER_CS_QUICK                     optional, set to 1 to stop after login, Today and the city
 ///   TEST_RUNNER_CS_KEY_URL                   optional, a local answer-key helper for demo data (scripts/demo-keys.mjs).
@@ -15,7 +19,8 @@ import XCTest
 ///                                            no answer, the test picks options in turn, as it does against production.
 /// Captures whose names start with "store-" are the ones the store screenshots are made from.
 /// The test answers today's recall set when there is one, and puts the settings it changes back.
-/// It starts one library course and one planned course, and deletes both before it ends.
+/// It turns one course off for daily recall and back on, recalls one course on its own (one answer, then closes),
+/// starts one library course and one planned course, and deletes both before it ends.
 final class WalkthroughTests: XCTestCase {
     private var app: XCUIApplication!
     private let environment = ProcessInfo.processInfo.environment
@@ -168,7 +173,8 @@ final class WalkthroughTests: XCTestCase {
 
         // A library course: what it covers, then start it.
         app.buttons["library-card"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["start-course"].waitForExistence(timeout: 30))
+        let page = waitForAny([app.buttons["start-course"], app.buttons["library-continue"]], timeout: 30)
+        XCTAssertNotNil(page, "The library course page did not open")
         shot("library-course")
         app.swipeUp()
         shot("library-course-modules")
@@ -178,6 +184,13 @@ final class WalkthroughTests: XCTestCase {
             if scrollTo(app.staticTexts[id].firstMatch, tries: 30) { shot("library-course-\(name)") }
         }
         scrollToTop()
+        if page == 1 {
+            // Already started: Continue opens your course, where Recall asks about what it has taught so far.
+            walkYourLibraryCourse()
+            openLibraryCourse(environment["CS_LIBRARY_START"] ?? "LLM inference fundamentals")
+            XCTAssertTrue(app.buttons["start-course"].waitForExistence(timeout: 30), "The library course to start has been started already")
+            shot("library-course-to-start")
+        }
         scrollTo(app.buttons["start-course"])
         app.buttons["start-course"].tap()
 
@@ -277,6 +290,7 @@ final class WalkthroughTests: XCTestCase {
         sleep(1)
         shot("you")
         walkSettings()
+        walkRecallCourses()
 
         // Stats, from its row on You.
         scrollToTop()
@@ -540,7 +554,119 @@ final class WalkthroughTests: XCTestCase {
         XCTAssertTrue(waitForGone(app.staticTexts["verdict"], timeout: 20), "The session did not move on")
     }
 
+    // MARK: Recall this course
+
+    /// On a library course the learner has started: Continue opens the course and its Recall is walked there,
+    /// then Recall on the library page carries on with that session, and closing it comes back to the page.
+    private func walkYourLibraryCourse() {
+        XCTAssertTrue(scrollTo(app.buttons["library-continue"]))
+        XCTAssertTrue(app.buttons["course-recall"].exists, "The library page of a started course has no Recall")
+        shot("library-course-yours")
+        app.buttons["library-continue"].tap()
+        XCTAssertTrue(app.staticTexts["course-title"].waitForExistence(timeout: 30), "Continue did not open your course")
+        XCTAssertTrue(app.buttons["tab-library"].isSelected, "Your course did not open on top of the library")
+        walkCourseRecall()
+
+        // Back to the library page: its Recall carries on with the session just started.
+        scrollToTop()
+        app.buttons["back"].tap()
+        XCTAssertTrue(app.buttons["library-continue"].waitForExistence(timeout: 30), "Back did not return to the library page")
+        scrollTo(app.buttons["course-recall"])
+        app.buttons["course-recall"].tap()
+        XCTAssertTrue(app.buttons["recall-close"].waitForExistence(timeout: 30), "Recall on the library page did not open the session")
+        XCTAssertTrue(app.otherElements["recall-pips"].exists, "The session has no pips")
+        sleep(1)
+        shot("library-recall-session")
+        app.buttons["recall-close"].tap()
+        XCTAssertTrue(app.buttons["library-continue"].waitForExistence(timeout: 30), "Closing the session did not return to the library page")
+        XCTAssertTrue(app.buttons["tab-library"].isSelected)
+    }
+
+    /// On a course with passed modules: Recall opens a session on that course alone. One answer, Next, then close,
+    /// which comes back to the course rather than Today.
+    private func walkCourseRecall() {
+        let recall = app.buttons["course-recall"]
+        XCTAssertTrue(recall.waitForExistence(timeout: 30), "The course has no Recall")
+        XCTAssertTrue(scrollTo(recall))
+        XCTAssertTrue(recall.isEnabled, "Recall is off on a course with passed modules")
+        sleep(1)
+        shot("course-recall")
+        recall.tap()
+        let opened = waitForAny([app.buttons["recall-close"], app.staticTexts["course-recall-error"], app.otherElements["course-recall-error"]], timeout: 30)
+        XCTAssertEqual(opened, 0, "Recall did not open a session: \(app.staticTexts["course-recall-error"].exists ? app.staticTexts["course-recall-error"].label : "no reason shown")")
+        guard opened == 0 else { return }
+        XCTAssertTrue(app.otherElements["recall-pips"].exists, "The course session has no pips")
+        XCTAssertFalse(app.buttons["tab-today"].exists, "The tab bar is showing during a recall session")
+        let count = app.staticTexts["recall-count"]
+        XCTAssertTrue(count.waitForExistence(timeout: 10))
+        XCTAssertNotNil(count.label.range(of: #"^\d+ of \d+$"#, options: .regularExpression), "The session's count reads \(count.label)")
+        sleep(1)
+        shot("course-recall-session")
+
+        // One answer. The pictures daily recall took are not taken again.
+        var seen = Seen(right: true, wrong: true, short: true, picked: true, storeRight: true)
+        if answerRecall(0, &seen, from: "course-recall") {
+            shot("course-recall-verdict")
+            nextRecall()
+        }
+        if app.staticTexts["recall-done"].waitForExistence(timeout: 3) {
+            // A one-question session: its finished screen goes back to the course.
+            shot("course-recall-done")
+            XCTAssertFalse(app.buttons["recall-finish"].exists, "A course session offers Done")
+            scrollTo(app.buttons["back-to-course"])
+            app.buttons["back-to-course"].tap()
+        } else {
+            app.buttons["recall-close"].tap()
+        }
+        XCTAssertTrue(app.staticTexts["course-title"].waitForExistence(timeout: 30), "Closing the course session did not return to the course")
+        XCTAssertFalse(app.staticTexts["today-heading"].exists, "Closing the course session went to Today")
+        sleep(1)
+        shot("course-recall-closed")
+    }
+
+    /// Searches the library for a course and opens its page.
+    private func openLibraryCourse(_ name: String) {
+        app.buttons["tab-library"].tap()
+        let search = app.textFields["library-search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 30))
+        scrollToTop()
+        search.tap()
+        let typed = (search.value as? String) ?? ""
+        if !typed.isEmpty, typed != search.placeholderValue {
+            search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: typed.count))
+        }
+        search.typeText(name)
+        let card = app.buttons.matching(NSPredicate(format: "identifier == 'library-card' AND label CONTAINS %@", name)).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 20), "The library has no course called \(name)")
+        dismissKeyboard()
+        settle(app.staticTexts["library-count"])
+        XCTAssertTrue(scrollTo(card))
+        card.tap()
+    }
+
     // MARK: You
+
+    /// The courses daily recall draws from: one switch per course. Turns one off and back on, so all end as they were.
+    private func walkRecallCourses() {
+        let switches = app.switches.matching(NSPredicate(format: "identifier BEGINSWITH 'recall-course-'"))
+        XCTAssertTrue(scrollTo(switches.firstMatch, tries: 8), "You has no courses in daily recall")
+        XCTAssertTrue(app.staticTexts["Courses in daily recall"].exists)
+        XCTAssertGreaterThanOrEqual(switches.count, 2, "Not every demo course has a switch")
+        let kubernetes = app.switches["recall-course-demo-kubernetes"]
+        let one = kubernetes.exists ? kubernetes : switches.firstMatch
+        scrollTo(one)
+        sleep(1)
+        shot("you-recall-courses")
+        let before = one.value as? String
+        XCTAssertNotNil(before)
+        // The switch is at the row's right end. Tapping the middle of the row would land on the title.
+        one.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        XCTAssertTrue(waitUntil { (one.value as? String) != before }, "The course did not switch")
+        sleep(1)
+        shot(before == "1" ? "you-recall-course-off" : "you-recall-course-on")
+        one.coordinate(withNormalizedOffset: CGVector(dx: 0.94, dy: 0.5)).tap()
+        XCTAssertTrue(waitUntil { (one.value as? String) == before }, "The course did not switch back")
+    }
 
     /// Changes the daily goal and the short answers switch, then puts both back as they were.
     private func walkSettings() {

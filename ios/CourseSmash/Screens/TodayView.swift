@@ -103,9 +103,10 @@ struct TodayView: View {
         }
     }
 
-    /// Nothing to recall yet: the course leads, with how far today's answers have got.
+    /// Nothing to recall yet, or every course is turned off for it: the course leads, with how far today's answers have got.
     @ViewBuilder
     private func empty(_ today: Today) -> some View {
+        let off = today.recall.off == true
         head("Today", today.streak.label)
         WeekStrip(week: today.streak.week, today: today.streak.day)
         if let resume = today.resume {
@@ -113,6 +114,22 @@ struct TodayView: View {
             if let next = today.upNext {
                 UpNextCard(next: next) { app.open(.libraryCourse(next.course.id)) }
             }
+        }
+        if off {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Daily recall is off").type(.cardTitle).accessibilityAddTraits(.isHeader)
+                Text(today.recall.lead).type(.sub).foregroundStyle(Theme.muted)
+                Button("Choose courses") {
+                    app.focusRecallCourses = true
+                    app.show(.you)
+                }
+                .buttonStyle(PillButtonStyle(fullWidth: true))
+                .accessibilityIdentifier("choose-courses")
+            }
+            .card(padding: 18)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("recall-off")
+        } else if today.resume != nil {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Recall starts soon").type(.cardTitle).accessibilityAddTraits(.isHeader)
                 Text(today.recall.lead).type(.sub).foregroundStyle(Theme.muted)

@@ -8,7 +8,8 @@ DAILY RECALL
 • Ideas you got right come back after a longer gap. Ideas you missed come back sooner.
 • Answer 5 questions in a day, in recall or in a course, and the day counts toward your streak. A rest day is saved for every 7 days in a row, up to 2, and covers a day you miss.
 • After recall, one tap carries on with your course. On a course's last module, the course that builds on it is suggested next.
-• Set your daily goal to 5, 10, 15 or 20 questions, and choose whether recall includes short answers.
+• Set your daily goal to 5, 10, 15 or 20 questions, choose whether recall includes short answers, and choose which courses it draws from.
+• Recall any course on its own: open a course you have studied and tap Recall for questions on just that course.
 
 HOW A COURSE WORKS
 • Describe what you want to understand and why, in a sentence. An AI agent plans a short course around it.

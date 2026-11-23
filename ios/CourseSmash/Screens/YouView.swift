@@ -6,8 +6,25 @@ struct YouView: View {
     @State private var settings: LearnerSettings?
     @State private var error: String?
     @State private var saving = false
+    /// Switches flipped on screen and waiting for the Worker's answer, so a switch doesn't spring back while it saves.
+    @State private var pending: [String: Bool] = [:]
 
     var body: some View {
+        ScrollViewReader { scroll in
+            page
+                .onChange(of: settings) { _, _ in focusRecallCourses(scroll) }
+                .onAppear { focusRecallCourses(scroll) }
+        }
+    }
+
+    /// "Choose courses" on Today opens You on the courses in daily recall.
+    private func focusRecallCourses(_ scroll: ScrollViewProxy) {
+        guard app.focusRecallCourses, settings?.recallCourses?.isEmpty == false else { return }
+        app.focusRecallCourses = false
+        DispatchQueue.main.async { withAnimation { scroll.scrollTo("recall-courses", anchor: .top) } }
+    }
+
+    private var page: some View {
         Page(footer: false) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -34,7 +51,10 @@ struct YouView: View {
                 .accessibilityIdentifier("stats-row")
 
                 if let error { ErrorText(message: error).accessibilityIdentifier("settings-error") }
-                if let settings { settingsCard(settings) }
+                if let settings {
+                    settingsCard(settings)
+                    if let courses = settings.recallCourses, !courses.isEmpty { recallCoursesCard(courses) }
+                }
 
                 HStack(spacing: 20) {
                     link("Privacy", "/privacy")
@@ -91,6 +111,42 @@ struct YouView: View {
         .disabled(saving)
     }
 
+    /// One switch per course: daily recall draws from the ones left on.
+    private func recallCoursesCard(_ courses: [LearnerSettings.RecallCourse]) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Courses in daily recall").type(.cardTitle).accessibilityAddTraits(.isHeader)
+                Text("Daily recall draws from the courses you leave on. You can still recall any course from its page.")
+                    .type(.sub).foregroundStyle(Theme.muted)
+            }
+            ForEach(courses) { entry in
+                Toggle(isOn: Binding(
+                    get: { pending[entry.id] ?? entry.included },
+                    set: { on in
+                        pending[entry.id] = on
+                        save(Change(recallCourses: [entry.id: on]))
+                    }
+                )) {
+                    HStack(spacing: 12) {
+                        if let course = entry.course { CourseThumb(subject: course.art) }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(RichText.plain(entry.title)).type(.subMedium).foregroundStyle(Theme.paper)
+                            Text(entry.detail).type(.sub).foregroundStyle(Theme.muted)
+                        }
+                    }
+                }
+                .tint(Theme.green)
+                .frame(minHeight: 44)
+                .accessibilityIdentifier("recall-course-\(entry.id)")
+            }
+        }
+        .card(padding: 18)
+        .disabled(saving)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("recall-courses")
+        .id("recall-courses")
+    }
+
     private func row(_ title: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(title)
@@ -114,9 +170,11 @@ struct YouView: View {
     private struct Change: Encodable {
         var dailyGoal: Int?
         var shortAnswers: Bool?
+        /// Course id to on or off for daily recall.
+        var recallCourses: [String: Bool]?
 
         enum CodingKeys: String, CodingKey {
-            case dailyGoal = "daily_goal", shortAnswers = "short_answers"
+            case dailyGoal = "daily_goal", shortAnswers = "short_answers", recallCourses = "recall_courses"
         }
     }
 
@@ -130,6 +188,8 @@ struct YouView: View {
             } catch {
                 self.error = message(of: error)
             }
+            // The response is the truth now, or the switch goes back to what it was.
+            pending = [:]
             saving = false
         }
     }

@@ -119,6 +119,8 @@ fun CourseScreen(app: AppModel, id: String) {
                         view.summary?.let { T(plain(it), TypeStyle.Body, color = Theme.Muted) }
                     }
                 }
+                // Recall this course on its own: the passed modules' ideas, in a session like Today's.
+                view.recall?.let { RecallAction(app, view.id, it) }
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (view.modules.isNotEmpty()) PillButton("Change building", { picking = true }, kind = Pill.Quiet, tag = "change-building")
                     LinkButton("Delete course", { confirmingDelete = true }, tag = "delete-course")

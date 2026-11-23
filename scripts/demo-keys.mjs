@@ -6,7 +6,8 @@
 //   node scripts/demo-keys.mjs data/demo.db            # http://localhost:8790
 //   node scripts/demo-keys.mjs data/demo.db --port 8791
 //
-// GET /recall              the open question of the demo learner's latest recall set
+// GET /recall              the open question of the demo learner's latest recall set: the newest "Recall this course"
+//                           session that has one, else today's set
 // GET /course?title=...    the next unanswered question of their newest course with that title (or newest course)
 //
 // Both answer {"kind":"mcq","index":2,"answer":"…"} or {"kind":"short","answer":"…"}, or 404 when nothing is open.
@@ -34,9 +35,9 @@ const key = (row) => {
 // The demo learner is the admin account: owner '' in the recall tables and NULL in courses.
 const recall = () => key(first(
   `SELECT r.kind, COALESCE(r.options, q.options) AS options, COALESCE(r.correct_index, q.correct_index) AS correct_index, COALESCE(r.reference, q.reference) AS reference
-   FROM recall_questions r LEFT JOIN questions q ON q.id = r.course_question_id
+   FROM recall_questions r LEFT JOIN questions q ON q.id = r.course_question_id LEFT JOIN recall_sessions s ON s.id = r.session_id
    WHERE r.owner = '' AND r.status = 'set' AND r.day = (SELECT MAX(day) FROM recall_questions WHERE owner = '')
-   ORDER BY r.position LIMIT 1`));
+   ORDER BY COALESCE(s.created_at, 0) DESC, r.position LIMIT 1`));
 
 const course = (title) => key(first(
   `SELECT q.kind, q.options, q.correct_index, q.reference FROM questions q

@@ -121,9 +121,11 @@ fun TodayScreen(model: AppModel) {
         today.upNext?.let { item("up-next") { Column(Modifier.padding(top = Theme.Gap)) { UpNextCard(model, it) } } }
         if (empty) {
             item("soon") {
-                CardColumn(Modifier.padding(top = Theme.Gap).testTag("recall-soon"), padding = 18.dp) {
-                    T("Recall starts soon", TypeStyle.CardTitle, Modifier.padding(bottom = 8.dp), heading = true)
+                // With every course turned off there is nothing to draw from, and the way back is choosing some again.
+                CardColumn(Modifier.padding(top = Theme.Gap).testTag(if (set.off) "recall-off" else "recall-soon"), padding = 18.dp) {
+                    T(if (set.off) "Daily recall is off" else "Recall starts soon", TypeStyle.CardTitle, Modifier.padding(bottom = 8.dp), heading = true)
                     T(set.lead, TypeStyle.Small, color = Theme.Muted)
+                    if (set.off) PillButton("Choose courses", { model.chooseRecallCourses() }, Modifier.padding(top = 16.dp), tag = "choose-courses")
                 }
             }
             if (today.next == null) {
