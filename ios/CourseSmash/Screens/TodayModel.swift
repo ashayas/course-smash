@@ -2,6 +2,7 @@ import SwiftUI
 
 /// Today: the streak, today's recall set and the session that answers it.
 /// One of these lives for the whole sign-in, so every tab shows the same streak.
+/// It also runs a "Recall this course" session, started from a course's page, on the same session screen.
 @MainActor
 @Observable
 final class TodayModel {
@@ -11,8 +12,13 @@ final class TodayModel {
     private(set) var today: Today?
     private(set) var loadError: String?
 
-    /// A session covers the whole screen. It starts when the first answer is sent from Today, or with "5 more recall".
+    /// A session covers the whole screen. It starts when the first answer is sent from Today, with "5 more recall",
+    /// or with "Recall" on a course.
     private(set) var inSession = false
+    /// The set of a "Recall this course" session while one is on screen. Today's own set stays in `today`.
+    private(set) var courseRecall: Recall?
+    /// The streak from the last response, for a course session started before Today has loaded.
+    private var latestStreak: Streak?
     private(set) var stage: Stage = .question
     /// The question on screen. During a verdict this is the one just answered, not the next one.
     private(set) var question: RecallQuestion?
@@ -28,8 +34,11 @@ final class TodayModel {
         self.api = api
     }
 
-    var streak: Streak? { today?.streak }
-    var recall: Recall? { today?.recall }
+    var streak: Streak? { today?.streak ?? latestStreak }
+    /// The set the session is answering: a course's, or today's.
+    var recall: Recall? { courseRecall ?? today?.recall }
+    /// True while the session is a "Recall this course" one, which closes back to the course it came from.
+    var inCourseSession: Bool { courseRecall != nil }
 
     /// True once the learner has picked an option or written something, which is when "Check" shows.
     var canCheck: Bool {
@@ -41,6 +50,8 @@ final class TodayModel {
         today = nil
         loadError = nil
         inSession = false
+        courseRecall = nil
+        latestStreak = nil
         stage = .question
         question = nil
         answer = nil
@@ -106,10 +117,12 @@ final class TodayModel {
         act("/api/recall/\(question.id)/skip") { self.advance() }
     }
 
-    /// "5 more questions" and "5 more recall": adds to today's set and carries on in the session,
-    /// opening one when the button was on Today.
+    /// "5 more questions" and "5 more recall": adds to the set and carries on in the session,
+    /// opening one when the button was on Today. A course session sends its id, so the questions come from that course.
     func more() {
-        act("/api/recall/more") {
+        struct Body: Encodable { let session: String }
+        let session = courseRecall?.session
+        act("/api/recall/more", body: session.map { Body(session: $0) }) {
             if self.recall?.question != nil { self.inSession = true }
             self.advance()
         }
@@ -117,11 +130,42 @@ final class TodayModel {
 
     /// "Skip for today" hides recall for the day. `false` brings it back.
     func skipDay(_ skipped: Bool) {
-        act("/api/recall/skip-day", skipped: skipped) { self.advance() }
+        struct Body: Encodable { let skipped: Bool }
+        act("/api/recall/skip-day", body: Body(skipped: skipped)) { self.advance() }
     }
 
-    /// Back to Today. Answers so far are kept.
+    /// "Recall" on a course or its library page: starts a session on that course, or carries on with today's open one,
+    /// and opens it over the whole screen. Returns the reason when there is nothing to ask, for the page to show.
+    func startCourse(_ id: String) async -> String? {
+        guard !working, !checking else { return nil }
+        working = true
+        defer { working = false }
+        do {
+            let state: RecallState = try await api.send("POST", "/api/courses/\(id)/recall")
+            courseRecall = state.recall
+            latestStreak = state.streak
+            today?.streak = state.streak
+            answer = nil
+            error = nil
+            if let first = state.recall.question {
+                show(first, fresh: true)
+                stage = .question
+            } else {
+                question = nil
+                stage = .done
+            }
+            inSession = true
+            return nil
+        } catch is CancellationError {
+            return nil
+        } catch {
+            return message(of: error)
+        }
+    }
+
+    /// Back to Today, or to the course a course session was started from. Answers so far are kept.
     func close() {
+        courseRecall = nil
         inSession = false
         answer = nil
         error = nil
@@ -154,18 +198,19 @@ final class TodayModel {
 
     private func apply(_ streak: Streak, _ recall: Recall) {
         today?.streak = streak
-        today?.recall = recall
+        latestStreak = streak
+        // A course session's answers come back with that session's set. Today's set is read again when it closes.
+        if recall.isCourseSession || inCourseSession { courseRecall = recall } else { today?.recall = recall }
     }
 
-    private func act(_ path: String, skipped: Bool? = nil, then: @escaping () -> Void) {
+    private func act(_ path: String, body: (any Encodable)? = nil, then: @escaping () -> Void) {
         guard !working else { return }
         working = true
         error = nil
         Task {
             do {
                 let state: RecallState
-                struct Body: Encodable { let skipped: Bool }
-                if let skipped { state = try await api.send("POST", path, body: Body(skipped: skipped)) } else { state = try await api.send("POST", path) }
+                if let body { state = try await api.send("POST", path, body: body) } else { state = try await api.send("POST", path) }
                 apply(state.streak, state.recall)
                 then()
             } catch {

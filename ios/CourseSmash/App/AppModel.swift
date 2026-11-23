@@ -34,6 +34,8 @@ final class AppModel {
     var path: [Route] = []
     /// The track the library opens on, as `#/library?track=` does on the web.
     var libraryTrack = ""
+    /// Set by "Choose courses" on Today: You scrolls to the courses in daily recall once it has loaded.
+    var focusRecallCourses = false
 
     private var config: AppConfig?
     private var catalog: Catalog?

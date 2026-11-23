@@ -42,6 +42,8 @@ struct CourseSummary: Decodable, Identifiable, Hashable {
     let passed: Int
     let answered: Int
     let average: Double?
+    /// Whether the course feeds daily recall. Nil from a server older than the setting.
+    let inRecall: Bool?
 
     var name: String { title ?? prompt }
 }
@@ -96,6 +98,24 @@ struct CatalogCourseDetail: Decodable {
     /// The learning path around this course: what to take first, and what it opens up.
     let prerequisites: [CatalogCourse]?
     let leadsTo: [CatalogCourse]?
+    /// The learner's own course started from this one, or nil when they haven't started it.
+    let yours: Yours?
+
+    struct Yours: Decodable {
+        let course: CourseSummary
+        let recall: CourseRecall?
+    }
+}
+
+/// Whether one course can be recalled on its own, on its page. `label` and `reason` are written by the Worker.
+struct CourseRecall: Decodable, Hashable {
+    let available: Bool
+    let ideas: Int?
+    let due: Int?
+    /// "15 ideas from 3 passed modules · 15 due", when available.
+    let label: String?
+    /// Why not, when unavailable.
+    let reason: String?
 }
 
 /// GET /api/catalog/:id/similar. `pending` until the course has been read for meaning.
@@ -141,6 +161,8 @@ struct CourseDetail: Decodable {
     let mastery: [Mastery]
     let events: [Event]
     let models: Models
+    /// "Recall this course". Nil from a server older than it.
+    let recall: CourseRecall?
 
     var name: String { title ?? prompt }
     var passed: Int { modules.filter { $0.status == "passed" }.count }
@@ -279,6 +301,15 @@ struct Recall: Decodable, Hashable {
     let moreAvailable: Bool
     let question: RecallQuestion?
     let comingBack: [ComingBack]
+    /// "day" for today's set, "course" for a "Recall this course" session. Nil from an older server, which only has the day.
+    let scope: String?
+    /// The session id when `scope` is "course". Sent with "5 more".
+    let session: String?
+    let courseId: String?
+    /// Every course is turned off for daily recall (today's set only).
+    let off: Bool?
+
+    var isCourseSession: Bool { scope == "course" }
 }
 
 /// A recall question. It never carries its answer key.
@@ -292,7 +323,7 @@ struct RecallQuestion: Decodable, Hashable, Identifiable {
     let why: String?
     let figure: String?
     let figureAlt: String?
-    /// Its place in today's set, from 1.
+    /// Its place in the set, from 1.
     let number: Int
     let course: CourseSummary?
 }
@@ -343,4 +374,15 @@ struct LearnerSettings: Decodable, Hashable {
     let shortAnswers: Bool
     let timeZone: String
     let goals: [Int]
+    /// The courses daily recall can draw from, newest first. Nil from a server older than the setting.
+    let recallCourses: [RecallCourse]?
+
+    struct RecallCourse: Decodable, Hashable, Identifiable {
+        let id: String
+        let title: String
+        let included: Bool
+        /// "25 ideas to recall", shown as it is.
+        let detail: String
+        let course: CourseSummary?
+    }
 }
