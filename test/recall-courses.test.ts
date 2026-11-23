@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { AnswerError, listCourses } from "../src/agent";
+import { getLearner, saveSettings } from "../src/days";
 import {
   answerRecall, checkRecallCourses, courseRecall, moreRecall, recallCourses, setRecallCourses, skipRecall, startCourseRecall, today, yourCatalogCourse,
 } from "../src/recall";
@@ -224,4 +225,47 @@ test("deleting a course removes its sessions", async () => {
   await env.DB.prepare("DELETE FROM courses WHERE id = 'c1'").run();
   assert.equal((await rows(env, "SELECT * FROM recall_sessions")).length, 0);
   assert.equal((await rows(env, "SELECT * FROM recall_questions")).length, 0);
+});
+
+test("two Recall taps at the same moment make one session, and no idea is open twice", async () => {
+  const env = makeEnv();
+  const now = Date.now();
+  await wideCourse(env, 6, now - 10 * DAY);
+  const results = await Promise.allSettled([startCourseRecall(env, null, "wide-course", ZONE, now), startCourseRecall(env, null, "wide-course", ZONE, now)]);
+  const started = results.flatMap((r) => (r.status === "fulfilled" ? [r.value.recall.session] : []));
+  assert.ok(started.length >= 1);
+  assert.equal(new Set(started).size, 1);
+  assert.equal((await rows(env, "SELECT * FROM recall_sessions")).length, 1);
+  const open = await rows<{ item_id: string }>(env, "SELECT item_id FROM recall_questions WHERE status = 'set'");
+  assert.equal(new Set(open.map((r) => r.item_id)).size, open.length);
+});
+
+test("a set's results count only its own answers", async () => {
+  const env = makeEnv();
+  const now = Date.now();
+  await usualLearner(env, now - 10 * DAY);
+  // Multiple choice only, so nothing here needs a model to grade it.
+  await saveSettings(env, await getLearner(env, null, ZONE, now), { short_answers: false });
+  await wideCourse(env, 4, now - 10 * DAY);
+  for (const course of ["c1", "wide-course"]) {
+    const started = await startCourseRecall(env, null, course, ZONE, now);
+    for (const row of await sessionRows(env, started.recall.session!)) await answerRecall(env, null, row.id, String(row.correct_index), ZONE, now + 1000);
+  }
+  const c1 = await startCourseRecall(env, null, "c1", ZONE, now + 2000);
+  const first = (await sessionRows(env, c1.recall.session!))[0]!;
+  const answered = await answerRecall(env, null, first.id, String(first.correct_index), ZONE, now + 3000);
+  assert.equal(answered.recall.correct, 1);
+  assert.ok(answered.recall.coming_back.length <= 1);
+  // Today's set has nothing answered from the sessions.
+  const day = await today(env, null, ZONE, now + 4000);
+  assert.equal(day.recall.correct, 0);
+});
+
+test("a session from another day can't be extended", async () => {
+  const env = makeEnv();
+  const now = Date.now();
+  await wideCourse(env, 14, now - 10 * DAY);
+  const started = await startCourseRecall(env, null, "wide-course", ZONE, now);
+  await rejects(moreRecall(env, null, ZONE, now + DAY, started.recall.session), 409, /another day/);
+  await rejects(moreRecall(env, "someone", ZONE, now, started.recall.session), 404);
 });

@@ -21,3 +21,7 @@ ALTER TABLE recall_questions ADD COLUMN session_id TEXT REFERENCES recall_sessio
 DROP INDEX recall_questions_day;
 CREATE UNIQUE INDEX recall_questions_day ON recall_questions(owner, day, position) WHERE session_id IS NULL;
 CREATE UNIQUE INDEX recall_questions_session ON recall_questions(session_id, position) WHERE session_id IS NOT NULL;
+
+-- One open question per idea per day, across the day's set and every session, so two requests building sets at
+-- the same moment can't ask the same idea twice. The losing request's batch fails as a whole.
+CREATE UNIQUE INDEX recall_questions_open_item ON recall_questions(owner, day, item_id) WHERE status = 'set' AND item_id IS NOT NULL;

@@ -263,15 +263,18 @@ const loadSession = async (env: Env, session: Session) =>
  * Add questions to the day's set, or to a course session. If another request added the same positions first,
  * this one's batch fails and theirs stands.
  */
+const insertDrafts = (env: Env, key: string, day: string, start: number, drafts: Draft[], now: number, sessionId: string | null) =>
+  drafts.map((d, i) => env.DB.prepare(
+    `INSERT INTO recall_questions (id, owner, course_id, item_id, course_question_id, bank_id, origin, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, source_url, status, day, position, created_at, session_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'set', ?, ?, ?, ?)`,
+  ).bind(crypto.randomUUID(), key, d.course_id, d.item_id, d.course_question_id, d.bank_id, d.origin, d.kind, d.prompt, d.options, d.correct_index, d.reference, d.concept, d.why, d.figure, d.figure_alt, d.source_url, day, start + i, now, sessionId));
+
 async function addToSet(env: Env, key: string, day: string, start: number, drafts: Draft[], now: number, sessionId: string | null = null) {
   if (!drafts.length) return;
   try {
-    await env.DB.batch(drafts.map((d, i) => env.DB.prepare(
-      `INSERT INTO recall_questions (id, owner, course_id, item_id, course_question_id, bank_id, origin, kind, prompt, options, correct_index, reference, concept, why, figure, figure_alt, source_url, status, day, position, created_at, session_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'set', ?, ?, ?, ?)`,
-    ).bind(crypto.randomUUID(), key, d.course_id, d.item_id, d.course_question_id, d.bank_id, d.origin, d.kind, d.prompt, d.options, d.correct_index, d.reference, d.concept, d.why, d.figure, d.figure_alt, d.source_url, day, start + i, now, sessionId)));
+    await env.DB.batch(insertDrafts(env, key, day, start, drafts, now, sessionId));
   } catch (error) {
-    console.log(JSON.stringify({ message: "the day's recall set was already being built", error: String(error) }));
+    console.log(JSON.stringify({ message: "another request was adding to recall at the same time", error: String(error) }));
   }
 }
 
@@ -311,8 +314,8 @@ async function recallView(env: Env, learner: Learner, rows: SetRow[], courses: C
   const courseIds = rows.filter((r) => r.course_question_id).map((r) => r.course_question_id!);
   const [attempts, courseAnswers, unused] = await Promise.all([
     day
-      ? env.DB.prepare("SELECT t.question_id, t.verdict, t.concept, t.due_in_days FROM recall_attempts t JOIN recall_questions r ON r.id = t.question_id WHERE r.owner = ? AND r.day = ?")
-        .bind(learner.owner, day).all<{ question_id: string; verdict: Answer["verdict"]; concept: string; due_in_days: number | null }>().then((r) => r.results)
+      ? env.DB.prepare("SELECT t.question_id, t.verdict, t.concept, t.due_in_days FROM recall_attempts t JOIN recall_questions r ON r.id = t.question_id WHERE r.owner = ? AND r.day = ? AND r.session_id IS ?")
+        .bind(learner.owner, day, session?.id ?? null).all<{ question_id: string; verdict: Answer["verdict"]; concept: string; due_in_days: number | null }>().then((r) => r.results)
       : [],
     courseIds.length
       ? env.DB.prepare(`SELECT question_id, verdict FROM answers WHERE question_id IN (${courseIds.map(() => "?").join(", ")})`)
@@ -606,6 +609,8 @@ export async function moreRecall(env: Env, owner: string | null, zone?: string |
     const rows = await loadSession(env, session);
     const start = rows.length ? Math.max(...rows.map((r) => r.position)) + 1 : 0;
     const day = await currentDay(env, learner, now);
+    // A session belongs to the day it was started on, so it isn't extended into the next one.
+    if (session.day !== day) throw new AnswerError("That recall session was on another day. Tap Recall to start a new one.", 409);
     await addToSet(env, learner.owner, session.day, start, await pick(env, learner, owner, day, now, MORE, rows, { course: session.course_id }), now, session.id);
     return state(env, learner, owner, now, undefined, session);
   }
@@ -670,6 +675,12 @@ export async function courseRecall(env: Env, owner: string | null, courseId: str
   return availability(course.passed, counts.get(courseId));
 }
 
+/** Today's session for the course that still has a question open, if any. */
+const openSession = (env: Env, key: string, courseId: string, day: string) => env.DB.prepare(
+  `SELECT s.* FROM recall_sessions s WHERE s.owner = ? AND s.course_id = ? AND s.day = ?
+   AND EXISTS (SELECT 1 FROM recall_questions r WHERE r.session_id = s.id AND r.status = 'set') ORDER BY s.created_at DESC LIMIT 1`,
+).bind(key, courseId, day).first<Session>();
+
 /**
  * Start a "Recall this course" session, or carry on with today's open one for the course. Draws from the course's
  * passed modules only, due ideas first, then the ones fading fastest. Throws with the reason when there is
@@ -681,10 +692,7 @@ export async function startCourseRecall(env: Env, owner: string | null, courseId
   if (!found.available) throw new AnswerError(found.reason!, 409);
   const learner = await getLearner(env, owner, zone, now);
   const day = await currentDay(env, learner, now);
-  const open = await env.DB.prepare(
-    `SELECT s.* FROM recall_sessions s WHERE s.owner = ? AND s.course_id = ? AND s.day = ?
-     AND EXISTS (SELECT 1 FROM recall_questions r WHERE r.session_id = s.id AND r.status = 'set') ORDER BY s.created_at DESC LIMIT 1`,
-  ).bind(learner.owner, courseId, day).first<Session>();
+  const open = await openSession(env, learner.owner, courseId, day);
   if (open) return state(env, learner, owner, now, undefined, open);
 
   const drafts = await pick(env, learner, owner, day, now, learner.daily_goal, [], { course: courseId });
@@ -695,9 +703,19 @@ export async function startCourseRecall(env: Env, owner: string | null, courseId
       : "There are no questions to ask on this course's ideas yet.", 409);
   }
   const session: Session = { id: crypto.randomUUID(), owner: learner.owner, course_id: courseId, day, created_at: now };
-  await env.DB.prepare("INSERT INTO recall_sessions (id, owner, course_id, day, created_at) VALUES (?, ?, ?, ?, ?)")
-    .bind(session.id, session.owner, session.course_id, session.day, session.created_at).run();
-  await addToSet(env, learner.owner, day, 0, drafts, now, session.id);
+  try {
+    // One transaction: if another request claimed any of these ideas first, no session is made.
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO recall_sessions (id, owner, course_id, day, created_at) VALUES (?, ?, ?, ?, ?)")
+        .bind(session.id, session.owner, session.course_id, session.day, session.created_at),
+      ...insertDrafts(env, learner.owner, day, 0, drafts, now, session.id),
+    ]);
+  } catch (error) {
+    console.log(JSON.stringify({ message: "a recall session was started at the same time", error: String(error) }));
+    const other = await openSession(env, learner.owner, courseId, day);
+    if (other) return state(env, learner, owner, now, undefined, other);
+    throw new AnswerError("Recall was starting somewhere else at the same time. Try again.", 409);
+  }
   return state(env, learner, owner, now, undefined, session);
 }
 
