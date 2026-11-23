@@ -5,7 +5,7 @@ The native iPhone app. It is a SwiftUI port of the web app in `public/`, screen 
 | | |
 |---|---|
 | Bundle ID | `app.coursesmash.ios` |
-| Version | `1.1.0`, build `2` (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`) |
+| Version | `1.3.0`, build `5` (`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml`) |
 | Runs on | iPhone, iOS 17 or later, portrait |
 | Server | `https://coursesmash.app` (`CSAPIBaseURL` in `project.yml`) |
 | Dependencies | [SwiftMath](https://github.com/mgriebling/SwiftMath) 1.7.3, for formulas |

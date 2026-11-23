@@ -13,7 +13,7 @@ Yes.
 | Identifiers: User ID | The username | Yes | No | App Functionality |
 | User Content: Other User Content | What you say you want to learn, and your answers in courses and in daily recall | Yes | No | App Functionality |
 | Usage Data: Product Interaction | How many questions you answered on each day, which makes the streak, and when the account was last active | Yes | No | App Functionality |
-| Other Data: Other Data Types | The name of the phone's time zone, such as Europe/Paris, and two settings: the daily goal and whether recall includes short answers | Yes | No | App Functionality |
+| Other Data: Other Data Types | The name of the phone's time zone, such as Europe/Paris, and three settings: the daily goal, whether recall includes short answers, and which courses daily recall draws from | Yes | No | App Functionality |
 
 Nothing else is collected: no contact info, health, financial info, location, contacts, photos, browsing or search history, purchases, diagnostics, advertising data or device ID.
 

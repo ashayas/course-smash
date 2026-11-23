@@ -5,7 +5,7 @@ The native Android app. It is a Kotlin and Jetpack Compose port of the web app i
 | | |
 |---|---|
 | Application ID | `app.coursesmash.android` |
-| Version | `1.2.0`, version code `4` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
+| Version | `1.3.0`, version code `5` (`versionName` and `versionCode` in `app/build.gradle.kts`) |
 | Runs on | Phones, Android 8.0 (API 26) or later, portrait. Targets API 36. |
 | Server | `https://coursesmash.app` (`API_BASE_URL` in `app/build.gradle.kts`) |
 | Libraries | Jetpack Compose (UI and Foundation), Activity Compose, kotlinx.serialization and coroutines. No Material library and no third-party SDKs. |
