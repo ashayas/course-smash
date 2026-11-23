@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -26,15 +27,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.coursesmash.android.AppModel
 import app.coursesmash.android.Route
 import app.coursesmash.android.Settings
+import app.coursesmash.android.art.art
 import app.coursesmash.android.messageOf
 import app.coursesmash.android.ui.CardColumn
 import app.coursesmash.android.ui.Chip
@@ -46,6 +50,7 @@ import app.coursesmash.android.ui.Theme
 import app.coursesmash.android.ui.TypeStyle
 import app.coursesmash.android.ui.card
 import app.coursesmash.android.ui.lift
+import app.coursesmash.android.ui.plain
 import app.coursesmash.android.ui.plural
 import app.coursesmash.android.ui.tag
 import kotlinx.coroutines.CancellationException
@@ -62,6 +67,7 @@ fun YouScreen(model: AppModel) {
     val scope = rememberCoroutineScope()
     val links = LocalUriHandler.current
     val streak = model.recall.streak
+    val list = rememberLazyListState()
 
     LaunchedEffect(Unit) {
         try {
@@ -73,13 +79,20 @@ fun YouScreen(model: AppModel) {
         }
     }
 
-    fun save(dailyGoal: Int? = null, shortAnswers: Boolean? = null) {
+    // From Today's "Choose courses": once the settings are in, bring the courses card to the top.
+    LaunchedEffect(settings != null, model.showRecallCourses) {
+        if (settings == null || !model.showRecallCourses) return@LaunchedEffect
+        model.showRecallCourses = false
+        list.animateScrollToItem(recallCoursesIndex(streak != null))
+    }
+
+    fun save(dailyGoal: Int? = null, shortAnswers: Boolean? = null, recallCourses: Map<String, Boolean>? = null) {
         if (saving) return
         saving = true
         error = null
         scope.launch {
             try {
-                settings = model.api.saveSettings(dailyGoal, shortAnswers)
+                settings = model.api.saveSettings(dailyGoal, shortAnswers, recallCourses)
                 choosingGoal = false
             } catch (failure: Exception) {
                 error = messageOf(failure)
@@ -88,7 +101,7 @@ fun YouScreen(model: AppModel) {
         }
     }
 
-    Page(footer = false) {
+    Page(list, footer = false) {
         item("head") {
             Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 T("You", TypeStyle.PageTitle, Modifier.weight(1f).testTag("you-title"), heading = true)
@@ -133,6 +146,36 @@ fun YouScreen(model: AppModel) {
                 }
             }
         }
+        val courses = settings?.recallCourses.orEmpty()
+        if (courses.isNotEmpty()) {
+            // Keep recallCoursesIndex in step with the items above this one.
+            item("recall-courses") {
+                CardColumn(Modifier.padding(top = Theme.Gap).testTag("recall-courses"), padding = 18.dp) {
+                    T("Courses in daily recall", TypeStyle.CardTitle, Modifier.padding(bottom = 6.dp), heading = true)
+                    T("Daily recall draws from the courses you leave on. You can still recall any course from its page.", TypeStyle.Small, Modifier.padding(bottom = 12.dp), color = Theme.Muted)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (entry in courses) {
+                            Row(
+                                Modifier.tag("recall-course").fillMaxWidth().heightIn(min = 52.dp)
+                                    .toggleable(entry.included, remember { MutableInteractionSource() }, indication = null, enabled = !saving, role = Role.Switch) {
+                                        save(recallCourses = mapOf(entry.id to it))
+                                    }
+                                    .semantics { stateDescription = if (entry.included) "On" else "Off" },
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                entry.course?.let { Thumb(model, model.city.building(it.art)) }
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                    T(plain(entry.title), TypeStyle(15, FontWeight.Medium))
+                                    if (entry.detail.isNotEmpty()) T(entry.detail, TypeStyle.Caption, color = Theme.Muted)
+                                }
+                                Switch(entry.included, colour = Theme.Green)
+                            }
+                        }
+                    }
+                }
+            }
+        }
         error?.let { item("error") { ErrorText(it, Modifier.padding(top = Theme.Gap)) } }
         item("links") {
             Column(Modifier.fillMaxWidth().padding(top = 20.dp, start = 4.dp, end = 4.dp)) {
@@ -154,13 +197,19 @@ private fun SettingRow(label: String, modifier: Modifier = Modifier, value: @Com
     }
 }
 
-/** An on or off switch drawn by the app: an ink track that turns yellow, like a window with its light on. */
+/** Where the courses card is in You's list: after the heading, the streak when there is one, Stats and the settings. */
+private fun recallCoursesIndex(hasStreak: Boolean) = if (hasStreak) 4 else 3
+
+/**
+ * An on or off switch drawn by the app: an ink track that turns yellow, like a window with its light on.
+ * The courses in daily recall use green, the kit's colour for what is done and kept.
+ */
 @Composable
-private fun Switch(on: Boolean) {
+private fun Switch(on: Boolean, colour: Color = Theme.Yellow) {
     val still = LocalStill.current
     val target = if (on) 22.dp else 0.dp
     val shift by animateDpAsState(target, Theme.spring(), label = "switch")
-    Box(Modifier.size(52.dp, 30.dp).background(if (on) Theme.Yellow else Theme.Ink, CircleShape).padding(4.dp)) {
+    Box(Modifier.size(52.dp, 30.dp).background(if (on) colour else Theme.Ink, CircleShape).padding(4.dp)) {
         Box(Modifier.offset(x = if (still) target else shift).size(22.dp).background(if (on) Theme.Ink else Theme.Muted, CircleShape))
     }
 }

@@ -7,6 +7,7 @@ import app.coursesmash.android.ApiClient
 import app.coursesmash.android.Recall
 import app.coursesmash.android.RecallAnswer
 import app.coursesmash.android.RecallQuestion
+import app.coursesmash.android.RecallUpdate
 import app.coursesmash.android.Streak
 import app.coursesmash.android.Today
 import app.coursesmash.android.messageOf
@@ -40,11 +41,20 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
     var error by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * A "Recall this course" session, from a course or library page: its own set, driven by what the Worker returns.
+     * While there is one, the session screen shows it instead of Today's set. Closing it goes back to that page.
+     */
+    var courseSession by mutableStateOf<RecallUpdate?>(null)
+        private set
+
     /** Goes up with every change made here, so a slower refresh never overwrites a newer answer. */
     private var changes = 0
 
-    val streak: Streak? get() = today?.streak
-    val recall: Recall? get() = today?.recall
+    val streak: Streak? get() = courseSession?.streak ?: today?.streak
+
+    /** The set on screen: the course session's while there is one, otherwise Today's. */
+    val recall: Recall? get() = courseSession?.recall ?: today?.recall
 
     /** The question on screen: the one just answered while its verdict shows, otherwise the next one. */
     val question: RecallQuestion? get() = if (verdict != null) answered else recall?.question
@@ -57,8 +67,8 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
         try {
             val loaded = api.today()
             if (before != changes) return
-            // A new question clears what was picked for the old one.
-            if (loaded.recall.question?.id != today?.recall?.question?.id) clearAnswer()
+            // A new question clears what was picked for the old one. A course session's question is not Today's.
+            if (courseSession == null && loaded.recall.question?.id != today?.recall?.question?.id) clearAnswer()
             today = loaded
             loadError = null
         } catch (cancelled: CancellationException) {
@@ -101,11 +111,40 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
         }
     }
 
-    /** Five more questions, then on with the session. */
-    fun more() = change({ api.moreRecall() }) { result ->
+    /**
+     * Starts "Recall this course" and opens its session over the whole screen. A 409 says why there is nothing to ask,
+     * and goes to `failed` so the page can show it under its Recall button.
+     */
+    fun startCourse(courseId: String, failed: (String) -> Unit) {
+        if (busy) return
+        busy = true
+        error = null
+        val mine = ++changes
+        scope.launch {
+            try {
+                val result = api.startCourseRecall(courseId)
+                if (mine == changes) {
+                    next()
+                    courseSession = result
+                    today = today?.copy(streak = result.streak)
+                    inSession = true
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                if (mine == changes) failed(messageOf(failure))
+            } finally {
+                if (mine == changes) busy = false
+            }
+        }
+    }
+
+    /** Five more questions, then on with the session. A course session gets five more from its own course. */
+    fun more() = change({ api.moreRecall(courseSession?.recall?.session) }) { result ->
         next()
         take(result.streak, result.recall)
         inSession = result.recall.question != null
+        if (!inSession) courseSession = null
     }
 
     fun skipDay(skipped: Boolean) = change({ api.skipRecallDay(skipped) }) { result ->
@@ -113,11 +152,15 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
         take(result.streak, result.recall)
     }
 
-    /** Back to Today. Answers so far are kept by the Worker, and the rest of the set waits there. */
+    /**
+     * Back to Today, or to the page a course session was started from. Answers so far are kept by the Worker,
+     * and the rest of the set waits there.
+     */
     fun close() {
         next()
         error = null
         inSession = false
+        courseSession = null
     }
 
     fun reset() {
@@ -135,7 +178,12 @@ class RecallModel(private val api: ApiClient, private val scope: CoroutineScope)
     }
 
     private fun take(streak: Streak, recall: Recall) {
-        today = today?.copy(streak = streak, recall = recall)
+        if (courseSession != null) {
+            courseSession = RecallUpdate(streak, recall)
+            today = today?.copy(streak = streak)
+        } else {
+            today = today?.copy(streak = streak, recall = recall)
+        }
     }
 
     /** One change at a time. Its result is dropped if the learner signed out while it was on its way. */

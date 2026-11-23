@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -21,6 +26,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import app.coursesmash.android.AppModel
+import app.coursesmash.android.CourseRecall
 import app.coursesmash.android.Recall
 import app.coursesmash.android.RecallAnswer
 import app.coursesmash.android.RecallQuestion
@@ -106,11 +112,15 @@ private fun ColumnScope.RecallQuestionScreen(model: AppModel, set: Recall, quest
     }
 }
 
-/** The set is finished: the day's window lights up, and the course is one button away. */
+/**
+ * The set is finished: the day's window lights up, and the course is one button away. A course session ends with
+ * the way back to the course instead, and has no "Done" link.
+ */
 @Composable
 private fun ColumnScope.RecallDone(model: AppModel, set: Recall, streak: Streak) {
     val recall = model.recall
-    val next = recall.today?.next
+    val fromCourse = set.scope == "course"
+    val next = recall.today?.next?.takeIf { !fromCourse }
     // Answers don't come back with the course to continue, and recall can change which one that is, so ask again.
     LaunchedEffect(Unit) { recall.refresh() }
     Row(Modifier.fillMaxWidth().padding(horizontal = Theme.Gutter).padding(top = 24.dp, bottom = 6.dp)) { Pips(set.marks, current = null) }
@@ -152,9 +162,36 @@ private fun ColumnScope.RecallDone(model: AppModel, set: Recall, streak: Streak)
             SourceRow(model, model.city.building(next.course.art), plain(next.course.name), next.detail, onInk = true)
             PillButton("Continue your course", { recall.close(); model.open(Route.Course(next.course.id)) }, fullWidth = true, tag = "recall-continue")
         }
+        if (fromCourse) {
+            PillButton("Back to the course", { recall.close() }, fullWidth = true, tag = "recall-back-to-course")
+        }
         if (set.moreAvailable) {
             PillButton(if (recall.busy) "Adding..." else "5 more questions", { recall.more() }, kind = Pill.Quiet, enabled = !recall.busy, fullWidth = true, tag = "recall-more")
         }
-        LinkButton("Done", { recall.close() }, tag = "recall-finish")
+        if (!fromCourse) LinkButton("Done", { recall.close() }, tag = "recall-finish")
+    }
+}
+
+/**
+ * The quiet "Recall" button on a course or library page, with the Worker's note under it: what there is to recall,
+ * or why there is nothing yet, when it is disabled. Starting opens the session over the whole screen, and a 409
+ * shows its reason here, in place. `kind` is Ink on a panel, where a quiet pill would not show.
+ */
+@Composable
+fun RecallAction(model: AppModel, courseId: String, recall: CourseRecall, modifier: Modifier = Modifier, kind: Pill = Pill.Quiet, before: @Composable RowScope.() -> Unit = {}) {
+    var error by remember(courseId) { mutableStateOf<String?>(null) }
+    val session = model.recall
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            before()
+            PillButton(
+                if (session.busy) "Starting..." else "Recall",
+                { error = null; session.startCourse(courseId) { error = it } },
+                kind = kind, enabled = recall.available && !session.busy, tag = "course-recall",
+            )
+        }
+        val note = if (recall.available) recall.label else recall.reason ?: recall.label
+        if (note.isNotEmpty()) T(note, TypeStyle.Small, Modifier.testTag("course-recall-note"), color = Theme.Muted)
+        error?.let { ErrorText(it, tag = "course-recall-error") }
     }
 }

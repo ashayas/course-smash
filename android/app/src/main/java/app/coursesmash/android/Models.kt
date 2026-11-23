@@ -42,9 +42,18 @@ data class CourseSummary(
     val modules: Int = 0,
     val passed: Int = 0,
     val average: Double? = null,
+    /** Whether the course feeds daily recall. Older Workers don't send it, and every course fed recall then. */
+    val inRecall: Boolean = true,
 ) {
     val name: String get() = title ?: prompt
 }
+
+/**
+ * Whether "Recall this course" can start. `label` is the note under the Recall button ("15 ideas from 3 passed
+ * modules · 15 due"), and `reason` says why it can't when it isn't `available`. Both are written by the Worker.
+ */
+@Serializable
+data class CourseRecall(val available: Boolean = false, val ideas: Int = 0, val due: Int = 0, val label: String = "", val reason: String? = null)
 
 @Serializable
 data class CourseList(val courses: List<CourseSummary>)
@@ -91,9 +100,14 @@ data class CatalogCourseDetail(
     /** The learning path around this course: what to take first, and what it opens up. */
     val prerequisites: List<CatalogCourse> = emptyList(),
     val leadsTo: List<CatalogCourse> = emptyList(),
+    /** The learner's own course started from this one, or null. Then the page offers Continue and Recall instead of Start. */
+    val yours: Yours? = null,
 ) {
     @Serializable
     data class Module(val title: String, val concepts: List<String> = emptyList())
+
+    @Serializable
+    data class Yours(val course: CourseSummary, val recall: CourseRecall? = null)
 }
 
 /** GET /api/catalog/:id/similar. `pending` until the course has been read for meaning. */
@@ -129,6 +143,8 @@ data class CourseDetail(
     val mastery: List<Mastery> = emptyList(),
     val events: List<Event> = emptyList(),
     val models: Models,
+    /** Whether the course can be recalled on its own. Null from an older Worker, and then there is no Recall button. */
+    val recall: CourseRecall? = null,
 ) {
     @Serializable
     data class Module(val id: String, val title: String, val status: String, val masteryTarget: Double? = null, val answered: Int = 0)
@@ -249,6 +265,13 @@ data class Recall(
     val moreAvailable: Boolean = false,
     val question: RecallQuestion? = null,
     val comingBack: List<ComingBack> = emptyList(),
+    /** "day" for Today's set, "course" for a "Recall this course" session. */
+    val scope: String = "day",
+    /** The session's id when `scope` is "course". Sent back with /api/recall/more. */
+    val session: String? = null,
+    val courseId: String? = null,
+    /** True when every course is turned off for daily recall. Then `status` is "empty". */
+    val off: Boolean = false,
 ) {
     @Serializable
     data class ComingBack(val concept: String, val `when`: String)
@@ -304,4 +327,15 @@ data class RecallUpdate(val streak: Streak, val recall: Recall)
 
 /** GET and PUT /api/settings */
 @Serializable
-data class Settings(val dailyGoal: Int, val shortAnswers: Boolean, val timeZone: String, val goals: List<Int> = emptyList())
+data class Settings(
+    val dailyGoal: Int,
+    val shortAnswers: Boolean,
+    val timeZone: String,
+    val goals: List<Int> = emptyList(),
+    /** The learner's courses, newest first, each with whether it feeds daily recall. Empty from an older Worker. */
+    val recallCourses: List<RecallCourse> = emptyList(),
+) {
+    /** `detail` is shown as it is: "25 ideas to recall", "Nothing to recall yet". `course` draws the building. */
+    @Serializable
+    data class RecallCourse(val id: String, val title: String, val included: Boolean = true, val detail: String = "", val course: CourseSummary? = null)
+}

@@ -56,8 +56,9 @@ import kotlin.math.abs
  *                       wrong on purpose. Without it, or when the helper has no answer, it answers as it always has.
  * Pictures named store-... are the ones the store screenshots are made from, each with its subject at the top.
  * The test answers today's recall questions when the learner has any, and passes without them (`recall.status` of `empty`).
- * It starts one library course and one planned course, and deletes both before it ends. It changes the daily goal and
- * the short answers setting, and puts both back.
+ * It starts one library course and one planned course, and deletes both before it ends. It changes the daily goal, the
+ * short answers setting and whether the first course is in daily recall, and puts all three back. It recalls the
+ * Kubernetes architecture course on its own when the learner has it, as the demo learner does.
  * Screenshots go to the app's files/walkthrough folder.
  */
 @OptIn(ExperimentalTestApi::class)
@@ -154,6 +155,9 @@ class WalkthroughTest {
         scrollToFirst("course-card")
         shot("city-courses")
 
+        // Recall one course on its own, from its page.
+        courseRecall()
+
         // A finished course, when the learner has one: the lit building under confetti.
         val finished = hasTestTag("course-card") and hasText("Finished", substring = true)
         if (runCatching { rule.onNode(hasScrollToNodeAction()).performScrollToNode(finished) }.isSuccess) {
@@ -205,10 +209,26 @@ class WalkthroughTest {
         settle("library-count")
         shot("library-search")
 
-        // A library course: what it covers, then start it.
-        scrollTo("library-card")
-        rule.onAllNodesWithTag("library-card").onFirst().performClick()
-        waitFor("start-course", 30)
+        // A library course: what it covers, then start it. A course the learner already has offers Continue and
+        // Recall instead of Start, so the test takes a picture of that and starts the next course in the results.
+        val tried = mutableListOf<String>()
+        while (true) {
+            // The next card in the results that hasn't been opened yet. Cards below the fold exist once the page scrolls to them.
+            val next = tried.fold(hasTestTag("library-card")) { matcher, title -> matcher and !hasText(title) }
+            scrollTo("library-card", next)
+            val card = rule.onAllNodes(next).onFirst()
+            val title = card.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)?.getOrNull(1)?.text.orEmpty()
+            assertTrue("A library card shows its title", title.isNotEmpty())
+            tried += title
+            card.performClick()
+            if (waitForAny(listOf("start-course", "library-yours"), 30) == "start-course") break
+            Thread.sleep(1500)
+            shot("library-course-yours")
+            assertTrue("A course of yours offers Continue", exists("library-continue"))
+            assertTrue("A course of yours offers Recall", exists("course-recall"))
+            press("back")
+            waitFor("library-count", 20)
+        }
         shot("library-course")
         // The learning path around the course, similar courses and where learners slip, when the course has them.
         for ((tag, name) in listOf("slips" to "where-learners-slip", "path-prerequisites" to "take-these-first", "path-leads-to" to "leads-to", "similar-courses" to "similar-courses")) {
@@ -554,6 +574,60 @@ class WalkthroughTest {
     }
     private var storeVerdictBottom = Float.MAX_VALUE
 
+    /**
+     * "Recall this course" on the Kubernetes demo course, which has passed modules: the session opens over the course
+     * with its pips, one question is answered, and closing it lands back on the course. Skipped when the learner has
+     * no such course.
+     */
+    private fun courseRecall() {
+        val kubernetes = hasTestTag("course-card") and hasText("Kubernetes architecture", substring = true)
+        if (runCatching { rule.onNode(hasScrollToNodeAction()).performScrollToNode(kubernetes) }.isFailure) return
+        rule.onAllNodes(kubernetes).onFirst().performClick()
+        // The course opens scrolled to its question. The Recall button is in the head, above it.
+        waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 240)
+        scrollTo("course-recall")
+        toTop("course-title", margin = 12)
+        Thread.sleep(1500)
+        shot("course-recall")
+        tap("course-recall")
+        waitForAny(listOf("recall-pips", "course-recall-error"), 60)
+        assertTrue("The course's recall session opens: ${if (exists("course-recall-error")) text("course-recall-error") else ""}", exists("recall-pips"))
+        assertTrue("The tab bar is hidden during a session", !exists("tab-today"))
+        assertTrue("The count reads \"n of total\"", Regex("\\d+ of \\d+").matches(text("recall-count")))
+        Thread.sleep(1200)
+        shot("course-recall-session")
+
+        // One answer, with the answer key when there is one. Today's set is finished by now, so its open question is this session's.
+        val known = key("/recall")
+        if (exists("recall-option-0")) {
+            tap("recall-option-${option(known, "recall-option", wrong = false) ?: 0}")
+            press("recall-check")
+        } else {
+            scrollTo("recall-short-answer")
+            rule.onNodeWithTag("recall-short-answer").performTextInput(shortAnswer(known, wrong = false))
+            Espresso.closeSoftKeyboard()
+            press("recall-check")
+        }
+        if (waitForAny(listOf("recall-verdict", "recall-error"), 120) == "recall-verdict") {
+            Thread.sleep(1200)
+            shot("course-recall-verdict")
+            press("recall-next")
+            rule.waitUntil(20_000) { !exists("recall-verdict") }
+        }
+        Thread.sleep(800)
+        shot(if (exists("recall-done")) "course-recall-done" else "course-recall-next")
+
+        // Closing goes back to the course, not to Today.
+        press(if (exists("recall-close")) "recall-close" else "recall-back-to-course")
+        waitForAny(listOf("check-answer", "try-again", "finished", "keep-going"), 60)
+        assertTrue("Back on the course", exists("back") && exists("tab-today"))
+        scrollTo("course-recall")
+        Thread.sleep(1000)
+        shot("course-recall-closed")
+        press("back")
+        waitFor("build-course", 20)
+    }
+
     /** You: the streak, Stats, and the settings, which are changed and then put back. */
     private fun you() {
         press("tab-you")
@@ -598,6 +672,19 @@ class WalkthroughTest {
         shot("you-short-answers-changed")
         tap("short-answers")
         rule.waitUntil(20_000) { isOn("short-answers") == shortAnswers }
+
+        // Courses in daily recall: one switch per course. Turn the first one off and back on, so every course ends on.
+        if (runCatching { toTop("recall-courses", margin = 12) }.isSuccess) {
+            Thread.sleep(1500)
+            shot("you-recall-courses")
+            assertTrue("The first course starts in daily recall", isOn("recall-course", first = true))
+            tap("recall-course")
+            rule.waitUntil(20_000) { !isOn("recall-course", first = true) }
+            Thread.sleep(800)
+            shot("you-recall-course-off")
+            tap("recall-course")
+            rule.waitUntil(20_000) { isOn("recall-course", first = true) }
+        }
         scrollTo("log-out")
         shot("you-log-out")
     }
@@ -640,8 +727,9 @@ class WalkthroughTest {
         rule.waitForIdle()
     }
 
-    private fun isOn(tag: String) =
-        rule.onNodeWithTag(tag).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ToggleableState) == androidx.compose.ui.state.ToggleableState.On
+    private fun isOn(tag: String, first: Boolean = false) =
+        (if (first) rule.onAllNodesWithTag(tag).onFirst() else rule.onNodeWithTag(tag)).fetchSemanticsNode().config
+            .getOrNull(SemanticsProperties.ToggleableState) == androidx.compose.ui.state.ToggleableState.On
 
     private fun tap(tag: String) {
         // Pages are lazy lists, so the element may not exist until the page has scrolled to it.

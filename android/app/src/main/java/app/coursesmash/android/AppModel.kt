@@ -36,6 +36,9 @@ class AppModel(application: Application) : AndroidViewModel(application) {
     var libraryTrack by mutableStateOf("")
         private set
 
+    /** Set when Today's "Choose courses" opens You, so You scrolls to the courses in daily recall. You clears it. */
+    var showRecallCourses by mutableStateOf(false)
+
     private var config: AppConfig? = null
     private var catalog: Catalog? = null
 
@@ -48,6 +51,12 @@ class AppModel(application: Application) : AndroidViewModel(application) {
         libraryTrack = track
         path.clear()
         this.tab = tab
+    }
+
+    /** You, scrolled to the card that chooses which courses feed daily recall. */
+    fun chooseRecallCourses() {
+        show(Tab.You)
+        showRecallCourses = true
     }
 
     fun open(route: Route) {
